@@ -27,7 +27,16 @@ pnpm lint             # линтер
 pnpm db:generate      # регенерация миграций после правок схемы
 ```
 
-Запуск приложений (`pnpm dev`) появится по мере реализации этапов 2–6.
+Запуск API локально (эмуляция D1 через wrangler):
+
+```bash
+cd apps/api
+cp .dev.vars.example .dev.vars                  # задать JWT_SECRET
+pnpm db:migrate:local && pnpm dev               # http://127.0.0.1:8787
+curl -X POST http://127.0.0.1:8787/dev/seed     # демо-данные
+```
+
+Описание эндпоинтов: [docs/api.md](docs/api.md). Запуск сайта и админки появится на этапах 3–5.
 
 ## Деньги и даты
 

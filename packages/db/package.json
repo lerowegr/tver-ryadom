@@ -6,7 +6,8 @@
   "description": "Drizzle-схема Cloudflare D1, миграции и seed-данные",
   "exports": {
     ".": "./src/index.ts",
-    "./seed": "./src/seed/index.ts"
+    "./seed": "./src/seed/index.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",

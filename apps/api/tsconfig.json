@@ -1,0 +1,4 @@
+{
+  "extends": "@tver/config/tsconfig/worker.json",
+  "include": ["src", "test", "vitest.config.ts"]
+}

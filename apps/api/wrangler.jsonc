@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tver-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tver-ryadom",
+      // Реальный database_id подставляется на этапе деплоя (этап 7).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "../../packages/db/migrations"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "development",
+    "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

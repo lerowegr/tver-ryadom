@@ -32,7 +32,11 @@ export const bookingAdminUpdateSchema = z.object({
 export const bookingListFilterSchema = paginationSchema.extend({
   status: z.enum(BOOKING_STATUSES).optional(),
   tourId: idSchema.optional(),
-  upcoming: z.coerce.boolean().optional(),
+  // Не z.coerce.boolean(): строка "false" в query-параметрах превратилась бы в true.
+  upcoming: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
 });
 
 export type BookingCreateInput = z.infer<typeof bookingCreateSchema>;

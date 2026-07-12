@@ -1,30 +1,9 @@
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BADGES } from '@tver/shared';
-import type { Db } from '../src/index';
 import * as schema from '../src/schema';
 import { seedDatabase } from '../src/seed';
-
-const migrationsDir = fileURLToPath(new URL('../migrations', import.meta.url));
-
-function createTestDb(): Db {
-  const sqlite = new Database(':memory:');
-  sqlite.pragma('foreign_keys = ON');
-  const files = readdirSync(migrationsDir)
-    .filter((file) => file.endsWith('.sql'))
-    .sort();
-  expect(files.length).toBeGreaterThan(0);
-  for (const file of files) {
-    sqlite.exec(readFileSync(join(migrationsDir, file), 'utf8'));
-  }
-  // Тестовый драйвер better-sqlite3 совместим с D1-типом Db по API запросов.
-  return drizzle(sqlite, { schema }) as unknown as Db;
-}
+import { createTestDb } from '../src/testing';
 
 describe('миграции и seed', () => {
   it('применяет миграции и наполняет базу демо-данными', async () => {
