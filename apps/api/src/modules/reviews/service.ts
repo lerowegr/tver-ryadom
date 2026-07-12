@@ -5,6 +5,17 @@ import { and, eq } from 'drizzle-orm';
 import type { AuthUser } from '../../env';
 import { conflict, notFound, validationError } from '../../lib/errors';
 
+/** Свежие одобренные отзывы для главной страницы. */
+export async function listLatestReviews(db: Db, limit = 6) {
+  return db.query.reviews.findMany({
+    where: eq(reviews.status, 'approved'),
+    orderBy: (review, { desc: sortDesc }) => [sortDesc(review.createdAt)],
+    limit,
+    columns: { id: true, authorName: true, rating: true, text: true, createdAt: true },
+    with: { tour: { columns: { slug: true, title: true } } },
+  });
+}
+
 export async function createReview(db: Db, input: ReviewCreateInput, user?: AuthUser) {
   const tour = await db.query.tours.findFirst({
     where: and(eq(tours.id, input.tourId), eq(tours.status, 'published')),

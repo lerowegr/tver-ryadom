@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "scripts\\dev-web.cmd",
+      "runtimeArgs": [],
+      "port": 3000,
+      "autoPort": false
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "scripts\\dev-api.cmd",
+      "runtimeArgs": [],
+      "port": 8787,
+      "autoPort": false
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import { contactRoutes } from './modules/contact/routes';
 import { favoriteRoutes } from './modules/favorites/routes';
 import { notificationRoutes } from './modules/notifications/routes';
 import { reviewRoutes } from './modules/reviews/routes';
+import { settingsRoutes } from './modules/settings/routes';
 import { badgeRoutes, tourRoutes } from './modules/tours/routes';
 
 export interface BuildAppOptions {
@@ -72,7 +73,8 @@ export function buildApp(options: BuildAppOptions = {}) {
     .route('/reviews', reviewRoutes)
     .route('/favorites', favoriteRoutes)
     .route('/notifications', notificationRoutes)
-    .route('/contact', contactRoutes);
+    .route('/contact', contactRoutes)
+    .route('/settings', settingsRoutes);
 
   app.route('/api/v1', api);
 

@@ -36,7 +36,19 @@ pnpm db:migrate:local && pnpm dev               # http://127.0.0.1:8787
 curl -X POST http://127.0.0.1:8787/dev/seed     # демо-данные
 ```
 
-Описание эндпоинтов: [docs/api.md](docs/api.md). Запуск сайта и админки появится на этапах 3–5.
+Запуск сайта (в отдельном терминале, при работающем API):
+
+```bash
+cd apps/web
+cp .env.example .env.local
+pnpm dev                                        # http://localhost:3000
+```
+
+Описание эндпоинтов: [docs/api.md](docs/api.md). Админка появится на этапе 5.
+
+> **Windows:** `pnpm --filter @tver/web build:worker` (сборка под Cloudflare Workers)
+> требует включённого режима разработчика (создание symlink). Продакшен-сборка
+> выполняется в Cloudflare Workers Builds на Linux, локально она не нужна.
 
 ## Деньги и даты
 

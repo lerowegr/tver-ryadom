@@ -1,0 +1,74 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Тёплая песочно-кремовая гамма */
+  --color-cream-50: #fbf9f4;
+  --color-cream-100: #f5efe4;
+  --color-cream-200: #ede3d0;
+  --color-sand-200: #eaddc7;
+  --color-sand-300: #dbc7a6;
+  --color-sand-400: #c6a87e;
+  --color-bark-500: #a1815d;
+  --color-bark-600: #8a6d4f;
+  --color-bark-700: #6e5539;
+  --color-bark-800: #503e29;
+  --color-ink-900: #2a2014;
+  --color-terra-500: #c0703e;
+  --color-terra-600: #a65832;
+  --color-terra-700: #8c4526;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, 'Times New Roman', serif;
+
+  --shadow-soft: 0 10px 40px -12px rgb(42 32 20 / 0.15);
+  --shadow-card: 0 4px 24px -8px rgb(42 32 20 / 0.12);
+
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-cream-50 text-ink-900 font-sans antialiased;
+}
+
+::selection {
+  @apply bg-terra-500/20;
+}
+
+/* Стеклянные поверхности (glassmorphism) */
+.glass {
+  @apply border border-white/50 bg-white/65 backdrop-blur-xl;
+}
+
+/* Текстовые блоки описаний */
+.prose-tver p {
+  @apply text-bark-800 mb-4 leading-relaxed;
+}
+
+/* Тонкая полоска-акцент под заголовками секций */
+.heading-accent::after {
+  content: '';
+  @apply bg-terra-500 mt-4 block h-0.5 w-12 rounded-full;
+}
+
+/* Скрытие скроллбара у горизонтальных каруселей */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

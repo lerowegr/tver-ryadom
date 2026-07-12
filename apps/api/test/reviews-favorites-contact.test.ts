@@ -133,6 +133,27 @@ describe('contact', () => {
   });
 });
 
+describe('публичные данные', () => {
+  it('свежие одобренные отзывы с названием экскурсии', async () => {
+    const { app } = await createTestApp();
+    const res = await app.request('/api/v1/reviews/latest', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    const { data } = await body(res);
+    expect(data).toHaveLength(5);
+    expect(data[0].tour.title).toBeTruthy();
+    expect(data.every((r: { rating: number }) => r.rating >= 4)).toBe(true);
+  });
+
+  it('публичные настройки: контакты и компания', async () => {
+    const { app } = await createTestApp();
+    const res = await app.request('/api/v1/settings', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    const { data } = await body(res);
+    expect(data['contacts.phone']).toBe('+79000000000');
+    expect(data['company.name']).toBe('Тверь рядом');
+  });
+});
+
 describe('инфраструктура', () => {
   it('healthcheck отвечает', async () => {
     const { app } = await createTestApp();

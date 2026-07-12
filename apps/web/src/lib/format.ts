@@ -1,0 +1,36 @@
+import { formatDuration, formatPrice, type PriceType } from '@tver/shared';
+
+export { formatDuration, formatPrice };
+
+/** «от 1 200 ₽ / человек» или «6 000 ₽ / группа». */
+export function priceLabel(kopecks: number, priceType: PriceType): string {
+  const suffix = priceType === 'per_person' ? 'человек' : 'группа';
+  return `${formatPrice(kopecks)} / ${suffix}`;
+}
+
+const dateTimeFmt = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+const dateFmt = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+export function formatDateTime(value: string | Date): string {
+  return dateTimeFmt.format(new Date(value));
+}
+
+export function formatDate(value: string | Date): string {
+  return dateFmt.format(new Date(value));
+}
+
+/** «до 15 человек» / «до 4 человек» / «от 1 человека». */
+export function groupLabel(min: number, max: number | null): string {
+  if (max) return `до ${max} чел.`;
+  return `от ${min} чел.`;
+}
