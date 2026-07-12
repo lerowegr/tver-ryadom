@@ -2,11 +2,14 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { normalizeRuPhone } from '@tver/shared';
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useAuth } from '@/components/providers';
 import { CheckIcon } from '@/components/ui/icons';
-import { ApiRequestError, apiPost } from '@/lib/api';
+import { ApiRequestError } from '@/lib/api';
+import { authFetch } from '@/lib/auth';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import type { BookingCreatedDto, ScheduleDto } from '@/lib/types';
 
@@ -27,6 +30,7 @@ const inputCls =
   'placeholder:text-bark-500/60 focus:border-terra-500 focus:outline-none focus:ring-2 focus:ring-terra-500/20';
 
 export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
+  const { user, status } = useAuth();
   const maxPeople = tour.groupMax ?? 30;
   const hasSlots = tour.schedules.length > 0;
   const [customDate, setCustomDate] = useState(!hasSlots);
@@ -65,6 +69,7 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -77,10 +82,22 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
   const peopleCount = watch('peopleCount') || tour.groupMin;
   const total = tour.priceType === 'per_person' ? tour.price * peopleCount : tour.price;
 
+  // Авторизованному гостю подставляем контакты из профиля (не затирая введённое).
+  useEffect(() => {
+    if (!user) return;
+    const { contactName, contactPhone, contactEmail } = getValues();
+    if (!contactName) setValue('contactName', user.name);
+    if (!contactPhone && user.phone) setValue('contactPhone', user.phone);
+    if (!contactEmail && user.email) setValue('contactEmail', user.email);
+  }, [user, getValues, setValue]);
+
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const booking = await apiPost<BookingCreatedDto>('/bookings', {
+      // authFetch привязывает бронь к аккаунту, для гостя работает без токена.
+      const booking = await authFetch<BookingCreatedDto>('/bookings', {
+        method: 'POST',
+        body: JSON.stringify({
         tourId: tour.id,
         scheduleId: customDate ? undefined : values.scheduleId,
         desiredDate:
@@ -90,6 +107,7 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
         contactPhone: normalizeRuPhone(values.contactPhone),
         contactEmail: values.contactEmail || undefined,
         comment: values.comment || undefined,
+        }),
       });
       setCreated(booking);
     } catch (error) {
@@ -119,6 +137,21 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
         </p>
         <p className="text-ink-900 mt-4 text-lg font-bold">К оплате: {formatPrice(created.totalPrice)}</p>
         <p className="text-bark-600 mt-1 text-xs">Оплата — на месте или по договорённости с гидом.</p>
+        {status === 'authed' ? (
+          <Link
+            href="/account/bookings"
+            className="bg-terra-500 hover:bg-terra-600 mt-5 inline-block rounded-full px-6 py-2.5 text-sm font-semibold text-white transition"
+          >
+            Мои брони
+          </Link>
+        ) : (
+          <p className="text-bark-600 mt-4 text-xs">
+            <Link href="/auth" className="text-terra-600 font-semibold hover:underline">
+              Создайте аккаунт
+            </Link>
+            , чтобы отслеживать брони и получать уведомления.
+          </p>
+        )}
       </div>
     );
   }

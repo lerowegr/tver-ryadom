@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@tanstack/react-query": "^5.101.2",
     "@tver/shared": "workspace:*",
     "motion": "^12.42.2",
     "next": "^15.5.20",

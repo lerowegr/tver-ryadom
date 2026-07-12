@@ -8,6 +8,37 @@ import { site } from '@/config/site';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { MenuIcon, XIcon } from '@/components/ui/icons';
+import { useAuth } from '@/components/providers';
+
+function AccountLink({ className = '' }: { className?: string }) {
+  const { user, status } = useAuth();
+
+  if (status === 'authed' && user) {
+    return (
+      <Link
+        href="/account"
+        className={`text-bark-800 flex items-center gap-2 rounded-full py-1.5 pr-4 pl-1.5 text-sm font-semibold transition hover:bg-white/70 ${className}`}
+      >
+        <span
+          className="from-sand-400 to-terra-500 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white"
+          aria-hidden
+        >
+          {user.name[0]?.toUpperCase() ?? '?'}
+        </span>
+        <span className="max-w-28 truncate">{user.name}</span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href="/auth"
+      className={`text-bark-700 hover:text-ink-900 rounded-full px-4 py-2 text-sm font-medium transition-colors ${className}`}
+    >
+      Войти
+    </Link>
+  );
+}
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -52,7 +83,8 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <Button href="/excursions" className="ml-3">
+            <AccountLink className="ml-1" />
+            <Button href="/excursions" className="ml-2">
               Забронировать
             </Button>
           </nav>
@@ -88,6 +120,7 @@ export function Header() {
                   {item.label}
                 </Link>
               ))}
+              <AccountLink className="px-3 py-3" />
               <Button href="/excursions" className="mt-2">
                 Забронировать экскурсию
               </Button>

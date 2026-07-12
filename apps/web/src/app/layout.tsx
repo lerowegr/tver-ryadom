@@ -3,6 +3,7 @@ import { Manrope, Playfair_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
+import { Providers } from '@/components/providers';
 import { site } from '@/config/site';
 import { getSettings } from '@/lib/data';
 import './globals.css';
@@ -45,9 +46,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="ru" className={`${manrope.variable} ${playfair.variable}`}>
       <body>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer settings={settings} />
+        <Providers>
+          <Header />
+          <main id="main">{children}</main>
+          <Footer settings={settings} />
+        </Providers>
       </body>
     </html>
   );

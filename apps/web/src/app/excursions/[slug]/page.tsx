@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Reveal } from '@/components/motion/reveal';
 import { BookingForm } from '@/components/tours/booking-form';
+import { FavoriteButton } from '@/components/tours/favorite-button';
 import { ProgramTimeline } from '@/components/tours/program-timeline';
 import { RouteMap } from '@/components/tours/route-map';
 import { TourVisual } from '@/components/tours/tour-visual';
@@ -86,10 +87,11 @@ export default async function TourPage({ params }: { params: Params }) {
         </nav>
 
         <header className="mb-8 max-w-3xl">
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
             {tour.badges.map((badge) => (
               <TourBadge key={badge.slug} {...badge} />
             ))}
+            <FavoriteButton tourId={tour.id} className="ml-1" />
           </div>
           <h1 className="font-display text-ink-900 text-4xl leading-tight font-semibold text-balance md:text-5xl">
             {tour.title}
@@ -243,7 +245,7 @@ export default async function TourPage({ params }: { params: Params }) {
             ) : null}
           </div>
 
-          <aside className="lg:sticky lg:top-24" aria-label="Бронирование">
+          <aside id="booking" className="scroll-mt-24 lg:sticky lg:top-24" aria-label="Бронирование">
             <div className="glass shadow-soft rounded-[2rem] p-7">
               <p className="text-bark-600 text-sm">Стоимость</p>
               <p className="text-ink-900 font-display mt-1 mb-6 text-3xl font-semibold">

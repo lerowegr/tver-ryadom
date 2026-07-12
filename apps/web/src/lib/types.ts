@@ -93,3 +93,43 @@ export interface BookingCreatedDto {
 }
 
 export type SiteSettings = Record<string, string>;
+
+export interface PublicUserDto {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: 'user' | 'admin';
+  emailVerified: boolean;
+  telegramLinked: boolean;
+  createdAt: string;
+}
+
+export interface MyBookingDto {
+  id: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  paymentStatus: 'none' | 'pending' | 'paid' | 'refunded';
+  peopleCount: number;
+  totalPrice: number;
+  startsAt: string | null;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string | null;
+  comment: string | null;
+  cancelReason: string | null;
+  createdAt: string;
+  tour: { id: string; slug: string; title: string } | null;
+}
+
+export interface NotificationDto {
+  id: string;
+  type: string;
+  payload: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface FavoriteDto {
+  addedAt: string;
+  tour: TourCardDto;
+}

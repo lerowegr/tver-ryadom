@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FavoriteButton } from '@/components/tours/favorite-button';
 import { TourBadge } from '@/components/ui/badge';
 import { ClockIcon, MapPinIcon, UsersIcon } from '@/components/ui/icons';
 import { RatingStars } from '@/components/ui/rating-stars';
@@ -17,6 +18,9 @@ export function TourCard({ tour }: { tour: TourCardDto }) {
           {tour.badges.slice(0, 3).map((badge) => (
             <TourBadge key={badge.slug} {...badge} />
           ))}
+        </div>
+        <div className="absolute top-3 right-3">
+          <FavoriteButton tourId={tour.id} />
         </div>
       </div>
 
