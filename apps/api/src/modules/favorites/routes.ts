@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../../env';
+import { imagesBaseOf } from '../../lib/images';
 import { ok } from '../../lib/respond';
 import { requireAuth } from '../../middleware/auth';
 import { addFavorite, listFavorites, removeFavorite } from './service';
@@ -9,7 +10,7 @@ export const favoriteRoutes = new Hono<AppEnv>()
 
   .get('/', async (c) => {
     const user = c.get('user')!;
-    return ok(c, await listFavorites(c.get('db'), user.id));
+    return ok(c, await listFavorites(c.get('db'), user.id, imagesBaseOf(c)));
   })
 
   .put('/:tourId', async (c) => {

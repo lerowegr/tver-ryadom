@@ -12,9 +12,17 @@
       "migrations_dir": "../../packages/db/migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "tver-images"
+    }
+  ],
   "vars": {
     "ENVIRONMENT": "development",
-    "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001"
+    "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001",
+    // База публичных URL картинок; в проде — https://api.<домен>/images
+    "IMAGES_BASE_URL": "http://localhost:8787/images"
   },
   "observability": {
     "enabled": true

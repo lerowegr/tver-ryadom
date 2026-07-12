@@ -14,6 +14,13 @@
       "runtimeArgs": [],
       "port": 8787,
       "autoPort": false
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "scripts\\dev-admin.cmd",
+      "runtimeArgs": [],
+      "port": 3001,
+      "autoPort": false
     }
   ]
 }

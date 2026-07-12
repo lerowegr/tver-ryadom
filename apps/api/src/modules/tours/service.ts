@@ -3,6 +3,7 @@ import { badges, reviews, tourBadges, tours } from '@tver/db';
 import type { Pagination, TourFilterInput, TourSort } from '@tver/shared';
 import { and, asc, count, desc, eq, gte, inArray, like, lte, or, type SQL } from 'drizzle-orm';
 import { notFound } from '../../lib/errors';
+import { toImageUrls } from '../../lib/images';
 
 type TourRow = typeof tours.$inferSelect;
 
@@ -13,7 +14,8 @@ interface CardRelations {
 }
 
 /** Карточка для каталога, избранного и подборок. */
-export function toTourCard(row: TourRow & CardRelations) {
+export function toTourCard(row: TourRow & CardRelations, imagesBase: string) {
+  const image = row.images?.[0];
   return {
     id: row.id,
     slug: row.slug,
@@ -27,7 +29,7 @@ export function toTourCard(row: TourRow & CardRelations) {
     groupMax: row.groupMax,
     ratingAvg: row.ratingAvg,
     ratingCount: row.ratingCount,
-    image: row.images?.[0] ?? null,
+    image: image ? toImageUrls(image, imagesBase) : null,
     badges: row.badges?.map((tb) => tb.badge) ?? [],
     routePoints: row.routePoints?.map((point) => point.title) ?? [],
   };
@@ -50,7 +52,7 @@ function orderFor(sort: TourSort) {
   }
 }
 
-export async function listTours(db: Db, filter: TourFilterInput) {
+export async function listTours(db: Db, filter: TourFilterInput, imagesBase: string) {
   const conditions: SQL[] = [eq(tours.status, 'published')];
 
   if (filter.priceMin !== undefined) conditions.push(gte(tours.price, filter.priceMin));
@@ -94,10 +96,10 @@ export async function listTours(db: Db, filter: TourFilterInput) {
     offset: (filter.page - 1) * filter.limit,
   });
 
-  return { items: rows.map(toTourCard), total: totalRow?.total ?? 0 };
+  return { items: rows.map((row) => toTourCard(row, imagesBase)), total: totalRow?.total ?? 0 };
 }
 
-export async function getTourBySlug(db: Db, slug: string) {
+export async function getTourBySlug(db: Db, slug: string, imagesBase: string) {
   const tour = await db.query.tours.findFirst({
     where: and(eq(tours.slug, slug), eq(tours.status, 'published')),
     with: {
@@ -134,11 +136,9 @@ export async function getTourBySlug(db: Db, slug: string) {
     recommendations: tour.recommendations,
     ratingAvg: tour.ratingAvg,
     ratingCount: tour.ratingCount,
-    images: tour.images.map((image) => ({
-      r2Key: image.r2Key,
-      alt: image.alt,
-      variants: image.variants,
-    })),
+    images: tour.images.map((image) =>
+      toImageUrls({ r2Key: image.r2Key, alt: image.alt, variants: image.variants }, imagesBase),
+    ),
     badges: tour.badges.map((tb) => tb.badge),
     routePoints: tour.routePoints.map((point) => ({
       title: point.title,

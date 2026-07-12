@@ -1,6 +1,7 @@
 import { paginationSchema, tourFilterSchema } from '@tver/shared';
 import { Hono } from 'hono';
 import type { AppEnv } from '../../env';
+import { imagesBaseOf } from '../../lib/images';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
 import { getTourBySlug, listBadges, listTourReviews, listTours } from './service';
@@ -8,12 +9,12 @@ import { getTourBySlug, listBadges, listTourReviews, listTours } from './service
 export const tourRoutes = new Hono<AppEnv>()
   .get('/', validate('query', tourFilterSchema), async (c) => {
     const filter = c.req.valid('query');
-    const { items, total } = await listTours(c.get('db'), filter);
+    const { items, total } = await listTours(c.get('db'), filter, imagesBaseOf(c));
     return paginated(c, items, total, filter.page, filter.limit);
   })
 
   .get('/:slug', async (c) => {
-    return ok(c, await getTourBySlug(c.get('db'), c.req.param('slug')));
+    return ok(c, await getTourBySlug(c.get('db'), c.req.param('slug'), imagesBaseOf(c)));
   })
 
   .get('/:slug/reviews', validate('query', paginationSchema), async (c) => {

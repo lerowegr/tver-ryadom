@@ -6,6 +6,7 @@ import type { AppEnv } from './env';
 import { AppError, notFound } from './lib/errors';
 import { ok } from './lib/respond';
 import { authenticate } from './middleware/auth';
+import { adminRoutes } from './modules/admin/routes';
 import { authRoutes } from './modules/auth/routes';
 import { bookingRoutes } from './modules/bookings/routes';
 import { contactRoutes } from './modules/contact/routes';
@@ -58,6 +59,19 @@ export function buildApp(options: BuildAppOptions = {}) {
 
   app.get('/health', (c) => ok(c, { status: 'ok' }));
 
+  // Публичная раздача фотографий из R2 с иммутабельным кешированием на CDN.
+  app.get('/images/*', async (c) => {
+    const key = decodeURIComponent(c.req.path.replace(/^\/images\//, ''));
+    if (!key || key.includes('..')) throw notFound();
+    const object = await c.env.IMAGES.get(key);
+    if (!object) throw notFound('Изображение не найдено');
+    return c.body(object.body as unknown as ReadableStream, 200, {
+      'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      ETag: object.httpEtag,
+    });
+  });
+
   // Наполнение локальной базы демо-данными; в проде маршрут отвечает 404.
   app.post('/dev/seed', async (c) => {
     if (c.env.ENVIRONMENT !== 'development') throw notFound();
@@ -74,7 +88,8 @@ export function buildApp(options: BuildAppOptions = {}) {
     .route('/favorites', favoriteRoutes)
     .route('/notifications', notificationRoutes)
     .route('/contact', contactRoutes)
-    .route('/settings', settingsRoutes);
+    .route('/settings', settingsRoutes)
+    .route('/admin', adminRoutes);
 
   app.route('/api/v1', api);
 

@@ -36,15 +36,20 @@ pnpm db:migrate:local && pnpm dev               # http://127.0.0.1:8787
 curl -X POST http://127.0.0.1:8787/dev/seed     # демо-данные
 ```
 
-Запуск сайта (в отдельном терминале, при работающем API):
+Запуск сайта и админки (в отдельных терминалах, при работающем API):
 
 ```bash
-cd apps/web
-cp .env.example .env.local
-pnpm dev                                        # http://localhost:3000
+cd apps/web && cp .env.example .env.local && pnpm dev     # сайт http://localhost:3000
+cd apps/admin && cp .env.example .env.local && pnpm dev   # админка http://localhost:3001
 ```
 
-Описание эндпоинтов: [docs/api.md](docs/api.md). Админка появится на этапе 5.
+Пароль администратора (email `admin@tver-ryadom.ru`):
+
+```bash
+pnpm --filter @tver/api admin:password -- <пароль>        # локальная база
+```
+
+Описание эндпоинтов: [docs/api.md](docs/api.md).
 
 > **Windows:** `pnpm --filter @tver/web build:worker` (сборка под Cloudflare Workers)
 > требует включённого режима разработчика (создание symlink). Продакшен-сборка

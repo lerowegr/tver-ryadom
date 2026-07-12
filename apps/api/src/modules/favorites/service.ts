@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { notFound } from '../../lib/errors';
 import { toTourCard } from '../tours/service';
 
-export async function listFavorites(db: Db, userId: string) {
+export async function listFavorites(db: Db, userId: string, imagesBase: string) {
   const rows = await db.query.favorites.findMany({
     where: eq(favorites.userId, userId),
     orderBy: (favorite, { desc: sortDesc }) => [sortDesc(favorite.createdAt)],
@@ -19,7 +19,7 @@ export async function listFavorites(db: Db, userId: string) {
   });
   return rows
     .filter((row) => row.tour.status === 'published')
-    .map((row) => ({ addedAt: row.createdAt, tour: toTourCard(row.tour) }));
+    .map((row) => ({ addedAt: row.createdAt, tour: toTourCard(row.tour, imagesBase) }));
 }
 
 export async function addFavorite(db: Db, userId: string, tourId: string) {
