@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+.next/
+.open-next/
+.turbo/
+coverage/
+
+# cloudflare local state
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# env
+.env
+.env.*
+!.env.example
+
+# local tool settings
+.claude/settings.local.json
+
+# misc
+*.log
+.DS_Store
+Thumbs.db
+*.local.db

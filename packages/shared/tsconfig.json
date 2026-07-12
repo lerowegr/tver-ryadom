@@ -1,0 +1,4 @@
+{
+  "extends": "@tver/config/tsconfig/base.json",
+  "include": ["src"]
+}
