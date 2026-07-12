@@ -23,6 +23,7 @@ coverage/
 .claude/settings.local.json
 
 # misc
+*.tsbuildinfo
 *.log
 .DS_Store
 Thumbs.db
