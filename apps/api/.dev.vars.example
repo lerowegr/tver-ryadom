@@ -1,0 +1,2 @@
+# Скопируйте в .dev.vars (не коммитится) и задайте свои значения
+JWT_SECRET=dev-secret-change-me
