@@ -12,6 +12,14 @@
     // Серверный URL API; публичные NEXT_PUBLIC_* переменные инлайнятся при сборке.
     "API_URL": "https://tver-api.tver-ryadom.workers.dev"
   },
+  // Worker→worker по *.workers.dev запрещён (ошибка 1042) —
+  // серверные запросы к API идут через service binding.
+  "services": [
+    {
+      "binding": "API",
+      "service": "tver-api"
+    }
+  ],
   "observability": {
     "enabled": true
   }

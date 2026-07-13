@@ -1,8 +1,44 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { cache } from 'react';
-import type { Paginated } from '@tver/shared';
+import type { ApiResponse, Paginated } from '@tver/shared';
 import { site } from '@/config/site';
-import { api } from './api';
+import { ApiRequestError } from './api';
 import type { BadgeDto, LatestReviewDto, ReviewDto, SiteSettings, TourCardDto, TourDetailDto } from './types';
+
+interface ApiBinding {
+  fetch: (input: string, init?: RequestInit) => Promise<Response>;
+}
+
+/**
+ * Серверный запрос к API. На Cloudflare Workers идёт через service binding
+ * (fetch между воркерами по *.workers.dev запрещён — ошибка 1042);
+ * в next dev и при сборке — обычный fetch.
+ */
+async function api<T>(path: string): Promise<T> {
+  const base =
+    process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
+  const url = `${base}/api/v1${path}`;
+
+  let binding: ApiBinding | undefined;
+  try {
+    binding = (getCloudflareContext().env as { API?: ApiBinding }).API;
+  } catch {
+    binding = undefined; // вне Workers-рантайма (next dev, next build)
+  }
+
+  const res = binding ? await binding.fetch(url) : await fetch(url, { cache: 'no-store' });
+
+  let payload: ApiResponse<T>;
+  try {
+    payload = (await res.json()) as ApiResponse<T>;
+  } catch {
+    throw new ApiRequestError('internal_error', `API вернул некорректный ответ (${res.status})`);
+  }
+  if (!payload.success) {
+    throw new ApiRequestError(payload.error.code, payload.error.message, payload.error.details);
+  }
+  return payload.data;
+}
 
 /** Настройки сайта; при недоступном API — запасные значения из конфига. */
 export const getSettings = cache(async (): Promise<SiteSettings> => {
