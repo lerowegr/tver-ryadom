@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/components/providers';
+import { TelegramIcon } from '@/components/ui/icons';
 import { ApiRequestError } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
 import type { PublicUserDto } from '@/lib/types';
+
+type TelegramLink = { available: false } | { available: true; url: string };
 
 const inputCls =
   'w-full rounded-2xl border border-sand-300 bg-white px-4 py-3 text-sm text-ink-900 ' +
@@ -128,6 +131,42 @@ export default function ProfilePage() {
             {profile.pending ? 'Сохраняем…' : 'Сохранить'}
           </button>
         </form>
+      </section>
+
+      <section className="shadow-card rounded-3xl bg-white p-7 md:p-9" aria-labelledby="profile-tg">
+        <h2 id="profile-tg" className="text-ink-900 mb-2 flex items-center gap-2 text-lg font-bold">
+          <TelegramIcon className="text-terra-600 h-5 w-5" /> Уведомления в Telegram
+        </h2>
+        {user.telegramLinked ? (
+          <p className="text-bark-700 text-sm">
+            <span className="text-terra-600 font-semibold">✓ Подключено.</span> Подтверждения броней
+            и напоминания приходят в Telegram.
+          </p>
+        ) : (
+          <div>
+            <p className="text-bark-700 mb-4 text-sm">
+              Привяжите Telegram, чтобы получать подтверждения броней и напоминания за сутки до
+              экскурсии.
+            </p>
+            <button
+              onClick={async () => {
+                try {
+                  const link = await authFetch<TelegramLink>('/auth/telegram-link');
+                  if (link.available) window.open(link.url, '_blank', 'noopener');
+                  else profile.setMessage({ kind: 'error', text: 'Бот ещё не подключён — загляните позже' });
+                } catch {
+                  profile.setMessage({ kind: 'error', text: 'Не удалось получить ссылку привязки' });
+                }
+              }}
+              className="bg-terra-500 hover:bg-terra-600 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition"
+            >
+              <TelegramIcon className="h-4 w-4" /> Привязать Telegram
+            </button>
+            <p className="text-bark-500 mt-3 text-xs">
+              Откроется чат с ботом — нажмите в нём «Start». Статус обновится после следующего входа.
+            </p>
+          </div>
+        )}
       </section>
 
       <section className="shadow-card rounded-3xl bg-white p-7 md:p-9" aria-labelledby="profile-pass">

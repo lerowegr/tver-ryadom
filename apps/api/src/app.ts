@@ -1,5 +1,6 @@
 import { createDb, type Db } from '@tver/db';
 import { seedDatabase } from '@tver/db/seed';
+import { webhookCallback } from 'grammy';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv } from './env';
@@ -8,6 +9,7 @@ import { ok } from './lib/respond';
 import { authenticate } from './middleware/auth';
 import { adminRoutes } from './modules/admin/routes';
 import { authRoutes } from './modules/auth/routes';
+import { getBot } from './modules/bot/bot';
 import { bookingRoutes } from './modules/bookings/routes';
 import { contactRoutes } from './modules/contact/routes';
 import { favoriteRoutes } from './modules/favorites/routes';
@@ -77,6 +79,19 @@ export function buildApp(options: BuildAppOptions = {}) {
     if (c.env.ENVIRONMENT !== 'development') throw notFound();
     await seedDatabase(c.get('db'));
     return ok(c, { seeded: true });
+  });
+
+  // Вебхук Telegram-бота; секрет в пути отсекает посторонние запросы.
+  app.post('/webhook/telegram/:secret', async (c) => {
+    if (
+      !c.env.TELEGRAM_BOT_TOKEN ||
+      !c.env.TELEGRAM_WEBHOOK_SECRET ||
+      c.req.param('secret') !== c.env.TELEGRAM_WEBHOOK_SECRET
+    ) {
+      throw notFound();
+    }
+    const bot = getBot(c.env, c.get('db'));
+    return webhookCallback(bot, 'hono')(c);
   });
 
   const api = new Hono<AppEnv>()

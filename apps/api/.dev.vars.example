@@ -1,2 +1,11 @@
 # Скопируйте в .dev.vars (не коммитится) и задайте свои значения
 JWT_SECRET=dev-secret-change-me
+
+# Telegram-бот (создать у @BotFather); пусто — канал выключен
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_USERNAME=
+TELEGRAM_WEBHOOK_SECRET=any-random-string
+
+# Email через resend.com; пусто — канал выключен
+RESEND_API_KEY=
+EMAIL_FROM=Тверь рядом <hello@example.ru>

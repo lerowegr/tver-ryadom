@@ -22,7 +22,12 @@
     "ENVIRONMENT": "development",
     "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001",
     // База публичных URL картинок; в проде — https://api.<домен>/images
-    "IMAGES_BASE_URL": "http://localhost:8787/images"
+    "IMAGES_BASE_URL": "http://localhost:8787/images",
+    "SITE_URL": "http://localhost:3000"
+  },
+  "triggers": {
+    // Каждую минуту: доставка outbox-уведомлений и напоминания за сутки.
+    "crons": ["* * * * *"]
   },
   "observability": {
     "enabled": true

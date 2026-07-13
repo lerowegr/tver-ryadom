@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../../env';
 import { ok } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
+import { notifyAdmins } from '../notifications/dispatch';
 
 export const contactRoutes = new Hono<AppEnv>().post(
   '/',
@@ -16,6 +17,11 @@ export const contactRoutes = new Hono<AppEnv>().post(
       name: input.name,
       phone: input.phone ?? null,
       email: input.email ?? null,
+      message: input.message,
+    });
+    await notifyAdmins(c.get('db'), 'admin_new_request', {
+      contactName: input.name,
+      contactPhone: input.phone,
       message: input.message,
     });
     return ok(c, { id, received: true }, 201);

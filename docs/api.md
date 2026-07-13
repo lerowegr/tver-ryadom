@@ -87,6 +87,35 @@ Refresh-токен (30 дней, ротация при каждом исполь
 
 Картинки раздаются публично: `GET /images/<r2-ключ>` (immutable-кеш).
 
+## Уведомления и Telegram-бот
+
+События (создание/подтверждение/отмена брони, напоминание за сутки, заявка с
+формы) создают запись в ЛК и задачи в **outbox**-таблице. Cron Trigger
+(каждую минуту) доставляет пачку задач в Telegram и на email (Resend) с
+3 ретраями и экспоненциальной паузой; после — статус `failed`.
+Канал молча выключен, пока не заданы секреты.
+
+**Бот** (grammY, вебхук `POST /webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>`):
+
+- `/start <код>` — привязка аккаунта по deep-link из ЛК (`GET /auth/telegram-link` 🔒,
+  стейтлес HMAC-код на 15 минут);
+- `/tours` — список экскурсий, `/mybookings` — предстоящие брони, `/help`;
+- любой текст пересылается администраторам (админ = user с ролью admin и
+  привязанным Telegram), автору уходит подтверждение.
+
+Подключение бота (после деплоя, этап 7):
+
+```bash
+# секреты API-воркера
+wrangler secret put TELEGRAM_BOT_TOKEN        # от @BotFather
+wrangler secret put TELEGRAM_WEBHOOK_SECRET   # любая случайная строка
+# vars: TELEGRAM_BOT_USERNAME, SITE_URL — в wrangler.jsonc
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://api.<домен>/webhook/telegram/<WEBHOOK_SECRET>"
+```
+
+Email: `wrangler secret put RESEND_API_KEY` + переменная `EMAIL_FROM`
+(домен должен быть подтверждён в resend.com).
+
 ## Служебные
 
 - `GET /health` — проверка живости (вне префикса `/api/v1`).

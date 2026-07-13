@@ -9,7 +9,7 @@ import { cancelBooking, createBooking, listMyBookings } from './service';
 export const bookingRoutes = new Hono<AppEnv>()
   // Гостевое бронирование разрешено: user подставляется, если есть токен.
   .post('/', validate('json', bookingCreateSchema), async (c) => {
-    const booking = await createBooking(c.get('db'), c.req.valid('json'), c.get('user'));
+    const booking = await createBooking(c.get('db'), c.req.valid('json'), c.get('user'), c.env.SITE_URL);
     return ok(c, booking, 201);
   })
 

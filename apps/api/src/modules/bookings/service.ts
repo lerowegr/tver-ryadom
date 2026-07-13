@@ -1,11 +1,13 @@
 import type { Db } from '@tver/db';
 import { bookings, schedules, tours } from '@tver/db';
-import type { BookingCreateInput, BookingListFilterInput } from '@tver/shared';
+import { formatPrice, type BookingCreateInput, type BookingListFilterInput } from '@tver/shared';
 import { and, count, eq, gt, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../env';
 import { affectedRows } from '../../lib/db-utils';
 import { conflict, notFound, validationError } from '../../lib/errors';
+import { notifyAdmins, notifyUser } from '../notifications/dispatch';
 import { createNotification } from '../notifications/service';
+import { formatMsk } from '../notifications/templates';
 
 type BookingRow = typeof bookings.$inferSelect;
 
@@ -32,7 +34,12 @@ function toBookingView(row: BookingRow & BookingRelations) {
   };
 }
 
-export async function createBooking(db: Db, input: BookingCreateInput, user?: AuthUser) {
+export async function createBooking(
+  db: Db,
+  input: BookingCreateInput,
+  user?: AuthUser,
+  siteUrl?: string,
+) {
   const tour = await db.query.tours.findFirst({
     where: and(eq(tours.id, input.tourId), eq(tours.status, 'published')),
   });
@@ -95,12 +102,20 @@ export async function createBooking(db: Db, input: BookingCreateInput, user?: Au
     source: 'web',
   });
 
-  if (user) {
-    await createNotification(db, user.id, 'booking_created', {
-      bookingId: id,
-      tourTitle: tour.title,
-    });
-  }
+  const payload = {
+    bookingId: id,
+    tourTitle: tour.title,
+    startsAt: startsAt ? formatMsk(startsAt) : undefined,
+    peopleCount: input.peopleCount,
+    totalPriceLabel: formatPrice(totalPrice),
+    contactName: input.contactName,
+    contactPhone: input.contactPhone,
+    comment: input.comment,
+    siteUrl,
+  };
+  // Клиенту — в ЛК и подключённые каналы; администраторам — в Telegram.
+  if (user) await notifyUser(db, user.id, 'booking_created', payload);
+  await notifyAdmins(db, 'admin_new_booking', payload);
 
   return {
     id,
@@ -147,7 +162,10 @@ export async function listMyBookings(db: Db, userId: string, filter: BookingList
 export async function cancelBooking(db: Db, userId: string, bookingId: string, reason?: string) {
   const booking = await db.query.bookings.findFirst({
     where: and(eq(bookings.id, bookingId), eq(bookings.userId, userId)),
-    with: { schedule: { columns: { startsAt: true } } },
+    with: {
+      schedule: { columns: { startsAt: true } },
+      tour: { columns: { title: true } },
+    },
   });
   if (!booking) throw notFound('Бронирование не найдено');
   if (booking.status !== 'pending' && booking.status !== 'confirmed') {
@@ -170,4 +188,14 @@ export async function cancelBooking(db: Db, userId: string, bookingId: string, r
   }
 
   await createNotification(db, userId, 'booking_cancelled', { bookingId });
+  await notifyAdmins(db, 'admin_booking_cancelled', {
+    bookingId,
+    tourTitle: booking.tour?.title,
+    startsAt: booking.schedule ? formatMsk(booking.schedule.startsAt) : undefined,
+    peopleCount: booking.peopleCount,
+    totalPriceLabel: formatPrice(booking.totalPrice),
+    contactName: booking.contactName,
+    contactPhone: booking.contactPhone,
+    comment: reason,
+  });
 }

@@ -4,6 +4,7 @@ import {
   bookingAdminUpdateSchema,
   paginationSchema,
 } from '@tver/shared';
+import { formatPrice } from '@tver/shared';
 import { and, count, eq, sql, type SQL } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -11,7 +12,8 @@ import type { AppEnv } from '../../env';
 import { conflict, notFound } from '../../lib/errors';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
-import { createNotification } from '../notifications/service';
+import { notifyUser } from '../notifications/dispatch';
+import { formatMsk } from '../notifications/templates';
 
 const listFilterSchema = paginationSchema.extend({
   status: z.enum(BOOKING_STATUSES).optional(),
@@ -76,7 +78,10 @@ export const adminBookingRoutes = new Hono<AppEnv>()
 
     const booking = await db.query.bookings.findFirst({
       where: eq(bookings.id, id),
-      with: { tour: { columns: { title: true } } },
+      with: {
+        tour: { columns: { title: true } },
+        schedule: { columns: { startsAt: true } },
+      },
     });
     if (!booking) throw notFound('Бронирование не найдено');
 
@@ -103,9 +108,19 @@ export const adminBookingRoutes = new Hono<AppEnv>()
       }
 
       if (booking.userId) {
-        await createNotification(db, booking.userId, `booking_${input.status}`, {
+        // ЛК + Telegram + email — доставку внешних каналов выполнит cron.
+        await notifyUser(db, booking.userId, `booking_${input.status}`, {
           bookingId: booking.id,
           tourTitle: booking.tour?.title,
+          startsAt: booking.schedule
+            ? formatMsk(booking.schedule.startsAt)
+            : booking.desiredDate
+              ? formatMsk(booking.desiredDate)
+              : undefined,
+          peopleCount: booking.peopleCount,
+          totalPriceLabel: formatPrice(booking.totalPrice),
+          comment: input.adminComment,
+          siteUrl: c.env.SITE_URL,
         });
       }
     } else if (input.adminComment !== undefined) {
