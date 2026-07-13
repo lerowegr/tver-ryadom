@@ -18,6 +18,8 @@ coverage/
 .env
 .env.*
 !.env.example
+# только публичные URL — безопасно коммитить
+!.env.production
 
 # local tool settings
 .claude/settings.local.json
@@ -25,6 +27,7 @@ coverage/
 # misc
 *.tsbuildinfo
 *.log
+*.local.txt
 .DS_Store
 Thumbs.db
 *.local.db

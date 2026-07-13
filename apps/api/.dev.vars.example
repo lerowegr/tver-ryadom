@@ -1,6 +1,13 @@
 # Скопируйте в .dev.vars (не коммитится) и задайте свои значения
 JWT_SECRET=dev-secret-change-me
 
+# Локальные переопределения продакшен-переменных из wrangler.jsonc
+ENVIRONMENT=development
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+IMAGES_BASE_URL=http://localhost:8787/images
+SITE_URL=http://localhost:3000
+COOKIE_SAMESITE=lax
+
 # Telegram-бот (создать у @BotFather); пусто — канал выключен
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_BOT_USERNAME=

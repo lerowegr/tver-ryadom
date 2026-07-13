@@ -10,7 +10,7 @@
   },
   "vars": {
     // Серверный URL API; публичные NEXT_PUBLIC_* переменные инлайнятся при сборке.
-    "API_URL": "http://127.0.0.1:8787"
+    "API_URL": "https://tver-api.tver-ryadom.workers.dev"
   },
   "observability": {
     "enabled": true

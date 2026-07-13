@@ -15,6 +15,11 @@ export interface Bindings {
   IMAGES_BASE_URL?: string;
   /** Публичный URL сайта — для ссылок в письмах и боте. */
   SITE_URL?: string;
+  /**
+   * SameSite refresh-куки. На *.workers.dev поддомены — разные сайты
+   * (Public Suffix List), поэтому нужен "none"; на своём домене — "lax".
+   */
+  COOKIE_SAMESITE?: string;
   /** Токен бота от BotFather (secret). Пусто — Telegram-канал выключен. */
   TELEGRAM_BOT_TOKEN?: string;
   /** Username бота без @ — для deep-link привязки аккаунта. */

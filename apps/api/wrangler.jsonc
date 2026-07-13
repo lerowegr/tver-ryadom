@@ -7,8 +7,7 @@
     {
       "binding": "DB",
       "database_name": "tver-ryadom",
-      // Реальный database_id подставляется на этапе деплоя (этап 7).
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "806a6e75-8ce1-4129-a0e7-a0dd67c65af8",
       "migrations_dir": "../../packages/db/migrations"
     }
   ],
@@ -18,12 +17,14 @@
       "bucket_name": "tver-images"
     }
   ],
+  // Продакшен-значения; для локальной разработки переопределяются в .dev.vars.
   "vars": {
-    "ENVIRONMENT": "development",
-    "CORS_ORIGINS": "http://localhost:3000,http://localhost:3001",
-    // База публичных URL картинок; в проде — https://api.<домен>/images
-    "IMAGES_BASE_URL": "http://localhost:8787/images",
-    "SITE_URL": "http://localhost:3000"
+    "ENVIRONMENT": "production",
+    "CORS_ORIGINS": "https://tver-web.tver-ryadom.workers.dev,https://tver-admin.tver-ryadom.workers.dev",
+    "IMAGES_BASE_URL": "https://tver-api.tver-ryadom.workers.dev/images",
+    "SITE_URL": "https://tver-web.tver-ryadom.workers.dev",
+    // На *.workers.dev поддомены — разные сайты (PSL); со своим доменом сменить на "lax".
+    "COOKIE_SAMESITE": "none"
   },
   "triggers": {
     // Каждую минуту: доставка outbox-уведомлений и напоминания за сутки.

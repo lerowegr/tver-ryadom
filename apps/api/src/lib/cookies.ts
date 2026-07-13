@@ -7,10 +7,12 @@ const REFRESH_COOKIE_PATH = '/api/v1/auth';
 const REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 export function setRefreshCookie(c: Context<AppEnv>, token: string) {
+  const crossSite = c.env.COOKIE_SAMESITE?.toLowerCase() === 'none';
   setCookie(c, REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: c.env.ENVIRONMENT !== 'development',
-    sameSite: 'Lax',
+    // SameSite=None обязан идти с Secure.
+    secure: crossSite || c.env.ENVIRONMENT !== 'development',
+    sameSite: crossSite ? 'None' : 'Lax',
     path: REFRESH_COOKIE_PATH,
     maxAge: REFRESH_TTL_SECONDS,
   });
