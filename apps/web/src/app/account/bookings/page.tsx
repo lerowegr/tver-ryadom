@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BOOKING_STATUS_LABELS, type BookingStatus, type Paginated } from '@tver/shared';
 import { useState } from 'react';
 import { ClockIcon, UsersIcon } from '@/components/ui/icons';
+import { SegmentedTabs } from '@/components/ui/segmented-tabs';
 import { ApiRequestError } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
 import { formatDateTime, formatPrice } from '@/lib/format';
@@ -66,21 +67,13 @@ export default function BookingsPage() {
 
   return (
     <div>
-      <div className="bg-cream-200 mb-6 inline-flex rounded-full p-1" role="tablist" aria-label="Фильтр броней">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-            className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-              tab === t.key ? 'shadow-card text-ink-900 bg-white' : 'text-bark-600'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        className="mb-6"
+        ariaLabel="Фильтр броней"
+        value={tab}
+        onChange={setTab}
+        options={tabs.map((t) => ({ value: t.key, label: t.label }))}
+      />
 
       {bookings.isLoading ? (
         <p className="text-bark-600 animate-pulse py-10 text-center">Загружаем брони…</p>

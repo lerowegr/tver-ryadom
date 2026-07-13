@@ -34,6 +34,23 @@ describe('tours', () => {
     expect(data.items[0].slug).toBe('predmeste-tveri'); // 1000 ₽ дешевле 1200 ₽
   });
 
+  it('несколько бейджей через запятую: совпадение хотя бы по одному', async () => {
+    const { app } = await createTestApp();
+    const res = await app.request('/api/v1/tours?badge=by-car,historical', {}, TEST_ENV);
+    const { data } = await body(res);
+    // by-car — Савватьево, historical — Предместье.
+    expect(data.total).toBe(2);
+    const slugs = data.items.map((t: { slug: string }) => t.slug).sort();
+    expect(slugs).toEqual(['predmeste-tveri', 'savvatevo-na-avto']);
+  });
+
+  it('сортировка по длительности по убыванию', async () => {
+    const { app } = await createTestApp();
+    const res = await app.request('/api/v1/tours?sort=duration_desc', {}, TEST_ENV);
+    const { data } = await body(res);
+    expect(data.items[0].slug).toBe('savvatevo-na-avto'); // 3,5 часа — самая длинная
+  });
+
   it('страница экскурсии: программа, маршрут, расписание со свободными местами', async () => {
     const { app } = await createTestApp();
     const res = await app.request('/api/v1/tours/obzornaya-po-tveri', {}, TEST_ENV);

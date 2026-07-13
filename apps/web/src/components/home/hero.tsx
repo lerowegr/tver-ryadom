@@ -6,7 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { StarIcon } from '@/components/ui/icons';
 
-export function Hero({ tagline, stats }: { tagline: string; stats: { tours: number; rating: number } }) {
+export function Hero({
+  tagline,
+  subtitle,
+  stats,
+}: {
+  tagline: string;
+  subtitle: string;
+  stats: { tours: number; rating: number };
+}) {
   const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
@@ -60,8 +68,7 @@ export function Hero({ tagline, stats }: { tagline: string; stats: { tours: numb
             transition={{ duration: 0.65, delay: 0.35 }}
             className="text-bark-700 mt-6 max-w-xl text-lg leading-relaxed"
           >
-            Гуляем по набережным Волги, заглядываем в тихое Затьмачье и уезжаем к монастырским
-            берегам Орши. Небольшие группы, живые истории и город, который становится ближе.
+            {subtitle}
           </motion.p>
 
           <motion.div

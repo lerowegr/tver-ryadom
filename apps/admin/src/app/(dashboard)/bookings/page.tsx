@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { ApiRequestError, authFetch } from '@/lib/api';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import type { AdminBooking } from '@/lib/types';
-import { BookingStatusPill, Card, Empty, Loading, Table } from '@/components/ui';
+import { BookingStatusPill, Card, Empty, Loading, QueryError, Table } from '@/components/ui';
 
 const actions: { status: BookingStatus; label: string; needComment?: boolean }[] = [
   { status: 'confirmed', label: 'Подтвердить' },
@@ -85,6 +85,8 @@ export default function BookingsPage() {
       <Card>
         {bookings.isLoading ? (
           <Loading />
+        ) : bookings.isError ? (
+          <QueryError error={bookings.error} retry={() => bookings.refetch()} />
         ) : (bookings.data?.items.length ?? 0) === 0 ? (
           <Empty text="Броней с таким статусом нет" />
         ) : (

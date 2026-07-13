@@ -29,6 +29,10 @@ export default async function HomePage() {
     <>
       <Hero
         tagline={settings['company.tagline'] ?? site.tagline}
+        subtitle={
+          settings['home.subtitle'] ||
+          'Гуляем по набережным Волги, заглядываем в тихое Затьмачье и уезжаем к монастырским берегам Орши. Небольшие группы, живые истории и город, который становится ближе.'
+        }
         stats={{ tours: toursPage.total, rating }}
       />
 

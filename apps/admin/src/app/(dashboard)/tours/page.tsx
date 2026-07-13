@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { authFetch } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
 import type { AdminTourListItem } from '@/lib/types';
-import { Card, Empty, Loading, Table, TourStatusPill } from '@/components/ui';
+import { Card, Empty, Loading, QueryError, Table, TourStatusPill } from '@/components/ui';
 
 export default function ToursPage() {
   const [status, setStatus] = useState<TourStatus | ''>('');
@@ -45,6 +45,8 @@ export default function ToursPage() {
       <Card>
         {tours.isLoading ? (
           <Loading />
+        ) : tours.isError ? (
+          <QueryError error={tours.error} retry={() => tours.refetch()} />
         ) : (tours.data?.items.length ?? 0) === 0 ? (
           <Empty text="Экскурсий нет — создайте первую" />
         ) : (

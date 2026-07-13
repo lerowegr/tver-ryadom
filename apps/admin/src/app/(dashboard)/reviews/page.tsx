@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { authFetch } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { AdminReview } from '@/lib/types';
-import { Card, Empty, Loading, ReviewStatusPill } from '@/components/ui';
+import { Card, Empty, Loading, QueryError, ReviewStatusPill } from '@/components/ui';
 
 const tabs: { key: ReviewStatus | ''; label: string }[] = [
   { key: 'pending', label: 'На модерации' },
@@ -56,6 +56,8 @@ export default function ReviewsPage() {
 
       {reviews.isLoading ? (
         <Loading />
+      ) : reviews.isError ? (
+        <QueryError error={reviews.error} retry={() => reviews.refetch()} />
       ) : (reviews.data?.items.length ?? 0) === 0 ? (
         <Card>
           <Empty text="Отзывов нет" />

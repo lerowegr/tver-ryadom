@@ -43,10 +43,19 @@ export const tourCreateSchema = z.object({
 
 export const tourUpdateSchema = tourCreateSchema.partial();
 
-export const tourSortOptions = ['popular', 'price_asc', 'price_desc', 'duration', 'rating'] as const;
+export const tourSortOptions = [
+  'popular',
+  'price_asc',
+  'price_desc',
+  'duration_asc',
+  'duration_desc',
+  'rating_asc',
+  'rating_desc',
+] as const;
 export type TourSort = (typeof tourSortOptions)[number];
 
 export const tourFilterSchema = paginationSchema.extend({
+  /** Слаг бейджа или несколько через запятую (совпадение хотя бы по одному). */
   badge: z.string().optional(),
   priceMin: z.coerce.number().int().min(0).optional(),
   priceMax: z.coerce.number().int().min(0).optional(),

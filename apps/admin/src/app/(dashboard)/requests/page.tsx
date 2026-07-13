@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { authFetch } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { AdminContactRequest } from '@/lib/types';
-import { Card, Empty, Loading } from '@/components/ui';
+import { Card, Empty, Loading, QueryError } from '@/components/ui';
 
 export default function RequestsPage() {
   const [status, setStatus] = useState<ContactRequestStatus>('new');
@@ -57,6 +57,8 @@ export default function RequestsPage() {
 
       {requests.isLoading ? (
         <Loading />
+      ) : requests.isError ? (
+        <QueryError error={requests.error} retry={() => requests.refetch()} />
       ) : (requests.data?.items.length ?? 0) === 0 ? (
         <Card>
           <Empty text={status === 'new' ? 'Новых заявок нет' : 'Обработанных заявок нет'} />

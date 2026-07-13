@@ -6,7 +6,8 @@ import { ok } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
 
 const updateSchema = z.object({
-  entries: z.record(z.string().min(1).max(100), z.string().max(2000)),
+  // до 8000 символов: сюда входит JSON команды раздела «О компании»
+  entries: z.record(z.string().min(1).max(100), z.string().max(8000)),
 });
 
 export const adminSettingsRoutes = new Hono<AppEnv>()

@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/providers';
+import { SegmentedTabs, smoothEase } from '@/components/ui/segmented-tabs';
 import { ApiRequestError } from '@/lib/api';
 
 type Mode = 'login' | 'register';
@@ -71,43 +73,42 @@ export function AuthForm() {
           : 'Аккаунт хранит ваши брони, избранные маршруты и уведомления.'}
       </p>
 
-      <div className="bg-cream-200 mt-6 flex rounded-full p-1" role="tablist" aria-label="Вход или регистрация">
-        {(
-          [
-            ['login', 'Вход'],
-            ['register', 'Регистрация'],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            role="tab"
-            aria-selected={mode === value}
-            onClick={() => {
-              setMode(value);
-              setError(null);
-              setFieldErrors({});
-            }}
-            className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
-              mode === value ? 'shadow-card text-ink-900 bg-white' : 'text-bark-600'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        className="mt-6 flex w-full"
+        ariaLabel="Вход или регистрация"
+        value={mode}
+        onChange={(value) => {
+          setMode(value);
+          setError(null);
+          setFieldErrors({});
+        }}
+        options={[
+          { value: 'login', label: 'Вход' },
+          { value: 'register', label: 'Регистрация' },
+        ]}
+      />
 
       <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
-        {mode === 'register' ? (
-          <div>
-            <label htmlFor="auth-name" className="sr-only">
-              Имя
-            </label>
-            <input id="auth-name" name="name" placeholder="Ваше имя" required className={inputCls} />
-            {fieldErrors.name ? (
-              <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.name}</p>
-            ) : null}
-          </div>
-        ) : null}
+        <AnimatePresence initial={false}>
+          {mode === 'register' ? (
+            <motion.div
+              key="name"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.45, ease: smoothEase }}
+              className="overflow-hidden"
+            >
+              <label htmlFor="auth-name" className="sr-only">
+                Имя
+              </label>
+              <input id="auth-name" name="name" placeholder="Ваше имя" required className={inputCls} />
+              {fieldErrors.name ? (
+                <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.name}</p>
+              ) : null}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <div>
           <label htmlFor="auth-email" className="sr-only">
@@ -127,24 +128,33 @@ export function AuthForm() {
           ) : null}
         </div>
 
-        {mode === 'register' ? (
-          <div>
-            <label htmlFor="auth-phone" className="sr-only">
-              Телефон
-            </label>
-            <input
-              id="auth-phone"
-              name="phone"
-              type="tel"
-              placeholder="Телефон (необязательно)"
-              autoComplete="tel"
-              className={inputCls}
-            />
-            {fieldErrors.phone ? (
-              <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.phone}</p>
-            ) : null}
-          </div>
-        ) : null}
+        <AnimatePresence initial={false}>
+          {mode === 'register' ? (
+            <motion.div
+              key="phone"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.45, ease: smoothEase }}
+              className="overflow-hidden"
+            >
+              <label htmlFor="auth-phone" className="sr-only">
+                Телефон
+              </label>
+              <input
+                id="auth-phone"
+                name="phone"
+                type="tel"
+                placeholder="Телефон (необязательно)"
+                autoComplete="tel"
+                className={inputCls}
+              />
+              {fieldErrors.phone ? (
+                <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.phone}</p>
+              ) : null}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <div>
           <label htmlFor="auth-password" className="sr-only">

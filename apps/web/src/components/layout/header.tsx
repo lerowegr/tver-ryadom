@@ -33,7 +33,7 @@ function AccountLink({ className = '' }: { className?: string }) {
   return (
     <Link
       href="/auth"
-      className={`text-bark-700 hover:text-ink-900 rounded-full px-4 py-2 text-sm font-medium transition-colors ${className}`}
+      className={`border-bark-600/30 text-bark-800 hover:border-terra-500 hover:text-terra-600 inline-flex items-center rounded-full border bg-white/70 px-5 py-2 text-sm font-semibold transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white ${className}`}
     >
       Войти
     </Link>

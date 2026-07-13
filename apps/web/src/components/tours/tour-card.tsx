@@ -14,7 +14,8 @@ export function TourCard({ tour }: { tour: TourCardDto }) {
         <div className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]">
           <TourVisual slug={tour.slug} title={tour.title} image={tour.image} />
         </div>
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+        {/* right-16 оставляет место под кнопку избранного */}
+        <div className="absolute top-4 right-16 left-4 flex flex-wrap gap-2">
           {tour.badges.slice(0, 3).map((badge) => (
             <TourBadge key={badge.slug} {...badge} />
           ))}

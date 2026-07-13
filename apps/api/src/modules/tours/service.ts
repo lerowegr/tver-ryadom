@@ -43,9 +43,13 @@ function orderFor(sort: TourSort) {
       return [asc(tours.price)];
     case 'price_desc':
       return [desc(tours.price)];
-    case 'duration':
+    case 'duration_asc':
       return [asc(tours.durationMinutes)];
-    case 'rating':
+    case 'duration_desc':
+      return [desc(tours.durationMinutes)];
+    case 'rating_asc':
+      return [asc(tours.ratingAvg), asc(tours.ratingCount)];
+    case 'rating_desc':
       return [desc(tours.ratingAvg), desc(tours.ratingCount)];
     case 'popular':
       return [asc(tours.sortOrder), desc(tours.ratingCount)];
@@ -65,11 +69,16 @@ export async function listTours(db: Db, filter: TourFilterInput, imagesBase: str
     if (search) conditions.push(search);
   }
   if (filter.badge) {
+    // Несколько бейджей через запятую: тур подходит, если совпал хотя бы один.
+    const slugs = filter.badge
+      .split(',')
+      .map((slug) => slug.trim())
+      .filter(Boolean);
     const tagged = await db
       .select({ tourId: tourBadges.tourId })
       .from(tourBadges)
       .innerJoin(badges, eq(tourBadges.badgeId, badges.id))
-      .where(eq(badges.slug, filter.badge));
+      .where(inArray(badges.slug, slugs));
     if (tagged.length === 0) return { items: [], total: 0 };
     conditions.push(
       inArray(

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { authFetch } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { AdminUserRow } from '@/lib/types';
-import { Card, Empty, Loading, Table } from '@/components/ui';
+import { Card, Empty, Loading, QueryError, Table } from '@/components/ui';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -47,6 +47,8 @@ export default function UsersPage() {
       <Card>
         {users.isLoading ? (
           <Loading />
+        ) : users.isError ? (
+          <QueryError error={users.error} retry={() => users.refetch()} />
         ) : (users.data?.items.length ?? 0) === 0 ? (
           <Empty text="Пользователи не найдены" />
         ) : (

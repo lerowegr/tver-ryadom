@@ -4,13 +4,20 @@ import { like, or } from 'drizzle-orm';
 import type { AppEnv } from '../../env';
 import { ok } from '../../lib/respond';
 
-/** Публичные настройки сайта: контакты, соцсети, название и слоган компании. */
+/** Публичные настройки сайта: контакты, соцсети, тексты разделов, команда. */
 export const settingsRoutes = new Hono<AppEnv>().get('/', async (c) => {
   const rows = await c
     .get('db')
     .select()
     .from(settings)
-    .where(or(like(settings.key, 'contacts.%'), like(settings.key, 'company.%')));
+    .where(
+      or(
+        like(settings.key, 'contacts.%'),
+        like(settings.key, 'company.%'),
+        like(settings.key, 'about.%'),
+        like(settings.key, 'home.%'),
+      ),
+    );
 
   const result: Record<string, unknown> = {};
   for (const row of rows) {

@@ -6,6 +6,7 @@ import { BookingForm } from '@/components/tours/booking-form';
 import { FavoriteButton } from '@/components/tours/favorite-button';
 import { ProgramTimeline } from '@/components/tours/program-timeline';
 import { RouteMap } from '@/components/tours/route-map';
+import { RouteSchematic } from '@/components/tours/route-schematic';
 import { TourVisual } from '@/components/tours/tour-visual';
 import { TourBadge } from '@/components/ui/badge';
 import { Container } from '@/components/ui/container';
@@ -141,7 +142,11 @@ export default async function TourPage({ params }: { params: Params }) {
                 <h2 id="route" className="font-display text-ink-900 heading-accent mb-8 text-2xl font-semibold md:text-3xl">
                   Маршрут
                 </h2>
-                <RouteMap points={tour.routePoints} />
+                {process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ? (
+                  <RouteMap points={tour.routePoints} />
+                ) : (
+                  <RouteSchematic points={tour.routePoints} />
+                )}
                 <ol className="grid gap-3 sm:grid-cols-2">
                   {tour.routePoints.map((point, i) => (
                     <li key={`${point.title}-${i}`} className="flex items-start gap-3 rounded-2xl bg-white p-4">

@@ -13,7 +13,13 @@ export const metadata: Metadata = {
     'Кто мы и почему показываем Тверь по-своему: история проекта «Тверь рядом», команда гидов и наши принципы.',
 };
 
-const team = [
+interface TeamMember {
+  name: string;
+  role: string;
+  text: string;
+}
+
+const defaultTeam: TeamMember[] = [
   {
     name: 'Егор',
     role: 'Основатель и гид',
@@ -31,8 +37,24 @@ const team = [
   },
 ];
 
+const defaultIntro =
+  '«Тверь рядом» началась с простой мысли: город между двумя столицами заслуживает большего, чем транзитная остановка. Мы собираем маршруты из личных находок, разговоров со старожилами и архивных историй — и рассказываем их живым языком.';
+
+/** Команда редактируется в админке (Настройки → Команда) и хранится как JSON. */
+function parseTeam(raw: unknown): TeamMember[] {
+  const value = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+  if (!Array.isArray(value)) return defaultTeam;
+  const members = value.filter(
+    (m): m is TeamMember =>
+      typeof m === 'object' && m !== null && typeof m.name === 'string' && m.name.length > 0,
+  );
+  return members.length > 0 ? members : defaultTeam;
+}
+
 export default async function AboutPage() {
   const [settings, reviews] = await Promise.all([getSettings(), safe(getLatestReviews(), [])]);
+  const team = parseTeam(settings['about.team']);
+  const intro = settings['about.intro'] || defaultIntro;
 
   return (
     <>
@@ -43,11 +65,7 @@ export default async function AboutPage() {
             <h1 className="font-display text-ink-900 text-4xl leading-tight font-semibold text-balance md:text-5xl">
               Мы показываем Тверь так, как показывали бы её друзьям
             </h1>
-            <p className="text-bark-700 mt-6 text-lg leading-relaxed">
-              «Тверь рядом» началась с простой мысли: город между двумя столицами заслуживает
-              большего, чем транзитная остановка. Мы собираем маршруты из личных находок, разговоров
-              со старожилами и архивных историй — и рассказываем их живым языком.
-            </p>
+            <p className="text-bark-700 mt-6 text-lg leading-relaxed">{intro}</p>
           </Reveal>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-3">
@@ -76,7 +94,7 @@ export default async function AboutPage() {
           />
           <div className="grid gap-6 md:grid-cols-3">
             {team.map((member, i) => (
-              <Reveal key={member.name} delay={i * 0.08}>
+              <Reveal key={`${member.name}-${i}`} delay={i * 0.08}>
                 <article className="shadow-card h-full rounded-3xl bg-white p-8 text-center">
                   <span
                     className="from-sand-300 to-terra-500 font-display mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-3xl font-semibold text-white"
@@ -96,18 +114,7 @@ export default async function AboutPage() {
 
       <Advantages />
       <ReviewsSection reviews={reviews} />
-
-      <section className="py-4 pb-20" aria-labelledby="license">
-        <Container>
-          <Reveal>
-            <p className="text-bark-600 mx-auto max-w-2xl text-center text-sm leading-relaxed">
-              Работаем официально как самозанятые гиды. Сведения об аттестации экскурсоводов
-              появятся в этом разделе после прохождения процедуры.
-            </p>
-          </Reveal>
-        </Container>
-      </section>
-
+      <div className="pt-8" />
       <ContactCta settings={settings} />
     </>
   );

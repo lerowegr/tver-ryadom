@@ -103,6 +103,24 @@ export function Empty({ text }: { text: string }) {
   return <p className="text-bark-600 py-8 text-center text-sm">{text}</p>;
 }
 
+/** Ошибка загрузки данных — показываем явно, а не как пустой список. */
+export function QueryError({ error, retry }: { error: unknown; retry?: () => void }) {
+  const message =
+    error instanceof Error && error.message
+      ? error.message
+      : 'Не удалось загрузить данные — проверьте соединение';
+  return (
+    <div className="bg-terra-500/10 rounded-xl px-4 py-4 text-center" role="alert">
+      <p className="text-terra-700 text-sm font-medium">{message}</p>
+      {retry ? (
+        <button onClick={retry} className="btn-secondary mt-3 !px-4 !py-1.5 text-xs">
+          Повторить
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function Loading() {
   return <p className="text-bark-600 animate-pulse py-8 text-center text-sm">Загружаем…</p>;
 }

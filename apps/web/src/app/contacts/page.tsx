@@ -129,9 +129,9 @@ export default async function ContactsPage() {
           </Reveal>
         </div>
 
-        <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:items-start">
+        <div className="mt-16">
           <Reveal>
-            <div>
+            <div className="mx-auto max-w-2xl">
               <h2 className="font-display text-ink-900 heading-accent text-2xl font-semibold md:text-3xl">
                 Форма обратной связи
               </h2>
@@ -139,16 +139,6 @@ export default async function ContactsPage() {
                 Напишите нам — вернёмся с ответом на телефон или почту. Это ни к чему не обязывает.
               </p>
               <ContactForm />
-            </div>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <div className="shadow-card overflow-hidden rounded-[2rem]">
-              <iframe
-                src="https://yandex.ru/map-widget/v1/?ll=35.8988%2C56.8626&z=15&pt=35.8988,56.8626,pm2rdm"
-                title="Тверь на карте"
-                className="h-[26rem] w-full border-0"
-                loading="lazy"
-              />
             </div>
           </Reveal>
         </div>
