@@ -2,9 +2,14 @@
 
 Сайт компании, проводящей экскурсии по Твери: каталог экскурсий, онлайн-бронирование,
 личный кабинет, административная панель и Telegram-бот. Работает целиком на бесплатном
-тарифе Cloudflare (Workers + D1 + R2 + KV), деплой — через git.
+тарифе Cloudflare (Workers + D1 + R2), деплой — `git push` в `main`.
 
-Проектное решение и дорожная карта: [docs/architecture.md](docs/architecture.md).
+**Продакшен:**
+[сайт](https://tver-web.tver-ryadom.workers.dev) ·
+[админка](https://tver-admin.tver-ryadom.workers.dev) ·
+[API](https://tver-api.tver-ryadom.workers.dev/health)
+
+Документация: [архитектура](docs/architecture.md) · [API](docs/api.md) · [деплой и эксплуатация](docs/deploy.md).
 
 ## Структура
 
