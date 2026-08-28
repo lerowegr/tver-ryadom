@@ -23,7 +23,7 @@ function AccountLink({ className = '' }: { className?: string }) {
         <span className="border-line-strong flex h-7 w-7 items-center justify-center border text-[0.625rem]" aria-hidden>
           {user.name[0]?.toUpperCase() ?? '?'}
         </span>
-        <span className="max-w-24 truncate">{user.name}</span>
+        <span className="max-w-[9rem] truncate">{user.name}</span>
       </Link>
     );
   }
@@ -39,24 +39,18 @@ function AccountLink({ className = '' }: { className?: string }) {
 }
 
 export function Header() {
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   useEffect(() => setOpen(false), [pathname]);
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-        scrolled || open ? 'bg-bg border-line border-b' : 'border-b border-transparent bg-transparent'
-      }`}
+      /* Фон непрозрачный всегда: герой разрезан пополам — слева светлая
+         колонка, справа фотография, — и прозрачная строка становится
+         нечитаемой над одной из половин. Постоянная волосяная линия снизу
+         заодно избавляет от слушателя скролла. */
+      className="bg-bg border-line fixed inset-x-0 top-0 z-50 border-b"
     >
       <Container className="!max-w-[104rem]">
         <div className="flex h-20 items-center justify-between gap-8">

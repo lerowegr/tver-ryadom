@@ -20,7 +20,9 @@ export interface HeroProps {
 /** Строка заголовка в маске: внутренний span выезжает снизу. */
 function MaskedLine({ children, italic = false }: { children: string; italic?: boolean }) {
   return (
-    <span className="block overflow-hidden pb-[0.08em]">
+    /* Запас снизу — под выносные элементы курсива: при line-height 1.04
+       маска срезала им хвосты. Отрицательный отступ возвращает исходный ритм. */
+    <span className="block overflow-hidden pb-[0.22em] -mb-[0.22em]">
       <span className={`hero-line block ${italic ? 'italic' : ''}`}>{children}</span>
     </span>
   );
@@ -159,12 +161,12 @@ export function Hero({
   );
 
   return (
-    <section ref={root} className="relative min-h-svh overflow-hidden">
-      <div className="grid min-h-svh lg:grid-cols-[46fr_54fr]">
+    <section ref={root} className="relative overflow-hidden pt-20">
+      <div className="grid min-h-[calc(100svh-5rem)] lg:grid-cols-[46fr_54fr]">
         <div className="order-2 flex items-center px-6 pt-14 pb-20 sm:px-10 lg:order-1 lg:px-16 xl:px-24">
           {copy}
         </div>
-        <div className="relative order-1 min-h-[46svh] lg:order-2 lg:min-h-svh">{photo}</div>
+        <div className="relative order-1 min-h-[46svh] lg:order-2 lg:min-h-[calc(100svh-5rem)]">{photo}</div>
       </div>
     </section>
   );
