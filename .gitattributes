@@ -3,3 +3,6 @@
 *.jpg binary
 *.webp binary
 *.ico binary
+
+# cmd.exe надёжнее работает с CRLF — эти файлы запускает пользователь
+*.cmd text eol=crlf

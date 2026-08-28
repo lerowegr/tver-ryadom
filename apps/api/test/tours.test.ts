@@ -11,7 +11,7 @@ describe('tours', () => {
     expect(data.items).toHaveLength(3);
 
     const card = data.items.find((t: { slug: string }) => t.slug === 'obzornaya-po-tveri');
-    expect(card.price).toBe(120000);
+    expect(card.price).toBe(450000);
     expect(card.badges.map((b: { slug: string }) => b.slug)).toContain('hit');
     expect(card.routePoints).toContain('Староволжский мост');
     expect(card.ratingAvg).toBe(5);
@@ -28,10 +28,12 @@ describe('tours', () => {
 
   it('фильтрует по цене и сортирует по возрастанию', async () => {
     const { app } = await createTestApp();
-    const res = await app.request('/api/v1/tours?priceMax=130000&sort=price_asc', {}, TEST_ENV);
+    const res = await app.request('/api/v1/tours?priceMax=500000&sort=price_asc', {}, TEST_ENV);
     const { data } = await body(res);
+    // 4500 ₽ проходят по фильтру, 6500 ₽ — нет.
     expect(data.total).toBe(2);
-    expect(data.items[0].slug).toBe('predmeste-tveri'); // 1000 ₽ дешевле 1200 ₽
+    expect(data.items.every((t: { price: number }) => t.price <= 500000)).toBe(true);
+    expect(data.items[0].price).toBeLessThanOrEqual(data.items[1].price);
   });
 
   it('несколько бейджей через запятую: совпадение хотя бы по одному', async () => {
@@ -48,7 +50,7 @@ describe('tours', () => {
     const { app } = await createTestApp();
     const res = await app.request('/api/v1/tours?sort=duration_desc', {}, TEST_ENV);
     const { data } = await body(res);
-    expect(data.items[0].slug).toBe('savvatevo-na-avto'); // 3,5 часа — самая длинная
+    expect(data.items[0].slug).toBe('savvatevo-na-avto'); // 2,5 часа — самая длинная
   });
 
   it('страница экскурсии: программа, маршрут, расписание со свободными местами', async () => {
@@ -61,7 +63,7 @@ describe('tours', () => {
     expect(data.included.length).toBeGreaterThan(0);
     expect(data.meetingLat).toBeCloseTo(56.8626);
     expect(data.schedules).toHaveLength(3);
-    expect(data.schedules[0].freeSeats).toBe(15);
+    expect(data.schedules[0].freeSeats).toBe(5); // вместимость слота = groupMax
   });
 
   it('404 для несуществующего слага', async () => {

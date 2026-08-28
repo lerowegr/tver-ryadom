@@ -117,9 +117,9 @@ describe('уведомления: события', () => {
     expect(rows[0]?.template).toBe('admin_new_booking');
 
     const rendered = renderTemplate(rows[0]!.template, rows[0]!.payload ?? {});
-    expect(rendered.text).toContain('Обзорная экскурсия');
+    expect(rendered.text).toContain('Живые истории');
     // Intl вставляет неразрывные пробелы между разрядами — нормализуем.
-    expect(rendered.text.replace(new RegExp('[' + String.fromCharCode(160, 8239) + ']', 'g'), ' ')).toContain('2 400');
+    expect(rendered.text.replace(new RegExp('[' + String.fromCharCode(160, 8239) + ']', 'g'), ' ')).toContain('4 500'); // 4500 ₽ за группу
   });
 
   it('подтверждение брони админом уходит клиенту в telegram и email', async () => {

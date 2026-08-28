@@ -1,4 +1,4 @@
-import { schedules } from '@tver/db';
+import { schedules, tours } from '@tver/db';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { TEST_ENV, bearer, body, createTestApp, jsonInit, registerUser } from './helpers';
@@ -16,6 +16,12 @@ describe('bookings', () => {
   it('гостевое бронирование на слот: цена за человека, место занято', async () => {
     const { app, db } = await createTestApp();
     const slot = await firstScheduleOf(db, 'tour-obzornaya');
+    // Все экскурсии в контенте продаются за группу, поэтому режим «за человека»
+    // задаём прямо в тесте: так проверка не ломается при смене текстов и цен.
+    await db
+      .update(tours)
+      .set({ priceType: 'per_person', price: 120000 })
+      .where(eq(tours.id, 'tour-obzornaya'));
 
     const res = await app.request(
       '/api/v1/bookings',
@@ -39,14 +45,14 @@ describe('bookings', () => {
 
   it('овербукинг невозможен: при нехватке мест — 409', async () => {
     const { app, db } = await createTestApp();
-    const slot = await firstScheduleOf(db, 'tour-obzornaya'); // capacity 15
+    const slot = await firstScheduleOf(db, 'tour-obzornaya'); // вместимость 5
 
     const first = await app.request(
       '/api/v1/bookings',
       jsonInit({
         tourId: 'tour-obzornaya',
         scheduleId: slot.id,
-        peopleCount: 14,
+        peopleCount: 4,
         contactName: 'Большая группа',
         contactPhone: '89001112233',
       }),
@@ -68,7 +74,7 @@ describe('bookings', () => {
     expect(second.status).toBe(409);
 
     const updated = await db.query.schedules.findFirst({ where: eq(schedules.id, slot.id) });
-    expect(updated?.bookedCount).toBe(14);
+    expect(updated?.bookedCount).toBe(4);
   });
 
   it('заявка на желаемую дату: цена за группу, лимит размера группы', async () => {
@@ -100,7 +106,7 @@ describe('bookings', () => {
       TEST_ENV,
     );
     expect(res.status).toBe(201);
-    expect((await body(res)).data.totalPrice).toBe(600000); // 6000 ₽ за группу
+    expect((await body(res)).data.totalPrice).toBe(650000); // 6500 ₽ за группу
   });
 
   it('прошедшая желаемая дата отклоняется', async () => {
