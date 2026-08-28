@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Select } from '@/components/ui/select';
 import type { BadgeDto } from '@/lib/types';
 
@@ -79,8 +79,14 @@ export function TourFilters({ badges }: { badges: BadgeDto[] }) {
 
   const hasFilters = ['badge', 'sort', 'durationMax', 'search'].some((k) => searchParams.get(k));
 
-  return (
-    <div className="mb-10 space-y-5">
+  // На узком экране восемь бейджей и три селекта занимали почти весь первый
+  // экран до карточек, поэтому ниже lg панель убрана под кнопку.
+  const [open, setOpen] = useState(false);
+  const activeCount =
+    activeBadges.size + (searchParams.get('sort') ? 1 : 0) + (searchParams.get('durationMax') ? 1 : 0);
+
+  const panel = (
+    <div className="space-y-5">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Тематика экскурсии (можно несколько)">
         {badges.map((badge) => {
           const active = activeBadges.has(badge.slug);
@@ -146,6 +152,51 @@ export function TourFilters({ badges }: { badges: BadgeDto[] }) {
             Сбросить фильтры
           </button>
         ) : null}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="mb-10">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="tour-filters"
+        className="border-line text-ink hover:border-ink flex w-full cursor-pointer items-center justify-between border px-5 py-4 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden"
+      >
+        <span className="flex items-center gap-3">
+          Фильтры
+          {activeCount > 0 ? (
+            <span className="bg-ink text-bg px-2 py-0.5 text-[0.625rem] tabular-nums">{activeCount}</span>
+          ) : null}
+        </span>
+        <svg
+          viewBox="0 0 16 16"
+          aria-hidden
+          className={`h-3.5 w-3.5 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            open ? 'rotate-180' : ''
+          }`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m4 6.5 4 4 4-4" />
+        </svg>
+      </button>
+
+      {/* Панель одна на все размеры: на узком экране она сворачивается,
+          с lg — всегда раскрыта. Приём grid-template-rows 0fr → 1fr даёт
+          плавную высоту без библиотеки анимации, а она здесь и нежелательна:
+          компонент живёт внутри <Suspense>. */}
+      <div
+        id="tour-filters"
+        className={`grid overflow-hidden transition-[grid-template-rows,padding-top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:grid-rows-[1fr] lg:pt-0 ${
+          open ? 'grid-rows-[1fr] pt-6' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <div className="min-h-0">{panel}</div>
       </div>
     </div>
   );
