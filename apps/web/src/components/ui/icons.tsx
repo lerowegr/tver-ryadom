@@ -132,3 +132,18 @@ export const CameraIcon = (p: IconProps) => (
     <circle cx="12" cy="14" r="3.5" />
   </svg>
 );
+
+export const CarIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4.5 16.5v2a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-2M21.5 16.5v2a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-2" />
+    <path d="M2.5 16.5v-4l2-5.5a1.5 1.5 0 0 1 1.4-1h12.2a1.5 1.5 0 0 1 1.4 1l2 5.5v4a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1z" />
+    <path d="M3 12.5h18M6.5 15h1M16.5 15h1" />
+  </svg>
+);
+
+export const RubleIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M9 20V4.5h4.5a4 4 0 0 1 0 8H9" />
+    <path d="M6.5 15.5h7M6.5 12.5H9" />
+  </svg>
+);

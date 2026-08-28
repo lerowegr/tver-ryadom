@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Playfair_Display } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
@@ -8,9 +8,9 @@ import { site } from '@/config/site';
 import { getSettings } from '@/lib/data';
 import './globals.css';
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-manrope',
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -37,14 +37,26 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#fbf9f4',
+  themeColor: '#fdfcfa',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const settings = await getSettings();
 
+  // suppressHydrationWarning: инлайн-скрипт ниже дописывает класс js-motion
+  // до гидратации, и React иначе жалуется на расхождение разметки сервера
+  // и клиента именно по этому атрибуту.
   return (
-    <html lang="ru" className={`${manrope.variable} ${playfair.variable}`}>
+    <html lang="ru" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Выполняется до первой отрисовки. Прячем анимируемые элементы
+            только если JS жив — иначе контент виден без анимации. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js-motion')",
+          }}
+        />
+      </head>
       <body>
         <Providers>
           <Header />

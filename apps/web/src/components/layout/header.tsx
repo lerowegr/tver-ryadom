@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { site } from '@/config/site';
-import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { MenuIcon, XIcon } from '@/components/ui/icons';
 import { useAuth } from '@/components/providers';
+
+const smooth = 'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]';
 
 function AccountLink({ className = '' }: { className?: string }) {
   const { user, status } = useAuth();
@@ -17,15 +18,12 @@ function AccountLink({ className = '' }: { className?: string }) {
     return (
       <Link
         href="/account"
-        className={`text-bark-800 flex items-center gap-2 rounded-full py-1.5 pr-4 pl-1.5 text-sm font-semibold transition hover:bg-white/70 ${className}`}
+        className={`text-ink hover:text-muted flex cursor-pointer items-center gap-2.5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase ${smooth} ${className}`}
       >
-        <span
-          className="from-sand-400 to-terra-500 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white"
-          aria-hidden
-        >
+        <span className="border-line-strong flex h-7 w-7 items-center justify-center border text-[0.625rem]" aria-hidden>
           {user.name[0]?.toUpperCase() ?? '?'}
         </span>
-        <span className="max-w-28 truncate">{user.name}</span>
+        <span className="max-w-24 truncate">{user.name}</span>
       </Link>
     );
   }
@@ -33,7 +31,7 @@ function AccountLink({ className = '' }: { className?: string }) {
   return (
     <Link
       href="/auth"
-      className={`border-bark-600/30 text-bark-800 hover:border-terra-500 hover:text-terra-600 inline-flex items-center rounded-full border bg-white/70 px-5 py-2 text-sm font-semibold transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white ${className}`}
+      className={`link-underline text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase ${className}`}
     >
       Войти
     </Link>
@@ -56,46 +54,58 @@ export function Header() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled || open ? 'glass shadow-soft' : 'bg-transparent'
+      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        scrolled || open ? 'bg-bg border-line border-b' : 'border-b border-transparent bg-transparent'
       }`}
     >
-      <Container>
-        <div className="flex h-16 items-center justify-between md:h-[4.5rem]">
-          <Link href="/" className="group flex items-baseline gap-1" aria-label="На главную">
-            <span className="font-display text-ink-900 text-2xl font-semibold">Тверь</span>
-            <span className="text-terra-600 font-display text-2xl italic transition-transform duration-300 group-hover:translate-x-0.5">
-              рядом
+      <Container className="!max-w-[104rem]">
+        <div className="flex h-20 items-center justify-between gap-8">
+          {/* Логотип */}
+          <Link href="/" className="group shrink-0" aria-label="На главную">
+            <span className="font-display text-ink text-[1.375rem] leading-none tracking-[-0.01em]">
+              Тверь <span className="italic">рядом</span>
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Основная навигация">
-            {site.nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  pathname.startsWith(item.href)
-                    ? 'bg-bark-600/10 text-ink-900'
-                    : 'text-bark-700 hover:text-ink-900'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <AccountLink className="ml-1" />
-            <Button href="/excursions" className="ml-2">
-              Забронировать
-            </Button>
+          {/* Навигация по центру — приём референса */}
+          <nav
+            className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 lg:flex"
+            aria-label="Основная навигация"
+          >
+            {site.nav.map((item) => {
+              const active = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`link-underline cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase ${smooth} ${
+                    active ? 'text-ink' : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
+          {/* Правый край: вход + рамочная кнопка */}
+          <div className="hidden items-center gap-8 lg:flex">
+            <AccountLink />
+            <Link
+              href="/contacts"
+              className={`border-line-strong text-ink hover:bg-ink hover:text-bg hover:border-ink cursor-pointer border px-7 py-3.5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase ${smooth}`}
+            >
+              Связаться
+            </Link>
+          </div>
+
           <button
-            className="text-bark-800 -mr-2 rounded-full p-2 md:hidden"
+            className="text-ink -mr-2 cursor-pointer p-2 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
           >
-            {open ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+            {open ? <XIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
           </button>
         </div>
       </Container>
@@ -106,24 +116,27 @@ export function Header() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden md:hidden"
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="border-line overflow-hidden border-t lg:hidden"
             aria-label="Мобильная навигация"
           >
-            <Container className="flex flex-col gap-1 pb-5">
+            <Container className="flex flex-col gap-6 py-8">
               {site.nav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-bark-800 rounded-xl px-3 py-3 text-base font-medium hover:bg-white/60"
+                  className="text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
                 >
                   {item.label}
                 </Link>
               ))}
-              <AccountLink className="px-3 py-3" />
-              <Button href="/excursions" className="mt-2">
-                Забронировать экскурсию
-              </Button>
+              <AccountLink />
+              <Link
+                href="/contacts"
+                className="border-line-strong text-ink mt-2 cursor-pointer border px-7 py-4 text-center text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
+              >
+                Связаться
+              </Link>
             </Container>
           </motion.nav>
         ) : null}

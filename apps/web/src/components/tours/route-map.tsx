@@ -69,7 +69,7 @@ export function RouteMap({ points }: { points: RoutePointDto[] }) {
           map.addChild(
             new YMapFeature({
               geometry: { type: 'LineString', coordinates: points.map((p) => [p.lng, p.lat]) },
-              style: { stroke: [{ color: '#c0703e', width: 4 }] },
+              style: { stroke: [{ color: '#14140f', width: 3 }] },
             }),
           );
         }
@@ -79,7 +79,7 @@ export function RouteMap({ points }: { points: RoutePointDto[] }) {
           el.textContent = String(i + 1);
           el.title = point.title;
           el.style.cssText =
-            'width:30px;height:30px;border-radius:50%;background:#c0703e;color:#fff;' +
+            'width:28px;height:28px;background:#14140f;color:#fdfcfa;' +
             'display:flex;align-items:center;justify-content:center;font-weight:700;' +
             'font-size:13px;box-shadow:0 2px 8px rgba(42,32,20,.35);transform:translate(-50%,-50%);cursor:default';
           map.addChild(new YMapMarker({ coordinates: [point.lng, point.lat] }, el));
@@ -104,7 +104,7 @@ export function RouteMap({ points }: { points: RoutePointDto[] }) {
   return (
     <div
       ref={containerRef}
-      className="border-sand-200 shadow-card mb-8 h-80 w-full overflow-hidden rounded-3xl border"
+      className="border-line mb-8 h-80 w-full overflow-hidden border"
       role="application"
       aria-label="Карта маршрута"
     />

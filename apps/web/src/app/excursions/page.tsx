@@ -35,14 +35,12 @@ export default async function ExcursionsPage({ searchParams }: { searchParams: S
   ]);
 
   return (
-    <div className="pt-28 pb-10 md:pt-36">
-      <Container>
-        <Reveal className="mb-10 max-w-2xl">
-          <p className="text-terra-600 mb-3 text-sm font-semibold tracking-widest uppercase">Каталог</p>
-          <h1 className="font-display text-ink-900 text-4xl leading-tight font-semibold md:text-5xl">
-            Экскурсии по Твери
-          </h1>
-          <p className="text-bark-700 mt-4 text-lg">
+    <div className="pt-40 pb-24 md:pt-52">
+      <Container className="!max-w-[104rem]">
+        <Reveal className="mb-16 max-w-2xl">
+          <p className="kicker mb-7">Каталог</p>
+          <h1 className="display text-[clamp(2.5rem,5vw,4.25rem)]">Экскурсии по Твери</h1>
+          <p className="text-muted mt-7 text-[1.0625rem] leading-[1.75]">
             {toursPage.total > 0
               ? `${toursPage.total} маршрута — от классической обзорной до тихих предместий.`
               : 'Маршруты скоро появятся.'}
@@ -54,7 +52,7 @@ export default async function ExcursionsPage({ searchParams }: { searchParams: S
         </Suspense>
 
         {toursPage.items.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-16 grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
             {toursPage.items.map((tour, i) => (
               <Reveal key={tour.id} delay={(i % 3) * 0.08} className="h-full">
                 <TourCard tour={tour} />
@@ -62,9 +60,9 @@ export default async function ExcursionsPage({ searchParams }: { searchParams: S
             ))}
           </div>
         ) : (
-          <div className="glass rounded-3xl p-12 text-center">
-            <p className="text-ink-900 text-lg font-semibold">По выбранным фильтрам ничего не нашлось</p>
-            <p className="text-bark-700 mt-2">Попробуйте сбросить фильтры или заглянуть позже.</p>
+          <div className="border-line mt-16 border-t py-24 text-center">
+            <p className="font-display text-ink text-2xl">По выбранным фильтрам ничего не нашлось</p>
+            <p className="text-muted mt-4 text-sm">Попробуйте сбросить фильтры или заглянуть позже.</p>
           </div>
         )}
 

@@ -1,16 +1,18 @@
-import Link from 'next/link';
-import { Advantages } from '@/components/home/advantages';
+import { AboutSection } from '@/components/home/about-section';
 import { ContactCta } from '@/components/home/contact-cta';
-import { Gallery } from '@/components/home/gallery';
+import { PhotoBand } from '@/components/home/photo-band';
 import { Hero } from '@/components/home/hero';
 import { ReviewsSection } from '@/components/home/reviews-section';
 import { Reveal } from '@/components/motion/reveal';
 import { TourCard } from '@/components/tours/tour-card';
 import { Container } from '@/components/ui/container';
-import { ArrowRightIcon } from '@/components/ui/icons';
 import { SectionHeading } from '@/components/ui/section-heading';
-import { site } from '@/config/site';
 import { getLatestReviews, getSettings, getTours, safe } from '@/lib/data';
+
+const heroLead =
+  'Три маршрута: обзорная прогулка по историческому центру, поездка в Савватьево ' +
+  'и неочевидное «Предместье Твери». Судьбы людей, тайны улиц и истории кладов — ' +
+  'без сухого перечисления дат.';
 
 export default async function HomePage() {
   const [settings, toursPage, reviews] = await Promise.all([
@@ -20,43 +22,26 @@ export default async function HomePage() {
   ]);
 
   const tours = toursPage.items.slice(0, 3);
-  const rating =
-    tours.length > 0
-      ? tours.reduce((sum, tour) => sum + (tour.ratingAvg || 5), 0) / tours.length
-      : 5;
 
   return (
     <>
       <Hero
-        tagline={settings['company.tagline'] ?? site.tagline}
-        subtitle={
-          settings['home.subtitle'] ||
-          'Гуляем по набережным Волги, заглядываем в тихое Затьмачье и уезжаем к монастырским берегам Орши. Небольшие группы, живые истории и город, который становится ближе.'
-        }
-        stats={{ tours: toursPage.total, rating }}
+        kicker="Елена Громова — экскурсовод по Твери"
+        titleTop="Авторские экскурсии по Твери"
+        titleItalic="через живые истории"
+        lead={settings['home.lead'] || heroLead}
+        imageUrl={tours[0]?.image?.variants?.hero ?? tours[0]?.image?.variants?.card ?? null}
       />
-
       {tours.length > 0 ? (
-        <section className="py-20 md:py-28" aria-labelledby="popular">
-          <Container>
-            <div className="flex flex-wrap items-end justify-between gap-6">
-              <SectionHeading
-                eyebrow="Экскурсии"
-                title="Популярные маршруты"
-                subtitle="С чего начать знакомство с Тверью — выбор наших гостей."
-              />
-              <Reveal className="mb-10 md:mb-14">
-                <Link
-                  href="/excursions"
-                  className="text-terra-600 hover:text-terra-700 inline-flex items-center gap-2 font-semibold"
-                >
-                  Все экскурсии <ArrowRightIcon className="h-4 w-4" />
-                </Link>
-              </Reveal>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <section className="py-28 md:py-40" aria-labelledby="popular">
+          <Container className="!max-w-[104rem]">
+            <SectionHeading
+              eyebrow="3 авторских маршрута"
+              title="Экскурсии по Твери и окрестностям"
+            />
+            <div className="mt-16 grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3 lg:mt-24">
               {tours.map((tour, i) => (
-                <Reveal key={tour.id} delay={i * 0.1} className="h-full">
+                <Reveal key={tour.id} delay={i * 0.12} className="h-full">
                   <TourCard tour={tour} />
                 </Reveal>
               ))}
@@ -65,9 +50,9 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <Advantages />
+      <AboutSection intro={settings['about.intro']} />
       <ReviewsSection reviews={reviews} />
-      <Gallery />
+      <PhotoBand />
       <ContactCta settings={settings} />
     </>
   );

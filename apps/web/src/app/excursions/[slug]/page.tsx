@@ -8,14 +8,12 @@ import { ProgramTimeline } from '@/components/tours/program-timeline';
 import { RouteMap } from '@/components/tours/route-map';
 import { RouteSchematic } from '@/components/tours/route-schematic';
 import { TourVisual } from '@/components/tours/tour-visual';
-import { TourBadge } from '@/components/ui/badge';
 import { Container } from '@/components/ui/container';
-import { CheckIcon, ClockIcon, MapPinIcon, UsersIcon, XIcon } from '@/components/ui/icons';
-import { RatingStars } from '@/components/ui/rating-stars';
+import { CarIcon, CheckIcon, ClockIcon, MapPinIcon, RubleIcon, WalkIcon, XIcon } from '@/components/ui/icons';
 import { site } from '@/config/site';
 import { ApiRequestError } from '@/lib/api';
 import { getTour, getTourReviews, safe } from '@/lib/data';
-import { formatDate, formatDuration, groupLabel, priceLabel } from '@/lib/format';
+import { formatDate, formatDuration, groupLabel, primaryBadge, priceLabel } from '@/lib/format';
 import type { TourDetailDto } from '@/lib/types';
 
 type Params = Promise<{ slug: string }>;
@@ -43,10 +41,24 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 }
 
+/** Заголовок раздела внутри страницы — единый размер и отступ. */
+function SectionTitle({ id, children }: { id: string; children: string }) {
+  return (
+    <h2 id={id} className="display mb-8 text-[clamp(1.5rem,2.4vw,2.125rem)]">
+      {children}
+    </h2>
+  );
+}
+
 export default async function TourPage({ params }: { params: Params }) {
   const { slug } = await params;
   const tour = await loadTour(slug);
   const reviews = await safe(getTourReviews(slug), { items: [], total: 0, page: 1, limit: 12, pages: 1 });
+
+  const byCar = tour.badges.some((b) => b.slug === 'by-car');
+  const MovementIcon = byCar ? CarIcon : WalkIcon;
+  const movement = byCar ? 'Индивидуальная автомобильно-пешеходная' : 'Индивидуальная пешеходная';
+  const badge = primaryBadge(tour.badges);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -73,90 +85,114 @@ export default async function TourPage({ params }: { params: Params }) {
       : {}),
   };
 
+  /* Три плитки под описанием — приём референса: формат, цена, время */
+  const facts = [
+    { Icon: MovementIcon, label: 'Формат', value: movement },
+    {
+      Icon: RubleIcon,
+      label: 'Стоимость',
+      value: priceLabel(tour.price, tour.priceType) + ', ' + groupLabel(tour.groupMin, tour.groupMax),
+    },
+    { Icon: ClockIcon, label: 'Время', value: formatDuration(tour.durationMinutes) },
+  ];
+
   return (
-    <div className="pt-24 md:pt-32">
+    <div className="pt-32 md:pt-40">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Container>
-        <nav aria-label="Хлебные крошки" className="text-bark-600 mb-6 text-sm">
-          <Link href="/excursions" className="hover:text-terra-600">
+      <Container className="!max-w-[104rem]">
+        <nav aria-label="Хлебные крошки" className="kicker-plain text-faint mb-12">
+          <Link href="/excursions" className="link-underline hover:text-ink">
             Экскурсии
           </Link>
-          <span className="mx-2" aria-hidden>
+          <span className="mx-3" aria-hidden>
             /
           </span>
-          <span className="text-ink-900">{tour.title}</span>
+          <span className="text-muted">{tour.title}</span>
         </nav>
 
-        <header className="mb-8 max-w-3xl">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            {tour.badges.map((badge) => (
-              <TourBadge key={badge.slug} {...badge} />
-            ))}
-            <FavoriteButton tourId={tour.id} className="ml-1" />
-          </div>
-          <h1 className="font-display text-ink-900 text-4xl leading-tight font-semibold text-balance md:text-5xl">
-            {tour.title}
-          </h1>
-          {tour.subtitle ? <p className="text-bark-700 mt-3 text-xl">{tour.subtitle}</p> : null}
-          <div className="text-bark-700 mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium">
-            <RatingStars rating={tour.ratingAvg} count={tour.ratingCount} />
-            <span className="flex items-center gap-1.5">
-              <ClockIcon className="h-4 w-4" /> {formatDuration(tour.durationMinutes)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <UsersIcon className="h-4 w-4" /> {groupLabel(tour.groupMin, tour.groupMax)}
-            </span>
-          </div>
-        </header>
+        {/* Первый экран: фото слева, рассказ справа */}
+        <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <Reveal>
+            <div className="relative">
+              <div className="aspect-4/5 overflow-hidden">
+                <TourVisual slug={tour.slug} title={tour.title} image={tour.images[0] ?? null} variant="hero" />
+              </div>
+              {badge ? (
+                <span className="bg-bg/90 text-ink absolute right-0 bottom-0 px-5 py-3 text-[0.625rem] font-medium tracking-[0.18em] uppercase">
+                  {badge.label}
+                </span>
+              ) : null}
+              <div className="absolute top-0 right-0">
+                <FavoriteButton tourId={tour.id} />
+              </div>
+            </div>
+          </Reveal>
 
-        <div className="shadow-soft mb-12 h-72 overflow-hidden rounded-[2rem] md:h-96">
-          <TourVisual slug={tour.slug} title={tour.title} image={tour.images[0] ?? null} variant="hero" />
+          <Reveal delay={0.12}>
+            <div>
+              {tour.subtitle ? <p className="kicker-plain text-faint mb-5">{tour.subtitle}</p> : null}
+              <h1 className="display text-[clamp(2rem,4vw,3.5rem)]">{tour.title}</h1>
+
+              <div className="mt-9 space-y-5">
+                {tour.fullDescription
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((paragraph, i) => (
+                    <p key={i} className="text-muted text-[1.0625rem] leading-[1.8]">
+                      {paragraph}
+                    </p>
+                  ))}
+              </div>
+
+              <dl className="border-line mt-12 grid gap-8 border-t pt-10 sm:grid-cols-3">
+                {facts.map(({ Icon, label, value }) => (
+                  <div key={label}>
+                    <span className="icon-tile mb-5">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <dt className="kicker-plain text-faint mb-2">{label}</dt>
+                    <dd className="text-ink text-sm leading-relaxed">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <Link
+                href="#booking"
+                className="bg-ink text-bg hover:bg-ink-soft mt-12 inline-flex cursor-pointer items-center px-10 py-5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+              >
+                Забронировать
+              </Link>
+            </div>
+          </Reveal>
         </div>
 
-        <div className="grid gap-12 lg:grid-cols-[1fr_24rem] lg:items-start">
-          <div className="min-w-0 space-y-14">
-            <Reveal>
-              <section aria-labelledby="about-tour">
-                <h2 id="about-tour" className="font-display text-ink-900 heading-accent mb-6 text-2xl font-semibold md:text-3xl">
-                  Об экскурсии
-                </h2>
-                <div className="prose-tver max-w-none">
-                  {tour.fullDescription.split('\n').map((paragraph, i) => (
-                    <p key={i}>{paragraph}</p>
-                  ))}
-                </div>
-              </section>
-            </Reveal>
-
+        <div className="mt-28 grid gap-16 md:mt-40 lg:grid-cols-[1fr_23rem] lg:items-start lg:gap-20">
+          <div className="min-w-0 space-y-24">
             {tour.program.length > 0 ? (
               <section aria-labelledby="program">
-                <h2 id="program" className="font-display text-ink-900 heading-accent mb-8 text-2xl font-semibold md:text-3xl">
-                  Программа
-                </h2>
+                <SectionTitle id="program">Программа</SectionTitle>
                 <ProgramTimeline steps={tour.program} />
               </section>
             ) : null}
 
             {tour.routePoints.length > 0 ? (
               <section aria-labelledby="route">
-                <h2 id="route" className="font-display text-ink-900 heading-accent mb-8 text-2xl font-semibold md:text-3xl">
-                  Маршрут
-                </h2>
+                <SectionTitle id="route">Маршрут</SectionTitle>
                 {process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ? (
                   <RouteMap points={tour.routePoints} />
                 ) : (
                   <RouteSchematic points={tour.routePoints} />
                 )}
-                <ol className="grid gap-3 sm:grid-cols-2">
+                <ol className="border-line mt-10 grid gap-x-10 border-t sm:grid-cols-2">
                   {tour.routePoints.map((point, i) => (
-                    <li key={`${point.title}-${i}`} className="flex items-start gap-3 rounded-2xl bg-white p-4">
-                      <span className="bg-cream-200 text-bark-800 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold">
-                        {i + 1}
+                    <li key={point.title + i} className="border-line flex items-start gap-5 border-b py-5">
+                      <span className="text-faint w-6 shrink-0 text-xs tabular-nums">
+                        {String(i + 1).padStart(2, '0')}
                       </span>
                       <div>
-                        <p className="text-ink-900 text-sm font-semibold">{point.title}</p>
+                        <p className="text-ink text-sm">{point.title}</p>
                         {point.description ? (
-                          <p className="text-bark-600 mt-0.5 text-xs">{point.description}</p>
+                          <p className="text-muted mt-1 text-xs leading-relaxed">{point.description}</p>
                         ) : null}
                       </div>
                     </li>
@@ -165,84 +201,75 @@ export default async function TourPage({ params }: { params: Params }) {
               </section>
             ) : null}
 
-            <Reveal>
-              <section aria-labelledby="included" className="grid gap-5 sm:grid-cols-2">
-                <div className="shadow-card rounded-3xl bg-white p-7">
-                  <h2 id="included" className="text-ink-900 mb-4 font-bold">
-                    Что входит
-                  </h2>
-                  <ul className="space-y-2.5">
-                    {tour.included.map((item) => (
-                      <li key={item} className="text-bark-700 flex items-start gap-2.5 text-sm">
-                        <CheckIcon className="text-terra-500 mt-0.5 h-4 w-4 shrink-0" /> {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="shadow-card rounded-3xl bg-white p-7">
-                  <h3 className="text-ink-900 mb-4 font-bold">Что не входит</h3>
-                  <ul className="space-y-2.5">
-                    {tour.notIncluded.map((item) => (
-                      <li key={item} className="text-bark-700 flex items-start gap-2.5 text-sm">
-                        <XIcon className="text-sand-400 mt-0.5 h-4 w-4 shrink-0" /> {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </section>
-            </Reveal>
+            <section aria-labelledby="included" className="grid gap-12 sm:grid-cols-2">
+              <div>
+                <h2 id="included" className="kicker mb-6">
+                  Что входит
+                </h2>
+                <ul className="space-y-3">
+                  {tour.included.map((item) => (
+                    <li key={item} className="text-muted flex items-start gap-3 text-sm leading-relaxed">
+                      <CheckIcon className="text-ink mt-0.5 h-4 w-4 shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="kicker mb-6">Что не входит</h3>
+                <ul className="space-y-3">
+                  {tour.notIncluded.map((item) => (
+                    <li key={item} className="text-muted flex items-start gap-3 text-sm leading-relaxed">
+                      <XIcon className="text-faint mt-0.5 h-4 w-4 shrink-0" /> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
 
             {tour.recommendations ? (
-              <Reveal>
-                <section aria-labelledby="tips" className="glass rounded-3xl p-7">
-                  <h2 id="tips" className="text-ink-900 mb-3 font-bold">
-                    Рекомендации
-                  </h2>
-                  <p className="text-bark-700 text-sm leading-relaxed">{tour.recommendations}</p>
-                </section>
-              </Reveal>
+              <section aria-labelledby="tips" className="border-line border-t pt-10">
+                <h2 id="tips" className="kicker mb-5">
+                  Рекомендации
+                </h2>
+                <p className="text-muted max-w-[62ch] text-sm leading-[1.8]">{tour.recommendations}</p>
+              </section>
             ) : null}
 
             {tour.meetingPoint ? (
-              <Reveal>
-                <section aria-labelledby="meeting" className="flex items-start gap-4">
-                  <span className="bg-terra-500/10 text-terra-600 rounded-2xl p-3">
-                    <MapPinIcon className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <h2 id="meeting" className="text-ink-900 font-bold">
-                      Место встречи
-                    </h2>
-                    <p className="text-bark-700 mt-1 text-sm">{tour.meetingPoint}</p>
-                    {tour.meetingLat && tour.meetingLng ? (
-                      <a
-                        href={`https://yandex.ru/maps/?pt=${tour.meetingLng},${tour.meetingLat}&z=16`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-terra-600 mt-1 inline-block text-sm font-medium hover:underline"
-                      >
-                        Открыть в Яндекс.Картах →
-                      </a>
-                    ) : null}
-                  </div>
-                </section>
-              </Reveal>
+              <section aria-labelledby="meeting" className="border-line border-t pt-10">
+                <h2 id="meeting" className="kicker mb-5">
+                  Место встречи
+                </h2>
+                <p className="text-ink flex items-start gap-3 text-sm">
+                  <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  {tour.meetingPoint}
+                </p>
+                {tour.meetingLat && tour.meetingLng ? (
+                  <a
+                    href={`https://yandex.ru/maps/?pt=${tour.meetingLng},${tour.meetingLat}&z=16`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link-underline text-muted mt-3 ml-7 inline-block text-sm"
+                  >
+                    Открыть в Яндекс.Картах
+                  </a>
+                ) : null}
+              </section>
             ) : null}
 
             {reviews.items.length > 0 ? (
               <section aria-labelledby="reviews">
-                <h2 id="reviews" className="font-display text-ink-900 heading-accent mb-8 text-2xl font-semibold md:text-3xl">
-                  Отзывы
-                </h2>
-                <ul className="space-y-5">
+                <SectionTitle id="reviews">Отзывы</SectionTitle>
+                <ul className="border-line border-t">
                   {reviews.items.map((review) => (
-                    <li key={review.id} className="shadow-card rounded-3xl bg-white p-7">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-ink-900 font-semibold">{review.authorName}</p>
-                        <RatingStars rating={review.rating} />
+                    <li key={review.id} className="border-line border-b py-8">
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <p className="text-ink text-sm font-medium">{review.authorName}</p>
+                        <p className="kicker-plain text-faint">
+                          {review.rating},0 из 5 · {formatDate(review.createdAt)}
+                        </p>
                       </div>
-                      <p className="text-bark-700 mt-3 text-sm leading-relaxed">{review.text}</p>
-                      <p className="text-bark-500 mt-3 text-xs">{formatDate(review.createdAt)}</p>
+                      <p className="text-muted mt-4 text-sm leading-[1.8]">{review.text}</p>
                     </li>
                   ))}
                 </ul>
@@ -250,11 +277,11 @@ export default async function TourPage({ params }: { params: Params }) {
             ) : null}
           </div>
 
-          <aside id="booking" className="scroll-mt-24 lg:sticky lg:top-24" aria-label="Бронирование">
-            <div className="glass shadow-soft rounded-[2rem] p-7">
-              <p className="text-bark-600 text-sm">Стоимость</p>
-              <p className="text-ink-900 font-display mt-1 mb-6 text-3xl font-semibold">
-                от {priceLabel(tour.price, tour.priceType)}
+          <aside id="booking" className="scroll-mt-32 lg:sticky lg:top-28" aria-label="Бронирование">
+            <div className="border-line border p-8">
+              <p className="kicker-plain text-faint">Стоимость</p>
+              <p className="font-display text-ink mt-3 mb-8 text-[2rem] leading-none">
+                {priceLabel(tour.price, tour.priceType)}
               </p>
               <BookingForm
                 tour={{

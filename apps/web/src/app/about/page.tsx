@@ -1,120 +1,68 @@
 import type { Metadata } from 'next';
-import { Advantages } from '@/components/home/advantages';
 import { ContactCta } from '@/components/home/contact-cta';
 import { ReviewsSection } from '@/components/home/reviews-section';
 import { Reveal } from '@/components/motion/reveal';
 import { Container } from '@/components/ui/container';
-import { SectionHeading } from '@/components/ui/section-heading';
 import { getLatestReviews, getSettings, safe } from '@/lib/data';
 
 export const metadata: Metadata = {
-  title: 'О компании',
+  title: 'Об экскурсоводе',
   description:
-    'Кто мы и почему показываем Тверь по-своему: история проекта «Тверь рядом», команда гидов и наши принципы.',
+    'Елена Громова — аттестованный экскурсовод по Твери. Более 11 поколений предков жили в Тверской губернии; отсюда и авторские маршруты по городу и окрестностям.',
 };
 
-interface TeamMember {
-  name: string;
-  role: string;
-  text: string;
-}
-
-const defaultTeam: TeamMember[] = [
-  {
-    name: 'Егор',
-    role: 'Основатель и гид',
-    text: 'Придумал «Тверь рядом», чтобы показывать город без пафоса и скуки. Ведёт обзорную и авторские маршруты.',
-  },
-  {
-    name: 'Анна',
-    role: 'Гид-краевед',
-    text: 'Знает про Затьмачье больше, чем архивы. Отвечает за маршруты по предместьям и работу с семьями.',
-  },
-  {
-    name: 'Михаил',
-    role: 'Гид-водитель',
-    text: 'Возит гостей в Савватьево и окрестности. Спокойный руль, горячий чай и истории по дороге.',
-  },
-];
-
 const defaultIntro =
-  '«Тверь рядом» началась с простой мысли: город между двумя столицами заслуживает большего, чем транзитная остановка. Мы собираем маршруты из личных находок, разговоров со старожилами и архивных историй — и рассказываем их живым языком.';
-
-/** Команда редактируется в админке (Настройки → Команда) и хранится как JSON. */
-function parseTeam(raw: unknown): TeamMember[] {
-  const value = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-  if (!Array.isArray(value)) return defaultTeam;
-  const members = value.filter(
-    (m): m is TeamMember =>
-      typeof m === 'object' && m !== null && typeof m.name === 'string' && m.name.length > 0,
-  );
-  return members.length > 0 ? members : defaultTeam;
-}
+  'К изучению истории родного города я пришла после исследования истории своего рода. ' +
+  'Рассказы старших родственников, работа с первоисточниками в архивах, поездки по сёлам ' +
+  'и деревням Тверского края. Каково же было моё удивление, что более 11 поколений предков ' +
+  'проживали на территории Тверской губернии!\n' +
+  'После такого открытия было невозможно не углубиться в историю Твери. Теперь я ' +
+  'аттестованный экскурсовод и с радостью делюсь знаниями о своём городе с туристами ' +
+  'и всеми, кому интересно настоящее и прошлое Твери.';
 
 export default async function AboutPage() {
   const [settings, reviews] = await Promise.all([getSettings(), safe(getLatestReviews(), [])]);
-  const team = parseTeam(settings['about.team']);
-  const intro = settings['about.intro'] || defaultIntro;
+  const paragraphs = (settings['about.intro'] || defaultIntro).split('\n').filter(Boolean);
 
   return (
     <>
-      <div className="pt-28 md:pt-36">
-        <Container>
-          <Reveal className="max-w-3xl">
-            <p className="text-terra-600 mb-3 text-sm font-semibold tracking-widest uppercase">О компании</p>
-            <h1 className="font-display text-ink-900 text-4xl leading-tight font-semibold text-balance md:text-5xl">
-              Мы показываем Тверь так, как показывали бы её друзьям
-            </h1>
-            <p className="text-bark-700 mt-6 text-lg leading-relaxed">{intro}</p>
+      <section className="pt-40 pb-28 md:pt-52 md:pb-40">
+        <Container className="!max-w-[104rem]">
+          <Reveal>
+            <p className="kicker mb-7">Об экскурсоводе</p>
+            <h1 className="display text-[clamp(2.5rem,6vw,5rem)]">Елена Громова</h1>
           </Reveal>
 
-          <div className="mt-14 grid gap-5 sm:grid-cols-3">
-            {[
-              ['2023', 'год, когда мы провели первую прогулку'],
-              ['3', 'авторских маршрута — и новые в работе'],
-              ['500+', 'гостей уже увидели Тверь с нами'],
-            ].map(([num, label], i) => (
-              <Reveal key={label} delay={i * 0.08}>
-                <div className="glass shadow-card rounded-3xl p-7 text-center">
-                  <p className="font-display text-terra-600 text-4xl font-semibold">{num}</p>
-                  <p className="text-bark-700 mt-2 text-sm">{label}</p>
+          <div className="mt-16 grid gap-14 lg:mt-24 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
+            <Reveal>
+              <div className="relative">
+                <div className="aspect-4/5 overflow-hidden">
+                  <img
+                    src="/photos/elena.jpg"
+                    alt="Елена Громова на набережной Волги"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </div>
+                <p className="bg-bg text-ink shadow-float absolute right-0 -bottom-6 px-8 py-6 text-[0.6875rem] font-medium tracking-[0.18em] uppercase sm:right-[-1.5rem]">
+                  аттестованный экскурсовод
+                </p>
+              </div>
+            </Reveal>
 
-      <section className="pt-20 md:pt-28" aria-labelledby="team">
-        <Container>
-          <SectionHeading
-            eyebrow="Команда"
-            title="Люди, которые ведут вас по городу"
-            subtitle="Небольшая команда, влюблённая в Тверь. Каждый маршрут — чей-то личный любимый."
-          />
-          <div className="grid gap-6 md:grid-cols-3">
-            {team.map((member, i) => (
-              <Reveal key={`${member.name}-${i}`} delay={i * 0.08}>
-                <article className="shadow-card h-full rounded-3xl bg-white p-8 text-center">
-                  <span
-                    className="from-sand-300 to-terra-500 font-display mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br text-3xl font-semibold text-white"
-                    aria-hidden
-                  >
-                    {member.name[0]}
-                  </span>
-                  <h3 className="text-ink-900 text-lg font-bold">{member.name}</h3>
-                  <p className="text-terra-600 mb-3 text-sm font-semibold">{member.role}</p>
-                  <p className="text-bark-700 text-sm leading-relaxed">{member.text}</p>
-                </article>
-              </Reveal>
-            ))}
+            <Reveal delay={0.15}>
+              <div className="space-y-6 lg:pt-4">
+                {paragraphs.map((text) => (
+                  <p key={text.slice(0, 24)} className="text-muted text-[1.0625rem] leading-[1.8]">
+                    {text}
+                  </p>
+                ))}
+              </div>
+            </Reveal>
           </div>
         </Container>
       </section>
 
-      <Advantages />
       <ReviewsSection reviews={reviews} />
-      <div className="pt-8" />
       <ContactCta settings={settings} />
     </>
   );

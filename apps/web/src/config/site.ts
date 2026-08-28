@@ -6,7 +6,7 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   nav: [
     { href: '/excursions', label: 'Экскурсии' },
-    { href: '/about', label: 'О компании' },
+    { href: '/about', label: 'Об экскурсоводе' },
     { href: '/contacts', label: 'Контакты' },
   ],
   /** Запасные контакты на случай недоступности API (реальные — в настройках БД). */

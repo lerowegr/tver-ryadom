@@ -25,10 +25,6 @@ interface BookingFormProps {
   };
 }
 
-const inputCls =
-  'w-full rounded-2xl border border-sand-300 bg-white px-4 py-3 text-sm text-ink-900 ' +
-  'placeholder:text-bark-500/60 focus:border-terra-500 focus:outline-none focus:ring-2 focus:ring-terra-500/20';
-
 export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
   const { user, status } = useAuth();
   const maxPeople = tour.groupMax ?? 30;
@@ -122,11 +118,11 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
   if (created) {
     return (
       <div className="text-center" role="status">
-        <span className="bg-terra-500/10 text-terra-600 mx-auto mb-4 inline-flex rounded-full p-4">
-          <CheckIcon className="h-8 w-8" />
+        <span className="icon-tile mx-auto mb-6">
+          <CheckIcon className="h-5 w-5" />
         </span>
-        <h3 className="text-ink-900 font-display text-xl font-semibold">Заявка отправлена!</h3>
-        <p className="text-bark-700 mt-2 text-sm leading-relaxed">
+        <h3 className="font-display text-ink text-xl">Заявка отправлена!</h3>
+        <p className="text-muted mt-3 text-sm leading-relaxed">
           {created.startsAt ? (
             <>
               «{created.tour.title}», {formatDateTime(created.startsAt)}.
@@ -135,18 +131,18 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           ) : null}
           Мы свяжемся с вами для подтверждения брони в ближайшее время.
         </p>
-        <p className="text-ink-900 mt-4 text-lg font-bold">К оплате: {formatPrice(created.totalPrice)}</p>
-        <p className="text-bark-600 mt-1 text-xs">Оплата — на месте или по договорённости с гидом.</p>
+        <p className="text-ink mt-6 text-lg">К оплате: {formatPrice(created.totalPrice)}</p>
+        <p className="text-muted mt-2 text-xs">Оплата — на месте или по договорённости с гидом.</p>
         {status === 'authed' ? (
           <Link
             href="/account/bookings"
-            className="bg-terra-500 hover:bg-terra-600 mt-5 inline-block rounded-full px-6 py-2.5 text-sm font-semibold text-white transition"
+            className="bg-ink text-bg hover:bg-ink-soft mt-7 inline-block cursor-pointer px-8 py-4 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
           >
             Мои брони
           </Link>
         ) : (
-          <p className="text-bark-600 mt-4 text-xs">
-            <Link href="/auth" className="text-terra-600 font-semibold hover:underline">
+          <p className="text-muted mt-5 text-xs">
+            <Link href="/auth" className="link-underline text-ink">
               Создайте аккаунт
             </Link>
             , чтобы отслеживать брони и получать уведомления.
@@ -157,26 +153,26 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-4">
+    <form onSubmit={onSubmit} noValidate className="space-y-7">
       <fieldset>
-        <legend className="text-ink-900 mb-2 text-sm font-semibold">Дата и время</legend>
+        <legend className="field-label mb-4">Дата и время</legend>
         {hasSlots && !customDate ? (
           <div className="space-y-2">
             {tour.schedules.map((slot) => (
               <label
                 key={slot.id}
-                className="border-sand-300 has-checked:border-terra-500 has-checked:bg-terra-500/5 flex cursor-pointer items-center justify-between rounded-2xl border bg-white px-4 py-3 transition"
+                className="border-line has-checked:border-ink flex cursor-pointer items-center justify-between border px-5 py-4 transition-colors duration-500"
               >
                 <span className="flex items-center gap-3">
                   <input
                     type="radio"
                     value={slot.id}
                     {...register('scheduleId')}
-                    className="accent-terra-500 h-4 w-4"
+                    className="accent-ink h-4 w-4"
                   />
-                  <span className="text-ink-900 text-sm font-medium">{formatDateTime(slot.startsAt)}</span>
+                  <span className="text-ink text-sm">{formatDateTime(slot.startsAt)}</span>
                 </span>
-                <span className="text-bark-600 text-xs">свободно {slot.freeSeats}</span>
+                <span className="text-muted text-xs">свободно {slot.freeSeats}</span>
               </label>
             ))}
             <button
@@ -185,7 +181,7 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
                 setCustomDate(true);
                 setValue('scheduleId', undefined);
               }}
-              className="text-terra-600 text-sm font-medium underline-offset-4 hover:underline"
+              className="link-underline text-muted text-sm"
             >
               Нужна другая дата?
             </button>
@@ -196,7 +192,7 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
               type="datetime-local"
               {...register('desiredDate')}
               min={new Date(Date.now() + 3600_000).toISOString().slice(0, 16)}
-              className={inputCls}
+              className="field"
               aria-label="Желаемые дата и время"
             />
             {hasSlots ? (
@@ -207,7 +203,7 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
                   setValue('desiredDate', undefined);
                   setValue('scheduleId', tour.schedules[0]?.id);
                 }}
-                className="text-terra-600 mt-2 text-sm font-medium underline-offset-4 hover:underline"
+                className="link-underline text-muted mt-2 inline-block text-sm"
               >
                 ← Выбрать из расписания
               </button>
@@ -215,12 +211,12 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           </div>
         )}
         {errors.scheduleId ? (
-          <p className="text-terra-700 mt-1.5 text-xs font-medium">{errors.scheduleId.message}</p>
+          <p className="field-error">{errors.scheduleId.message}</p>
         ) : null}
       </fieldset>
 
       <div>
-        <label htmlFor="peopleCount" className="text-ink-900 mb-2 block text-sm font-semibold">
+        <label htmlFor="peopleCount" className="field-label mb-4">
           Участники
         </label>
         <div className="flex items-center gap-3">
@@ -228,7 +224,7 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
             type="button"
             aria-label="Меньше участников"
             onClick={() => setValue('peopleCount', Math.max(tour.groupMin, peopleCount - 1))}
-            className="border-sand-300 text-bark-700 hover:border-terra-500 h-11 w-11 rounded-full border bg-white text-xl font-bold"
+            className="border-line text-ink hover:border-ink h-12 w-12 cursor-pointer border transition-colors duration-500"
           >
             −
           </button>
@@ -238,20 +234,20 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
             {...register('peopleCount')}
             min={tour.groupMin}
             max={maxPeople}
-            className={`${inputCls} w-20 text-center`}
+            className="field w-20 text-center"
           />
           <button
             type="button"
             aria-label="Больше участников"
             onClick={() => setValue('peopleCount', Math.min(maxPeople, peopleCount + 1))}
-            className="border-sand-300 text-bark-700 hover:border-terra-500 h-11 w-11 rounded-full border bg-white text-xl font-bold"
+            className="border-line text-ink hover:border-ink h-12 w-12 cursor-pointer border transition-colors duration-500"
           >
             +
           </button>
-          <span className="text-bark-600 text-xs">до {maxPeople} чел.</span>
+          <span className="text-muted text-xs">до {maxPeople} чел.</span>
         </div>
         {errors.peopleCount ? (
-          <p className="text-terra-700 mt-1.5 text-xs font-medium">{errors.peopleCount.message}</p>
+          <p className="field-error">{errors.peopleCount.message}</p>
         ) : null}
       </div>
 
@@ -259,9 +255,9 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
         <label htmlFor="contactName" className="sr-only">
           Имя
         </label>
-        <input id="contactName" placeholder="Ваше имя" {...register('contactName')} className={inputCls} />
+        <input id="contactName" placeholder="Ваше имя" {...register('contactName')} className="field" />
         {errors.contactName ? (
-          <p className="text-terra-700 mt-1.5 text-xs font-medium">{errors.contactName.message}</p>
+          <p className="field-error">{errors.contactName.message}</p>
         ) : null}
       </div>
 
@@ -274,10 +270,10 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           type="tel"
           placeholder="Телефон, например +7 900 123-45-67"
           {...register('contactPhone')}
-          className={inputCls}
+          className="field"
         />
         {errors.contactPhone ? (
-          <p className="text-terra-700 mt-1.5 text-xs font-medium">{errors.contactPhone.message}</p>
+          <p className="field-error">{errors.contactPhone.message}</p>
         ) : null}
       </div>
 
@@ -290,10 +286,10 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           type="email"
           placeholder="Email (необязательно)"
           {...register('contactEmail')}
-          className={inputCls}
+          className="field"
         />
         {errors.contactEmail ? (
-          <p className="text-terra-700 mt-1.5 text-xs font-medium">{errors.contactEmail.message}</p>
+          <p className="field-error">{errors.contactEmail.message}</p>
         ) : null}
       </div>
 
@@ -306,17 +302,17 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           rows={2}
           placeholder="Комментарий: дети, темп, особые пожелания…"
           {...register('comment')}
-          className={inputCls}
+          className="field"
         />
       </div>
 
-      <div className="border-cream-200 flex items-center justify-between border-t pt-4">
-        <span className="text-bark-700 text-sm">Итого</span>
-        <span className="text-ink-900 font-display text-2xl font-semibold">{formatPrice(total)}</span>
+      <div className="border-line flex items-center justify-between border-t pt-6">
+        <span className="text-muted text-sm">Итого</span>
+        <span className="font-display text-ink text-2xl">{formatPrice(total)}</span>
       </div>
 
       {submitError ? (
-        <p className="bg-terra-500/10 text-terra-700 rounded-2xl px-4 py-3 text-sm font-medium" role="alert">
+        <p className="border-danger text-danger border-l-2 py-2 pl-4 text-sm" role="alert">
           {submitError}
         </p>
       ) : null}
@@ -324,11 +320,11 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-terra-500 shadow-soft hover:bg-terra-600 w-full rounded-full py-3.5 font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
+        className="bg-ink text-bg hover:bg-ink-soft mt-4 w-full cursor-pointer py-5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:opacity-40"
       >
         {isSubmitting ? 'Отправляем…' : 'Забронировать'}
       </button>
-      <p className="text-bark-600 text-center text-xs leading-relaxed">
+      <p className="text-muted text-center text-xs leading-relaxed">
         Это заявка, а не оплата: мы подтвердим бронь и ответим на вопросы.
       </p>
     </form>

@@ -26,7 +26,7 @@ export function SegmentedTabs<T extends string>({
   const groupId = useId();
 
   return (
-    <div className={`bg-cream-200 inline-flex rounded-full p-1 ${className}`} role="tablist" aria-label={ariaLabel}>
+    <div className={`border-line inline-flex border ${className}`} role="tablist" aria-label={ariaLabel}>
       {options.map((option) => {
         const active = value === option.value;
         return (
@@ -35,18 +35,18 @@ export function SegmentedTabs<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.value)}
-            className="relative flex-1 rounded-full px-5 py-2 text-sm font-semibold whitespace-nowrap"
+            className="relative flex-1 cursor-pointer px-6 py-3.5 text-[0.6875rem] font-medium tracking-[0.18em] whitespace-nowrap uppercase"
           >
             {active ? (
               <motion.span
                 layoutId={`segment-${groupId}`}
-                className="shadow-card absolute inset-0 rounded-full bg-white"
+                className="bg-ink absolute inset-0"
                 transition={{ duration: 0.45, ease: smoothEase }}
               />
             ) : null}
             <span
               className={`relative z-10 transition-colors duration-300 ${
-                active ? 'text-ink-900' : 'text-bark-600 hover:text-bark-800'
+                active ? 'text-bg' : 'text-muted hover:text-ink'
               }`}
             >
               {option.label}

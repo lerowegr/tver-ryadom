@@ -9,10 +9,6 @@ import type { PublicUserDto } from '@/lib/types';
 
 type TelegramLink = { available: false } | { available: true; url: string };
 
-const inputCls =
-  'w-full rounded-2xl border border-sand-300 bg-white px-4 py-3 text-sm text-ink-900 ' +
-  'placeholder:text-bark-500/60 focus:border-terra-500 focus:outline-none focus:ring-2 focus:ring-terra-500/20';
-
 function useFormState() {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
@@ -79,27 +75,27 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <section className="shadow-card rounded-3xl bg-white p-7 md:p-9" aria-labelledby="profile-data">
-        <h2 id="profile-data" className="text-ink-900 mb-1 text-lg font-bold">
+      <section className="border-line border p-8 md:p-10" aria-labelledby="profile-data">
+        <h2 id="profile-data" className="text-ink mb-1 text-lg font-medium">
           Личные данные
         </h2>
-        <p className="text-bark-600 mb-6 text-sm">
+        <p className="text-muted mb-6 text-sm">
           {user.email}
           {user.emailVerified ? (
-            <span className="text-terra-600 ml-2 text-xs font-semibold">✓ подтверждён</span>
+            <span className="text-ink ml-2 text-xs font-medium">✓ подтверждён</span>
           ) : (
-            <span className="text-bark-500 ml-2 text-xs">подтверждение придёт с email-уведомлениями</span>
+            <span className="text-faint ml-2 text-xs">подтверждение придёт с email-уведомлениями</span>
           )}
         </p>
         <form onSubmit={saveProfile} className="max-w-md space-y-4">
           <div>
-            <label htmlFor="pf-name" className="text-bark-700 mb-1.5 block text-sm font-medium">
+            <label htmlFor="pf-name" className="field-label">
               Имя
             </label>
-            <input id="pf-name" name="name" defaultValue={user.name} required className={inputCls} />
+            <input id="pf-name" name="name" defaultValue={user.name} required className="field" />
           </div>
           <div>
-            <label htmlFor="pf-phone" className="text-bark-700 mb-1.5 block text-sm font-medium">
+            <label htmlFor="pf-phone" className="field-label">
               Телефон
             </label>
             <input
@@ -108,7 +104,7 @@ export default function ProfilePage() {
               type="tel"
               defaultValue={user.phone ?? ''}
               placeholder="+7 900 123-45-67"
-              className={inputCls}
+              className="field"
             />
           </div>
           {profile.message ? (
@@ -116,8 +112,8 @@ export default function ProfilePage() {
               role="status"
               className={`rounded-2xl px-4 py-3 text-sm font-medium ${
                 profile.message.kind === 'ok'
-                  ? 'bg-sand-200/60 text-bark-800'
-                  : 'bg-terra-500/10 text-terra-700'
+                  ? 'border-ink text-ink border-l-2 pl-4'
+                  : 'border-danger text-danger border-l-2 pl-4'
               }`}
             >
               {profile.message.text}
@@ -126,25 +122,25 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={profile.pending}
-            className="bg-terra-500 hover:bg-terra-600 rounded-full px-7 py-3 text-sm font-semibold text-white transition disabled:opacity-60"
+            className="bg-ink text-bg hover:bg-ink-soft cursor-pointer px-8 py-4 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 disabled:opacity-40"
           >
             {profile.pending ? 'Сохраняем…' : 'Сохранить'}
           </button>
         </form>
       </section>
 
-      <section className="shadow-card rounded-3xl bg-white p-7 md:p-9" aria-labelledby="profile-tg">
-        <h2 id="profile-tg" className="text-ink-900 mb-2 flex items-center gap-2 text-lg font-bold">
-          <TelegramIcon className="text-terra-600 h-5 w-5" /> Уведомления в Telegram
+      <section className="border-line border p-8 md:p-10" aria-labelledby="profile-tg">
+        <h2 id="profile-tg" className="text-ink mb-2 flex items-center gap-2 text-lg font-medium">
+          <TelegramIcon className="text-ink h-5 w-5" /> Уведомления в Telegram
         </h2>
         {user.telegramLinked ? (
-          <p className="text-bark-700 text-sm">
-            <span className="text-terra-600 font-semibold">✓ Подключено.</span> Подтверждения броней
+          <p className="text-muted text-sm">
+            <span className="text-ink font-medium">✓ Подключено.</span> Подтверждения броней
             и напоминания приходят в Telegram.
           </p>
         ) : (
           <div>
-            <p className="text-bark-700 mb-4 text-sm">
+            <p className="text-muted mb-4 text-sm">
               Привяжите Telegram, чтобы получать подтверждения броней и напоминания за сутки до
               экскурсии.
             </p>
@@ -158,24 +154,24 @@ export default function ProfilePage() {
                   profile.setMessage({ kind: 'error', text: 'Не удалось получить ссылку привязки' });
                 }
               }}
-              className="bg-terra-500 hover:bg-terra-600 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition"
+              className="bg-ink text-bg hover:bg-ink-soft inline-flex cursor-pointer items-center gap-2 px-7 py-3.5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
             >
               <TelegramIcon className="h-4 w-4" /> Привязать Telegram
             </button>
-            <p className="text-bark-500 mt-3 text-xs">
+            <p className="text-faint mt-3 text-xs">
               Откроется чат с ботом — нажмите в нём «Start». Статус обновится после следующего входа.
             </p>
           </div>
         )}
       </section>
 
-      <section className="shadow-card rounded-3xl bg-white p-7 md:p-9" aria-labelledby="profile-pass">
-        <h2 id="profile-pass" className="text-ink-900 mb-6 text-lg font-bold">
+      <section className="border-line border p-8 md:p-10" aria-labelledby="profile-pass">
+        <h2 id="profile-pass" className="text-ink mb-6 text-lg font-medium">
           Смена пароля
         </h2>
         <form onSubmit={changePassword} className="max-w-md space-y-4">
           <div>
-            <label htmlFor="pf-cur" className="text-bark-700 mb-1.5 block text-sm font-medium">
+            <label htmlFor="pf-cur" className="field-label">
               Текущий пароль
             </label>
             <input
@@ -184,11 +180,11 @@ export default function ProfilePage() {
               type="password"
               autoComplete="current-password"
               required
-              className={inputCls}
+              className="field"
             />
           </div>
           <div>
-            <label htmlFor="pf-new" className="text-bark-700 mb-1.5 block text-sm font-medium">
+            <label htmlFor="pf-new" className="field-label">
               Новый пароль
             </label>
             <input
@@ -198,7 +194,7 @@ export default function ProfilePage() {
               autoComplete="new-password"
               required
               minLength={8}
-              className={inputCls}
+              className="field"
             />
           </div>
           {password.message ? (
@@ -206,8 +202,8 @@ export default function ProfilePage() {
               role="status"
               className={`rounded-2xl px-4 py-3 text-sm font-medium ${
                 password.message.kind === 'ok'
-                  ? 'bg-sand-200/60 text-bark-800'
-                  : 'bg-terra-500/10 text-terra-700'
+                  ? 'border-ink text-ink border-l-2 pl-4'
+                  : 'border-danger text-danger border-l-2 pl-4'
               }`}
             >
               {password.message.text}
@@ -216,7 +212,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={password.pending}
-            className="border-bark-600/30 text-bark-800 hover:border-bark-600/60 rounded-full border bg-white px-7 py-3 text-sm font-semibold transition disabled:opacity-60"
+            className="border-line text-ink hover:border-ink hover:bg-ink hover:text-bg cursor-pointer border px-8 py-4 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 disabled:opacity-40"
           >
             {password.pending ? 'Меняем…' : 'Изменить пароль'}
           </button>

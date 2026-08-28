@@ -12,6 +12,7 @@ const contactFields = [
   { key: 'contacts.telegram', label: 'Ссылка Telegram' },
   { key: 'contacts.whatsapp', label: 'Ссылка WhatsApp' },
   { key: 'contacts.vk', label: 'Ссылка ВКонтакте' },
+  { key: 'contacts.max', label: 'Ссылка MAX' },
 ];
 
 const textFields = [

@@ -16,13 +16,13 @@ export function RatingStars({
         {[1, 2, 3, 4, 5].map((i) => (
           <StarIcon
             key={i}
-            className={`h-4 w-4 ${i <= Math.round(rating) ? 'text-terra-500' : 'text-sand-300'}`}
+            className={`h-4 w-4 ${i <= Math.round(rating) ? 'text-ink' : 'text-line-strong'}`}
           />
         ))}
       </span>
-      <span className="text-ink-900 text-sm font-semibold">{rating.toFixed(1).replace('.', ',')}</span>
+      <span className="text-ink text-sm">{rating.toFixed(1).replace('.', ',')}</span>
       {count !== undefined ? (
-        <span className="text-bark-600 text-sm" aria-label={`${count} отзывов`}>
+        <span className="text-muted text-sm" aria-label={`${count} отзывов`}>
           ({count})
         </span>
       ) : null}

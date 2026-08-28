@@ -20,10 +20,10 @@ const tabs: { key: Tab; label: string }[] = [
 ];
 
 const statusStyles: Record<BookingStatus, string> = {
-  pending: 'bg-sand-200 text-bark-800',
+  pending: 'border-line text-muted border',
   confirmed: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-cream-200 text-bark-600',
-  completed: 'bg-bark-600/10 text-bark-800',
+  cancelled: 'border-line text-faint border',
+  completed: 'border-line text-muted border',
 };
 
 function queryFor(tab: Tab): string {
@@ -76,16 +76,16 @@ export default function BookingsPage() {
       />
 
       {bookings.isLoading ? (
-        <p className="text-bark-600 animate-pulse py-10 text-center">Загружаем брони…</p>
+        <p className="text-muted animate-pulse py-10 text-center">Загружаем брони…</p>
       ) : (bookings.data?.items.length ?? 0) === 0 ? (
-        <div className="glass rounded-3xl p-10 text-center">
-          <p className="text-ink-900 text-lg font-semibold">Здесь пока пусто</p>
-          <p className="text-bark-700 mt-2 text-sm">
+        <div className="border-line border-t py-16 text-center">
+          <p className="text-ink text-lg font-medium">Здесь пока пусто</p>
+          <p className="text-muted mt-2 text-sm">
             {tab === 'upcoming' ? 'Нет предстоящих экскурсий — самое время выбрать!' : 'Броней не найдено.'}
           </p>
           <Link
             href="/excursions"
-            className="bg-terra-500 hover:bg-terra-600 mt-6 inline-block rounded-full px-7 py-3 text-sm font-semibold text-white transition"
+            className="bg-ink text-bg hover:bg-ink-soft mt-8 inline-block cursor-pointer px-8 py-4 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
           >
             К экскурсиям
           </Link>
@@ -93,7 +93,7 @@ export default function BookingsPage() {
       ) : (
         <ul className="space-y-4">
           {bookings.data?.items.map((booking) => (
-            <li key={booking.id} className="shadow-card rounded-3xl bg-white p-6 md:p-7">
+            <li key={booking.id} className="bg-white p-6 md:p-7">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <span
@@ -101,16 +101,16 @@ export default function BookingsPage() {
                   >
                     {BOOKING_STATUS_LABELS[booking.status]}
                   </span>
-                  <h3 className="text-ink-900 mt-3 text-lg font-bold">
+                  <h3 className="text-ink mt-3 text-lg font-medium">
                     {booking.tour ? (
-                      <Link href={`/excursions/${booking.tour.slug}`} className="hover:text-terra-600">
+                      <Link href={`/excursions/${booking.tour.slug}`} className="hover:text-ink">
                         {booking.tour.title}
                       </Link>
                     ) : (
                       'Экскурсия недоступна'
                     )}
                   </h3>
-                  <div className="text-bark-700 mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                  <div className="text-muted mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
                     <span className="flex items-center gap-1.5">
                       <ClockIcon className="h-4 w-4" />
                       {booking.startsAt ? formatDateTime(booking.startsAt) : 'дата согласовывается'}
@@ -120,19 +120,19 @@ export default function BookingsPage() {
                     </span>
                   </div>
                   {booking.cancelReason ? (
-                    <p className="text-bark-500 mt-2 text-xs">Причина отмены: {booking.cancelReason}</p>
+                    <p className="text-faint mt-2 text-xs">Причина отмены: {booking.cancelReason}</p>
                   ) : null}
                 </div>
-                <p className="text-ink-900 font-display text-xl font-semibold">
+                <p className="text-ink font-display text-xl font-medium">
                   {formatPrice(booking.totalPrice)}
                 </p>
               </div>
 
-              <div className="border-cream-200 mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+              <div className="border-line mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
                 {canCancel(booking) ? (
                   cancelId === booking.id ? (
                     <div className="w-full space-y-3">
-                      <label htmlFor={`reason-${booking.id}`} className="text-bark-700 block text-sm font-medium">
+                      <label htmlFor={`reason-${booking.id}`} className="field-label">
                         Почему отменяете? (необязательно)
                       </label>
                       <textarea
@@ -140,15 +140,15 @@ export default function BookingsPage() {
                         rows={2}
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        className="border-sand-300 text-ink-900 focus:border-terra-500 w-full rounded-2xl border bg-white px-4 py-3 text-sm focus:outline-none"
+                        className="field"
                         placeholder="Изменились планы…"
                       />
-                      {error ? <p className="text-terra-700 text-xs font-medium">{error}</p> : null}
+                      {error ? <p className="text-danger text-xs font-medium">{error}</p> : null}
                       <div className="flex gap-3">
                         <button
                           onClick={() => cancel.mutate({ id: booking.id, why: reason })}
                           disabled={cancel.isPending}
-                          className="bg-terra-500 hover:bg-terra-600 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+                          className="bg-ink text-bg hover:bg-ink-soft cursor-pointer px-7 py-3.5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 disabled:opacity-40"
                         >
                           {cancel.isPending ? 'Отменяем…' : 'Подтвердить отмену'}
                         </button>
@@ -157,7 +157,7 @@ export default function BookingsPage() {
                             setCancelId(null);
                             setError(null);
                           }}
-                          className="text-bark-600 px-4 py-2.5 text-sm font-semibold"
+                          className="text-muted px-4 py-2.5 text-sm font-medium"
                         >
                           Передумал
                         </button>
@@ -166,7 +166,7 @@ export default function BookingsPage() {
                   ) : (
                     <button
                       onClick={() => setCancelId(booking.id)}
-                      className="border-bark-600/30 text-bark-800 hover:border-terra-500 hover:text-terra-600 rounded-full border px-5 py-2 text-sm font-semibold transition"
+                      className="border-line text-ink hover:border-ink hover:bg-ink hover:text-bg cursor-pointer border px-6 py-3 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
                     >
                       Отменить
                     </button>
@@ -175,12 +175,12 @@ export default function BookingsPage() {
                 {booking.tour && (booking.status === 'cancelled' || booking.status === 'completed') ? (
                   <Link
                     href={`/excursions/${booking.tour.slug}#booking`}
-                    className="bg-terra-500 hover:bg-terra-600 rounded-full px-5 py-2 text-sm font-semibold text-white transition"
+                    className="bg-ink text-bg hover:bg-ink-soft cursor-pointer px-6 py-3 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
                   >
                     Забронировать снова
                   </Link>
                 ) : null}
-                <span className="text-bark-500 ml-auto text-xs">
+                <span className="text-faint ml-auto text-xs">
                   Заявка от {formatDateTime(booking.createdAt)}
                 </span>
               </div>

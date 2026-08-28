@@ -34,3 +34,14 @@ export function groupLabel(min: number, max: number | null): string {
   if (max) return `до ${max} чел.`;
   return `от ${min} чел.`;
 }
+
+/** Порядок важности бейджей: «Хит» и «Авторский» информативнее прочих. */
+const badgePriority = ['hit', 'exclusive', 'author-route', 'first-visit', 'popular'];
+
+export function primaryBadge<T extends { slug: string }>(badges: T[]): T | undefined {
+  if (badges.length === 0) return undefined;
+  return [...badges].sort(
+    (a, b) =>
+      (badgePriority.indexOf(a.slug) + 1 || 99) - (badgePriority.indexOf(b.slug) + 1 || 99),
+  )[0];
+}

@@ -10,10 +10,6 @@ import { ApiRequestError } from '@/lib/api';
 
 type Mode = 'login' | 'register';
 
-const inputCls =
-  'w-full rounded-2xl border border-sand-300 bg-white px-4 py-3 text-sm text-ink-900 ' +
-  'placeholder:text-bark-500/60 focus:border-terra-500 focus:outline-none focus:ring-2 focus:ring-terra-500/20';
-
 export function AuthForm() {
   const { status, login, register } = useAuth();
   const router = useRouter();
@@ -63,11 +59,11 @@ export function AuthForm() {
   };
 
   return (
-    <div className="glass shadow-soft w-full max-w-md rounded-[2rem] p-8 md:p-10">
-      <h1 className="font-display text-ink-900 text-3xl font-semibold">
+    <div className="border-line w-full max-w-md border p-9 md:p-12">
+      <h1 className="display text-[2rem]">
         {mode === 'login' ? 'С возвращением!' : 'Давайте знакомиться'}
       </h1>
-      <p className="text-bark-700 mt-2 text-sm">
+      <p className="text-muted mt-4 text-sm leading-relaxed">
         {mode === 'login'
           ? 'Войдите, чтобы управлять бронированиями и избранным.'
           : 'Аккаунт хранит ваши брони, избранные маршруты и уведомления.'}
@@ -88,7 +84,7 @@ export function AuthForm() {
         ]}
       />
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
+      <form onSubmit={onSubmit} className="mt-9 space-y-7" noValidate>
         <AnimatePresence initial={false}>
           {mode === 'register' ? (
             <motion.div
@@ -102,9 +98,9 @@ export function AuthForm() {
               <label htmlFor="auth-name" className="sr-only">
                 Имя
               </label>
-              <input id="auth-name" name="name" placeholder="Ваше имя" required className={inputCls} />
+              <input id="auth-name" name="name" placeholder="Ваше имя" required className="field" />
               {fieldErrors.name ? (
-                <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.name}</p>
+                <p className="field-error">{fieldErrors.name}</p>
               ) : null}
             </motion.div>
           ) : null}
@@ -121,10 +117,10 @@ export function AuthForm() {
             placeholder="Email"
             autoComplete="email"
             required
-            className={inputCls}
+            className="field"
           />
           {fieldErrors.email ? (
-            <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.email}</p>
+            <p className="field-error">{fieldErrors.email}</p>
           ) : null}
         </div>
 
@@ -147,10 +143,10 @@ export function AuthForm() {
                 type="tel"
                 placeholder="Телефон (необязательно)"
                 autoComplete="tel"
-                className={inputCls}
+                className="field"
               />
               {fieldErrors.phone ? (
-                <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.phone}</p>
+                <p className="field-error">{fieldErrors.phone}</p>
               ) : null}
             </motion.div>
           ) : null}
@@ -168,15 +164,15 @@ export function AuthForm() {
             autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
             required
             minLength={mode === 'register' ? 8 : 1}
-            className={inputCls}
+            className="field"
           />
           {fieldErrors.password ? (
-            <p className="text-terra-700 mt-1.5 text-xs font-medium">{fieldErrors.password}</p>
+            <p className="field-error">{fieldErrors.password}</p>
           ) : null}
         </div>
 
         {error ? (
-          <p className="bg-terra-500/10 text-terra-700 rounded-2xl px-4 py-3 text-sm font-medium" role="alert">
+          <p className="border-danger text-danger border-l-2 py-2 pl-4 text-sm" role="alert">
             {error}
           </p>
         ) : null}
@@ -184,19 +180,19 @@ export function AuthForm() {
         <button
           type="submit"
           disabled={pending || status === 'loading'}
-          className="bg-terra-500 shadow-soft hover:bg-terra-600 w-full rounded-full py-3.5 font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
+          className="bg-ink text-bg hover:bg-ink-soft mt-4 w-full cursor-pointer py-5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:opacity-40"
         >
           {pending ? 'Секунду…' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
         </button>
       </form>
 
       {mode === 'login' ? (
-        <p className="text-bark-600 mt-5 text-center text-xs leading-relaxed">
-          Забыли пароль? <Link href="/contacts" className="text-terra-600 font-semibold hover:underline">Напишите нам</Link> —
+        <p className="text-muted mt-7 text-center text-xs leading-relaxed">
+          Забыли пароль? <Link href="/contacts" className="link-underline text-ink">Напишите нам</Link> —
           восстановление по email появится вместе с уведомлениями.
         </p>
       ) : (
-        <p className="text-bark-600 mt-5 text-center text-xs leading-relaxed">
+        <p className="text-muted mt-7 text-center text-xs leading-relaxed">
           Регистрируясь, вы соглашаетесь на обработку персональных данных для оформления бронирований.
         </p>
       )}

@@ -11,16 +11,18 @@ export function SectionHeading({
   subtitle?: string;
   align?: 'left' | 'center';
 }) {
-  const alignCls = align === 'center' ? 'text-center [&_.heading-accent]:after:mx-auto' : '';
+  const centered = align === 'center';
   return (
-    <Reveal className={`mb-10 max-w-2xl md:mb-14 ${align === 'center' ? 'mx-auto' : ''} ${alignCls}`}>
+    <Reveal className={`max-w-2xl ${centered ? 'mx-auto text-center' : ''}`}>
       {eyebrow ? (
-        <p className="text-terra-600 mb-3 text-sm font-semibold tracking-widest uppercase">{eyebrow}</p>
+        <p className={centered ? 'kicker-plain mb-5' : 'kicker mb-5'}>{eyebrow}</p>
       ) : null}
-      <h2 className="font-display heading-accent text-ink-900 text-3xl leading-tight font-semibold text-balance md:text-4xl">
-        {title}
-      </h2>
-      {subtitle ? <p className="text-bark-700 mt-5 text-lg leading-relaxed">{subtitle}</p> : null}
+      <h2 className="display text-[clamp(1.875rem,3.4vw,3rem)]">{title}</h2>
+      {subtitle ? (
+        <p className={`text-muted mt-6 text-[1.0625rem] leading-[1.75] ${centered ? 'mx-auto' : ''}`}>
+          {subtitle}
+        </p>
+      ) : null}
     </Reveal>
   );
 }

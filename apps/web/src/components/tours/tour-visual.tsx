@@ -5,9 +5,9 @@
 import type { TourImageDto } from '@/lib/types';
 
 const palettes = [
-  ['#dbc7a6', '#c0703e'],
-  ['#c6a87e', '#8a6d4f'],
-  ['#eaddc7', '#a1815d'],
+  ['#efede8', '#8a8880'],
+  ['#e7e4de', '#6b6b66'],
+  ['#f7f5f1', '#b8b4ab'],
 ];
 
 function hashOf(text: string): number {
@@ -46,7 +46,7 @@ export function TourVisual({
   }
 
   const idx = hashOf(slug) % palettes.length;
-  const [from, to] = palettes[idx] ?? ['#dbc7a6', '#c0703e'];
+  const [from, to] = palettes[idx] ?? ['#efede8', '#8a8880'];
   const path = silhouettes[idx] ?? silhouettes[0];
 
   return (

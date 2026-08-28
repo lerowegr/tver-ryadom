@@ -36,20 +36,19 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
   if (status !== 'authed') {
     return (
       <div className="flex min-h-svh items-center justify-center pt-16" aria-busy="true">
-        <p className="text-bark-600 animate-pulse">Загружаем личный кабинет…</p>
+        <p className="kicker-plain text-muted animate-pulse">Загружаем личный кабинет…</p>
       </div>
     );
   }
 
   return (
-    <div className="pt-28 pb-16 md:pt-32">
-      <Container>
-        <h1 className="font-display text-ink-900 mb-8 text-3xl font-semibold md:text-4xl">
-          Личный кабинет
-        </h1>
-        <div className="grid gap-8 lg:grid-cols-[15rem_1fr] lg:items-start">
+    <div className="pt-40 pb-28 md:pt-52">
+      <Container className="!max-w-[104rem]">
+        <p className="kicker mb-7">Кабинет</p>
+        <h1 className="display mb-16 text-[clamp(2.25rem,4.4vw,3.5rem)]">Личный кабинет</h1>
+        <div className="grid gap-12 lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-20">
           <nav
-            className="no-scrollbar flex gap-2 overflow-x-auto lg:sticky lg:top-24 lg:flex-col"
+            className="no-scrollbar border-line flex gap-8 overflow-x-auto lg:sticky lg:top-28 lg:flex-col lg:gap-0 lg:border-t"
             aria-label="Разделы кабинета"
           >
             {navItems.map((item) => {
@@ -59,22 +58,20 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex shrink-0 items-center justify-between gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition lg:rounded-2xl ${
-                    active ? 'shadow-card text-ink-900 bg-white' : 'text-bark-700 hover:bg-white/60'
+                  className={`flex shrink-0 items-center justify-between gap-3 py-4 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] lg:border-line lg:border-b ${
+                    active ? 'text-ink' : 'text-muted hover:text-ink'
                   }`}
                 >
                   {item.label}
                   {item.href === '/account/notifications' && unread > 0 ? (
-                    <span className="bg-terra-500 rounded-full px-2 py-0.5 text-xs font-bold text-white">
-                      {unread}
-                    </span>
+                    <span className="bg-ink text-bg px-2 py-0.5 text-[0.625rem] tabular-nums">{unread}</span>
                   ) : null}
                 </Link>
               );
             })}
             <button
               onClick={() => logout().then(() => router.push('/'))}
-              className="text-bark-600 hover:text-terra-600 shrink-0 rounded-full px-5 py-2.5 text-left text-sm font-semibold transition lg:rounded-2xl"
+              className="text-muted hover:text-ink shrink-0 cursor-pointer py-4 text-left text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
             >
               Выйти
             </button>

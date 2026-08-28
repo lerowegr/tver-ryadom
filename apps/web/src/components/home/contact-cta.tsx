@@ -1,50 +1,58 @@
+import Link from 'next/link';
 import { formatRuPhone } from '@tver/shared';
 import { Reveal } from '@/components/motion/reveal';
-import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
-import { PhoneIcon, TelegramIcon, WhatsAppIcon } from '@/components/ui/icons';
 import type { SiteSettings } from '@/lib/types';
 
+/**
+ * Финальный блок. Тёмная полоса на почти-чёрном — единственная инверсия
+ * на странице: она закрывает ритм и отделяет подвал.
+ */
 export function ContactCta({ settings }: { settings: SiteSettings }) {
   const phone = settings['contacts.phone'];
+  const telegram = settings['contacts.telegram'];
+  const whatsapp = settings['contacts.whatsapp'];
+
+  const linkCls =
+    'link-underline text-bg/80 hover:text-bg text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500';
 
   return (
-    <section className="pb-20 md:pb-28">
-      <Container>
+    <section className="bg-ink text-bg py-28 md:py-40">
+      <Container className="!max-w-[104rem]">
         <Reveal>
-          <div className="from-bark-700 to-bark-800 shadow-soft relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br px-8 py-14 md:px-16">
-            <div className="bg-terra-500/25 absolute -top-20 right-0 h-72 w-72 rounded-full blur-3xl" aria-hidden />
-            <div className="relative max-w-2xl">
-              <h2 className="font-display text-3xl leading-tight font-semibold text-white text-balance md:text-4xl">
+          <div className="grid gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-24">
+            <div>
+              <p className="kicker-plain text-bg/45 mb-6">Свой маршрут</p>
+              <h2 className="font-display text-[clamp(1.875rem,3.4vw,3rem)] leading-[1.08] text-balance">
                 Не нашли подходящую дату или собираете свою компанию?
               </h2>
-              <p className="text-cream-200/90 mt-4 text-lg">
-                Напишите нам — соберём экскурсию под вас: другое время, свой темп, особые интересы.
+            </div>
+
+            <div className="flex flex-col justify-end">
+              <p className="text-bg/65 max-w-[42ch] text-[1.0625rem] leading-[1.75]">
+                Напишите — соберём экскурсию под вас: другое время, свой темп, особые интересы.
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
+
+              <div className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-5">
+                <Link
+                  href="/contacts"
+                  className="bg-bg text-ink cursor-pointer px-10 py-5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white"
+                >
+                  Написать
+                </Link>
                 {phone ? (
-                  <Button href={`tel:${phone}`} size="lg">
-                    <PhoneIcon className="h-5 w-5" /> {formatRuPhone(phone)}
-                  </Button>
-                ) : null}
-                {settings['contacts.telegram'] ? (
-                  <a
-                    href={settings['contacts.telegram']}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                  >
-                    <TelegramIcon className="h-5 w-5" /> Telegram
+                  <a href={`tel:${phone}`} className={linkCls}>
+                    {formatRuPhone(phone)}
                   </a>
                 ) : null}
-                {settings['contacts.whatsapp'] ? (
-                  <a
-                    href={settings['contacts.whatsapp']}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                  >
-                    <WhatsAppIcon className="h-5 w-5" /> WhatsApp
+                {telegram ? (
+                  <a href={telegram} target="_blank" rel="noopener noreferrer" className={linkCls}>
+                    Telegram
+                  </a>
+                ) : null}
+                {whatsapp ? (
+                  <a href={whatsapp} target="_blank" rel="noopener noreferrer" className={linkCls}>
+                    WhatsApp
                   </a>
                 ) : null}
               </div>

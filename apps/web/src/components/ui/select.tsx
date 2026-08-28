@@ -13,14 +13,14 @@ export function Select({
     <span className={`relative inline-flex ${className}`}>
       <select
         {...rest}
-        className="border-sand-300 text-bark-800 focus:outline-terra-500 disabled:text-bark-500/60 w-full cursor-pointer appearance-none rounded-full border bg-white py-2.5 pr-10 pl-4 text-sm font-medium transition-colors duration-200 disabled:cursor-not-allowed"
+        className="border-line text-ink focus:border-ink focus:outline-none disabled:text-faint w-full cursor-pointer appearance-none border bg-transparent py-3 pr-10 pl-4 text-[0.6875rem] font-medium tracking-[0.14em] uppercase transition-colors duration-500 disabled:cursor-not-allowed"
       >
         {children}
       </select>
       <svg
         viewBox="0 0 16 16"
         aria-hidden
-        className="text-bark-600 pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2"
+        className="text-muted pointer-events-none absolute top-1/2 right-3.5 h-3.5 w-3.5 -translate-y-1/2"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"

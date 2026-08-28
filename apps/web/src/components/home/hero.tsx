@@ -1,114 +1,171 @@
 'use client';
 
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Link from 'next/link';
 import { useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Container } from '@/components/ui/container';
-import { StarIcon } from '@/components/ui/icons';
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
+
+export interface HeroProps {
+  kicker: string;
+  titleTop: string;
+  titleItalic: string;
+  lead: string;
+  imageUrl?: string | null;
+  imageCaption?: string;
+}
+
+/** Строка заголовка в маске: внутренний span выезжает снизу. */
+function MaskedLine({ children, italic = false }: { children: string; italic?: boolean }) {
+  return (
+    <span className="block overflow-hidden pb-[0.08em]">
+      <span className={`hero-line block ${italic ? 'italic' : ''}`}>{children}</span>
+    </span>
+  );
+}
+
+/** Заглушка вместо фотографии: слоистые плоскости с мягким дрейфом. */
+function PhotoPlate() {
+  return (
+    <div className="bg-surface-soft absolute inset-0 overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-70"
+        style={{
+          background:
+            'radial-gradient(120% 90% at 70% 10%, #ffffff 0%, transparent 55%),' +
+            'radial-gradient(90% 70% at 20% 95%, #e7e4de 0%, transparent 60%)',
+        }}
+      />
+      <div
+        className="absolute inset-0 opacity-[0.18]"
+        style={{
+          backgroundImage: 'radial-gradient(#8a8880 0.5px, transparent 0.5px)',
+          backgroundSize: '4px 4px',
+        }}
+      />
+      <div className="absolute inset-x-10 bottom-10">
+        <p className="kicker-plain text-faint">Фотография появится после загрузки в админке</p>
+      </div>
+    </div>
+  );
+}
 
 export function Hero({
-  tagline,
-  subtitle,
-  stats,
-}: {
-  tagline: string;
-  subtitle: string;
-  stats: { tours: number; rating: number };
-}) {
-  const ref = useRef<HTMLElement>(null);
-  const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const skylineY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 120]);
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -60]);
+  kicker,
+  titleTop,
+  titleItalic,
+  lead,
+  imageUrl,
+  imageCaption,
+}: HeroProps) {
+  const root = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      if (reduce) {
+        gsap.set('.gs-fade', { opacity: 1 });
+        gsap.set(gsap.utils.toArray<HTMLElement>('.hero-line', root.current), { y: 0 });
+        gsap.set('.hero-photo', { clipPath: 'none' });
+        gsap.set('.hero-photo-inner', { scale: 1 });
+        return;
+      }
+
+      // Стартовые состояния ставим явно, а анимируем только через .to().
+      // fromTo внутри таймлайна повторно применял стартовые значения при
+      // перерасчёте, и строки заголовка залипали под маской.
+      // Смещение строк считаем в пикселях от высоты самой строки.
+      // С yPercent анимация не доезжала: проценты пересчитываются при
+      // обновлении ScrollTrigger и затирали конечное значение.
+      const lines = gsap.utils.toArray<HTMLElement>('.hero-line', root.current);
+      lines.forEach((line) => gsap.set(line, { y: line.offsetHeight * 1.15 }));
+      gsap.set('.hero-photo', { clipPath: 'inset(100% 0% 0% 0%)' });
+      gsap.set('.hero-photo-inner', { scale: 1.18 });
+      gsap.set(['.hero-kicker', '.hero-lead', '.hero-cta'], { y: 18 });
+
+      // Вступление: шторка фото и построчный выезд заголовка.
+      gsap
+        .timeline({ defaults: { ease: 'power3.out' } })
+        .to('.hero-photo', { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.4, ease: 'expo.out' })
+        .to('.hero-photo-inner', { scale: 1, duration: 1.8, ease: 'expo.out' }, 0)
+        .to('.hero-kicker', { opacity: 1, y: 0, duration: 0.6 }, 0.25)
+        .to(lines, { y: 0, duration: 1.05, stagger: 0.11 }, 0.35)
+        .to('.hero-lead', { opacity: 1, y: 0, duration: 0.8 }, 0.85)
+        .to('.hero-cta', { opacity: 1, y: 0, duration: 0.7 }, 1);
+
+
+      // Скролл: фото уезжает медленнее текста — глубина.
+      gsap.to('.hero-photo-inner', {
+        yPercent: 12,
+        ease: 'none',
+        scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: true },
+      });
+      gsap.to('.hero-copy', {
+        yPercent: -14,
+        opacity: 0.25,
+        ease: 'none',
+        scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: true },
+      });
+    },
+    { scope: root },
+  );
+
+  const photo = (
+    <div className="hero-photo absolute inset-0 overflow-hidden">
+      <div className="hero-photo-inner absolute inset-0">
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <PhotoPlate />
+        )}
+      </div>
+      {imageCaption ? (
+        <p className="kicker-plain absolute bottom-8 left-8 text-white/70">{imageCaption}</p>
+      ) : null}
+    </div>
+  );
+
+  const copy = (
+    <div className="hero-copy">
+      <p className="hero-kicker kicker gs-fade">{kicker}</p>
+
+      <h1 className="display mt-8 text-[clamp(2.25rem,4.6vw,4rem)]">
+        <MaskedLine>{titleTop}</MaskedLine>
+        <MaskedLine italic>{titleItalic}</MaskedLine>
+      </h1>
+
+      <p className="hero-lead gs-fade text-muted mt-8 max-w-[46ch] text-[1.0625rem] leading-[1.75]">
+        {lead}
+      </p>
+
+      <div className="hero-cta gs-fade mt-11 flex flex-wrap items-center gap-8">
+        <Link
+          href="/excursions"
+          className="bg-ink text-bg hover:bg-ink-soft inline-flex cursor-pointer items-center px-10 py-5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        >
+          Выбрать экскурсию
+        </Link>
+        <Link
+          href="/contacts"
+          className="link-underline text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
+        >
+          Задать вопрос
+        </Link>
+      </div>
+    </div>
+  );
 
   return (
-    <section ref={ref} className="relative flex min-h-svh items-center overflow-hidden pt-16">
-      {/* Тёплое небо и мягкие пятна света */}
-      <div className="from-cream-100 via-cream-50 to-sand-200 absolute inset-0 bg-gradient-to-b" aria-hidden />
-      <div className="bg-terra-500/15 absolute -top-24 right-[-10%] h-96 w-96 rounded-full blur-3xl" aria-hidden />
-      <div className="bg-sand-400/25 absolute top-1/3 left-[-8%] h-80 w-80 rounded-full blur-3xl" aria-hidden />
-
-      {/* Параллакс-силуэт города */}
-      <motion.svg
-        style={{ y: skylineY }}
-        viewBox="0 0 1440 220"
-        preserveAspectRatio="xMidYMax slice"
-        className="text-bark-700/25 absolute bottom-0 left-0 h-40 w-full md:h-56"
-        aria-hidden
-      >
-        <path
-          fill="currentColor"
-          d="M0 220V150l60-8 30-40 30 40 50 6 40-24 40 24 70 8 20-70 14-22 14 22 20 70 90 6 30-36 30 36 80 8 24-50 16 50 100 6 40-30 40 30 60 4 30-60 18-26 18 26 30 60 70 6 40-22 40 22 60 8 30-44 30 44 66 8v88H0Z"
-        />
-      </motion.svg>
-
-      <Container className="relative pt-10 pb-28">
-        <motion.div style={{ y: contentY }} className="max-w-3xl">
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-terra-600 mb-5 text-sm font-semibold tracking-widest uppercase"
-          >
-            Авторские экскурсии по Твери
-          </motion.p>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.2 }}
-            className="font-display text-ink-900 text-4xl leading-[1.1] font-semibold text-balance sm:text-5xl md:text-6xl"
-          >
-            {tagline}
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.35 }}
-            className="text-bark-700 mt-6 max-w-xl text-lg leading-relaxed"
-          >
-            {subtitle}
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.5 }}
-            className="mt-9 flex flex-wrap items-center gap-4"
-          >
-            <Button href="/excursions" size="lg">
-              Выбрать экскурсию
-            </Button>
-            <Button href="/about" size="lg" variant="secondary">
-              Как это проходит
-            </Button>
-          </motion.div>
-
-          <motion.dl
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            className="glass shadow-soft mt-12 inline-flex flex-wrap gap-x-10 gap-y-4 rounded-3xl px-7 py-5"
-          >
-            <div>
-              <dt className="text-bark-600 text-xs font-medium uppercase">Маршрутов</dt>
-              <dd className="text-ink-900 font-display text-2xl font-semibold">{stats.tours}</dd>
-            </div>
-            <div>
-              <dt className="text-bark-600 text-xs font-medium uppercase">Рейтинг гостей</dt>
-              <dd className="text-ink-900 font-display flex items-center gap-1.5 text-2xl font-semibold">
-                {stats.rating.toFixed(1).replace('.', ',')}
-                <StarIcon className="text-terra-500 h-5 w-5" />
-              </dd>
-            </div>
-            <div>
-              <dt className="text-bark-600 text-xs font-medium uppercase">Группы</dt>
-              <dd className="text-ink-900 font-display text-2xl font-semibold">до 15 чел.</dd>
-            </div>
-          </motion.dl>
-        </motion.div>
-      </Container>
+    <section ref={root} className="relative min-h-svh overflow-hidden">
+      <div className="grid min-h-svh lg:grid-cols-[46fr_54fr]">
+        <div className="order-2 flex items-center px-6 pt-14 pb-20 sm:px-10 lg:order-1 lg:px-16 xl:px-24">
+          {copy}
+        </div>
+        <div className="relative order-1 min-h-[46svh] lg:order-2 lg:min-h-svh">{photo}</div>
+      </div>
     </section>
   );
 }

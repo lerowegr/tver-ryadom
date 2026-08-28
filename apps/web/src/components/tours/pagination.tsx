@@ -25,16 +25,14 @@ export function Pagination({
   };
 
   return (
-    <nav className="mt-12 flex items-center justify-center gap-2" aria-label="Страницы каталога">
+    <nav className="mt-20 flex items-center justify-center gap-3" aria-label="Страницы каталога">
       {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
         <Link
           key={p}
           href={hrefFor(p)}
           aria-current={p === page ? 'page' : undefined}
-          className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition ${
-            p === page
-              ? 'bg-terra-500 text-white'
-              : 'text-bark-700 hover:border-bark-500/50 border border-transparent bg-white'
+          className={`flex h-12 w-12 items-center justify-center border text-xs tabular-nums transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            p === page ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'
           }`}
         >
           {p}

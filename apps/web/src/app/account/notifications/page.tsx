@@ -37,14 +37,14 @@ export default function NotificationsPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <p className="text-bark-700 text-sm">
+        <p className="text-muted text-sm">
           {unread > 0 ? `Непрочитанных: ${unread}` : 'Все уведомления прочитаны'}
         </p>
         {unread > 0 ? (
           <button
             onClick={() => markAll.mutate()}
             disabled={markAll.isPending}
-            className="text-terra-600 text-sm font-semibold underline-offset-4 hover:underline disabled:opacity-60"
+            className="link-underline text-muted hover:text-ink cursor-pointer text-sm disabled:opacity-40"
           >
             Отметить все прочитанными
           </button>
@@ -52,11 +52,11 @@ export default function NotificationsPage() {
       </div>
 
       {notifications.isLoading ? (
-        <p className="text-bark-600 animate-pulse py-10 text-center">Загружаем уведомления…</p>
+        <p className="text-muted animate-pulse py-10 text-center">Загружаем уведомления…</p>
       ) : items.length === 0 ? (
-        <div className="glass rounded-3xl p-10 text-center">
-          <p className="text-ink-900 text-lg font-semibold">Уведомлений пока нет</p>
-          <p className="text-bark-700 mt-2 text-sm">
+        <div className="border-line border-t py-16 text-center">
+          <p className="text-ink text-lg font-medium">Уведомлений пока нет</p>
+          <p className="text-muted mt-2 text-sm">
             Здесь появятся подтверждения броней и напоминания об экскурсиях.
           </p>
         </div>
@@ -69,22 +69,22 @@ export default function NotificationsPage() {
             return (
               <li
                 key={notification.id}
-                className={`shadow-card flex items-start gap-4 rounded-3xl p-5 ${
-                  isUnread ? 'border-terra-500/40 border bg-white' : 'bg-white/60'
+                className={`border-line flex items-start gap-5 border-b py-6 ${
+                  isUnread ? 'text-ink' : 'text-muted'
                 }`}
               >
                 <span
                   className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                    isUnread ? 'bg-terra-500' : 'bg-sand-300'
+                    isUnread ? 'bg-ink' : 'bg-line-strong'
                   }`}
                   aria-hidden
                 />
                 <div className="min-w-0">
-                  <p className="text-ink-900 text-sm font-semibold">
+                  <p className="text-ink text-sm font-medium">
                     {typeLabels[notification.type] ?? notification.type}
                   </p>
-                  {tourTitle ? <p className="text-bark-700 mt-0.5 text-sm">{tourTitle}</p> : null}
-                  <p className="text-bark-500 mt-1 text-xs">{formatDateTime(notification.createdAt)}</p>
+                  {tourTitle ? <p className="text-muted mt-0.5 text-sm">{tourTitle}</p> : null}
+                  <p className="text-faint mt-1 text-xs">{formatDateTime(notification.createdAt)}</p>
                 </div>
               </li>
             );

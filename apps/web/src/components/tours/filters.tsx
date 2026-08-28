@@ -89,10 +89,8 @@ export function TourFilters({ badges }: { badges: BadgeDto[] }) {
               key={badge.slug}
               onClick={() => toggleBadge(badge.slug)}
               aria-pressed={active}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                active
-                  ? 'bg-terra-500 shadow-card scale-[1.03] text-white'
-                  : 'text-bark-700 hover:border-bark-500/60 border border-transparent bg-white'
+              className={`cursor-pointer border px-5 py-3 text-[0.6875rem] font-medium tracking-[0.14em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                active ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'
               }`}
             >
               {badge.label}
@@ -143,7 +141,7 @@ export function TourFilters({ badges }: { badges: BadgeDto[] }) {
         {hasFilters ? (
           <button
             onClick={() => router.replace(pathname, { scroll: false })}
-            className="text-bark-600 hover:text-terra-600 px-2 text-sm font-medium underline-offset-4 transition-colors hover:underline"
+            className="link-underline text-muted hover:text-ink cursor-pointer px-2 text-[0.6875rem] font-medium tracking-[0.14em] uppercase"
           >
             Сбросить фильтры
           </button>
