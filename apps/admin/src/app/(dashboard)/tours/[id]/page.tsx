@@ -221,7 +221,7 @@ export default function TourEditPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-ink-900 text-2xl font-bold">
+        <h1 className="font-display text-ink text-[1.75rem] leading-tight">
           {isNew ? 'Новая экскурсия' : `Редактирование: ${tour.data?.title ?? ''}`}
         </h1>
         {!isNew ? (
@@ -235,13 +235,13 @@ export default function TourEditPage() {
         <Card title="Основное">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-title">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-title">
                 Название
               </label>
               <input id="f-title" {...register('title', { required: true })} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-slug">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-slug">
                 Слаг (URL)
               </label>
               <div className="flex gap-2">
@@ -257,19 +257,19 @@ export default function TourEditPage() {
               </div>
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-subtitle">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-subtitle">
                 Подзаголовок
               </label>
               <input id="f-subtitle" {...register('subtitle')} className="input" />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-short">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-short">
                 Краткое описание (карточка каталога)
               </label>
               <textarea id="f-short" rows={2} {...register('shortDescription', { required: true })} className="input" />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-full">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-full">
                 Полное описание (абзацы — с новой строки)
               </label>
               <textarea id="f-full" rows={6} {...register('fullDescription', { required: true })} className="input" />
@@ -280,13 +280,13 @@ export default function TourEditPage() {
         <Card title="Цена и параметры">
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-price">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-price">
                 Цена, ₽
               </label>
               <input id="f-price" type="number" min={0} step="0.01" {...register('priceRub', { required: true })} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-ptype">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-ptype">
                 Тип цены
               </label>
               <select id="f-ptype" {...register('priceType')} className="input">
@@ -295,25 +295,25 @@ export default function TourEditPage() {
               </select>
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-dur">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-dur">
                 Длительность, минут
               </label>
               <input id="f-dur" type="number" min={15} {...register('durationMinutes', { required: true })} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-gmin">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-gmin">
                 Группа от
               </label>
               <input id="f-gmin" type="number" min={1} {...register('groupMin')} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-gmax">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-gmax">
                 Группа до (пусто — без лимита)
               </label>
               <input id="f-gmax" type="number" min={1} {...register('groupMax')} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-status">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-status">
                 Статус
               </label>
               <select id="f-status" {...register('status')} className="input">
@@ -327,10 +327,10 @@ export default function TourEditPage() {
           </div>
 
           <div className="mt-5">
-            <p className="text-bark-700 mb-2 text-sm font-medium">Тематические бейджи</p>
+            <p className="text-muted mb-2 text-sm font-medium">Тематические бейджи</p>
             <div className="flex flex-wrap gap-2">
               {(badges.data ?? []).map((badge) => (
-                <label key={badge.slug} className="has-checked:bg-terra-500 has-checked:text-white bg-cream-200 text-bark-800 cursor-pointer rounded-full px-3.5 py-1.5 text-sm font-medium transition">
+                <label key={badge.slug} className="has-checked:bg-ink has-checked:text-white bg-surface-soft text-ink-soft cursor-pointer px-3.5 py-1.5 text-sm font-medium transition">
                   <input type="checkbox" value={badge.slug} {...register('badgeSlugs')} className="sr-only" />
                   {badge.label}
                 </label>
@@ -342,19 +342,19 @@ export default function TourEditPage() {
         <Card title="Место встречи и условия">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="sm:col-span-3">
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-meet">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-meet">
                 Место встречи
               </label>
               <input id="f-meet" {...register('meetingPoint')} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-lat">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-lat">
                 Широта
               </label>
               <input id="f-lat" {...register('meetingLat')} className="input" placeholder="56.8626" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-lng">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-lng">
                 Долгота
               </label>
               <input id="f-lng" {...register('meetingLng')} className="input" placeholder="35.8988" />
@@ -362,20 +362,20 @@ export default function TourEditPage() {
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-inc">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-inc">
                 Что входит (по строке на пункт)
               </label>
               <textarea id="f-inc" rows={4} {...register('includedText')} className="input" />
             </div>
             <div>
-              <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-ninc">
+              <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-ninc">
                 Что не входит
               </label>
               <textarea id="f-ninc" rows={4} {...register('notIncludedText')} className="input" />
             </div>
           </div>
           <div className="mt-4">
-            <label className="text-bark-700 mb-1.5 block text-sm font-medium" htmlFor="f-rec">
+            <label className="text-muted mb-1.5 block text-sm font-medium" htmlFor="f-rec">
               Рекомендации гостям
             </label>
             <textarea id="f-rec" rows={2} {...register('recommendations')} className="input" />
@@ -391,11 +391,11 @@ export default function TourEditPage() {
           }
         >
           {program.fields.length === 0 ? (
-            <p className="text-bark-600 text-sm">Добавьте шаги программы — они показываются таймлайном.</p>
+            <p className="text-muted text-sm">Добавьте шаги программы — они показываются таймлайном.</p>
           ) : (
             <div className="space-y-3">
               {program.fields.map((field, index) => (
-                <div key={field.id} className="bg-cream-100 grid gap-3 rounded-xl p-4 sm:grid-cols-[1fr_8rem_auto]">
+                <div key={field.id} className="bg-surface-soft grid gap-3 p-4 sm:grid-cols-[1fr_8rem_auto]">
                   <div className="space-y-2">
                     <input placeholder="Название шага" {...register(`program.${index}.title`)} className="input" />
                     <input placeholder="Описание (необязательно)" {...register(`program.${index}.description`)} className="input" />
@@ -419,11 +419,11 @@ export default function TourEditPage() {
           }
         >
           {routePoints.fields.length === 0 ? (
-            <p className="text-bark-600 text-sm">Точки с координатами рисуют маршрут на карте.</p>
+            <p className="text-muted text-sm">Точки с координатами рисуют маршрут на карте.</p>
           ) : (
             <div className="space-y-3">
               {routePoints.fields.map((field, index) => (
-                <div key={field.id} className="bg-cream-100 grid gap-3 rounded-xl p-4 sm:grid-cols-[1fr_7rem_7rem_auto]">
+                <div key={field.id} className="bg-surface-soft grid gap-3 p-4 sm:grid-cols-[1fr_7rem_7rem_auto]">
                   <div className="space-y-2">
                     <input placeholder="Название точки" {...register(`routePoints.${index}.title`)} className="input" />
                     <input placeholder="Описание (необязательно)" {...register(`routePoints.${index}.description`)} className="input" />
@@ -443,7 +443,7 @@ export default function TourEditPage() {
           <p
             role="status"
             className={`rounded-xl px-4 py-3 text-sm font-medium ${
-              message.kind === 'ok' ? 'bg-sand-200/60 text-bark-800' : 'bg-terra-500/10 text-terra-700'
+              message.kind === 'ok' ? 'bg-surface-soft/60 text-ink-soft' : 'bg-transparent text-danger'
             }`}
           >
             {message.text}

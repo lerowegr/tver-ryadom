@@ -19,10 +19,10 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`shadow-card rounded-2xl bg-white p-6 ${className}`}>
+    <section className={`panel p-6 ${className}`}>
       {title || action ? (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          {title ? <h2 className="text-ink-900 font-bold">{title}</h2> : <span />}
+        <div className="border-line mb-5 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+          {title ? <h2 className="kicker-plain">{title}</h2> : <span />}
           {action}
         </div>
       ) : null}
@@ -31,33 +31,35 @@ export function Card({
   );
 }
 
+/**
+ * Статусы. Палитра монохромная, но в рабочем инструменте статус нужно
+ * ловить взглядом, поэтому «рабочее» состояние подсвечено зелёным,
+ * а завершённое/отклонённое — приглушено. Это служебные цвета, не акцент.
+ */
+const pill = 'inline-block border px-2.5 py-1 text-[0.625rem] font-medium tracking-[0.14em] uppercase whitespace-nowrap';
+const neutral = 'border-line-strong text-ink';
+const positive = 'border-success/40 text-success';
+const faded = 'border-line text-faint';
+
 const bookingStatusStyles: Record<BookingStatus, string> = {
-  pending: 'bg-sand-200 text-bark-800',
-  confirmed: 'bg-emerald-100 text-emerald-800',
-  cancelled: 'bg-cream-200 text-bark-600',
-  completed: 'bg-bark-600/10 text-bark-800',
+  pending: neutral,
+  confirmed: positive,
+  cancelled: faded,
+  completed: faded,
 };
 
 export function BookingStatusPill({ status }: { status: BookingStatus }) {
-  return (
-    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold whitespace-nowrap ${bookingStatusStyles[status]}`}>
-      {BOOKING_STATUS_LABELS[status]}
-    </span>
-  );
+  return <span className={`${pill} ${bookingStatusStyles[status]}`}>{BOOKING_STATUS_LABELS[status]}</span>;
 }
 
 const tourStatusStyles: Record<TourStatus, string> = {
-  draft: 'bg-sand-200 text-bark-800',
-  published: 'bg-emerald-100 text-emerald-800',
-  archived: 'bg-cream-200 text-bark-600',
+  draft: neutral,
+  published: positive,
+  archived: faded,
 };
 
 export function TourStatusPill({ status }: { status: TourStatus }) {
-  return (
-    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold whitespace-nowrap ${tourStatusStyles[status]}`}>
-      {TOUR_STATUS_LABELS[status]}
-    </span>
-  );
+  return <span className={`${pill} ${tourStatusStyles[status]}`}>{TOUR_STATUS_LABELS[status]}</span>;
 }
 
 const reviewStatusLabels: Record<ReviewStatus, string> = {
@@ -67,17 +69,13 @@ const reviewStatusLabels: Record<ReviewStatus, string> = {
 };
 
 const reviewStatusStyles: Record<ReviewStatus, string> = {
-  pending: 'bg-sand-200 text-bark-800',
-  approved: 'bg-emerald-100 text-emerald-800',
-  rejected: 'bg-cream-200 text-bark-600',
+  pending: neutral,
+  approved: positive,
+  rejected: faded,
 };
 
 export function ReviewStatusPill({ status }: { status: ReviewStatus }) {
-  return (
-    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold whitespace-nowrap ${reviewStatusStyles[status]}`}>
-      {reviewStatusLabels[status]}
-    </span>
-  );
+  return <span className={`${pill} ${reviewStatusStyles[status]}`}>{reviewStatusLabels[status]}</span>;
 }
 
 export function Table({ head, children }: { head: string[]; children: ReactNode }) {
@@ -85,22 +83,22 @@ export function Table({ head, children }: { head: string[]; children: ReactNode 
     <div className="overflow-x-auto">
       <table className="w-full min-w-[40rem] text-left text-sm">
         <thead>
-          <tr className="border-cream-200 border-b">
+          <tr className="border-line border-b">
             {head.map((h) => (
-              <th key={h} className="text-bark-600 py-2.5 pr-4 text-xs font-semibold tracking-wide uppercase">
+              <th key={h} className="kicker-plain py-3 pr-4 text-left font-medium">
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-cream-200 divide-y">{children}</tbody>
+        <tbody className="divide-line divide-y">{children}</tbody>
       </table>
     </div>
   );
 }
 
 export function Empty({ text }: { text: string }) {
-  return <p className="text-bark-600 py-8 text-center text-sm">{text}</p>;
+  return <p className="text-muted py-10 text-center text-sm">{text}</p>;
 }
 
 /** Ошибка загрузки данных — показываем явно, а не как пустой список. */
@@ -110,10 +108,10 @@ export function QueryError({ error, retry }: { error: unknown; retry?: () => voi
       ? error.message
       : 'Не удалось загрузить данные — проверьте соединение';
   return (
-    <div className="bg-terra-500/10 rounded-xl px-4 py-4 text-center" role="alert">
-      <p className="text-terra-700 text-sm font-medium">{message}</p>
+    <div className="border-danger border-l-2 py-3 pl-4" role="alert">
+      <p className="text-danger text-sm">{message}</p>
       {retry ? (
-        <button onClick={retry} className="btn-secondary mt-3 !px-4 !py-1.5 text-xs">
+        <button onClick={retry} className="btn-secondary mt-3 !px-4 !py-2">
           Повторить
         </button>
       ) : null}
@@ -122,5 +120,5 @@ export function QueryError({ error, retry }: { error: unknown; retry?: () => voi
 }
 
 export function Loading() {
-  return <p className="text-bark-600 animate-pulse py-8 text-center text-sm">Загружаем…</p>;
+  return <p className="kicker-plain text-muted animate-pulse py-10 text-center">Загружаем…</p>;
 }

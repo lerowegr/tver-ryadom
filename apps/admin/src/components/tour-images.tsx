@@ -55,7 +55,7 @@ export function TourImages({ tourId, images }: { tourId: string; images: AdminIm
       }
     >
       {error ? (
-        <p className="bg-terra-500/10 text-terra-700 mb-4 rounded-xl px-4 py-3 text-sm font-medium" role="alert">
+        <p className="bg-transparent text-danger mb-4 px-4 py-3 text-sm font-medium" role="alert">
           {error}
         </p>
       ) : null}
@@ -64,18 +64,18 @@ export function TourImages({ tourId, images }: { tourId: string; images: AdminIm
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((image) => (
-            <figure key={image.id} className="group relative overflow-hidden rounded-xl">
+            <figure key={image.id} className="group relative overflow-hidden">
               {/* Готовые R2-варианты, next/image не нужен */}
               <img
                 src={image.variants.card ?? image.variants.original}
                 alt={image.alt ?? ''}
-                className="bg-cream-200 h-32 w-full object-cover"
+                className="bg-surface-soft h-32 w-full object-cover"
               />
               <button
                 onClick={() => {
                   if (window.confirm('Удалить фотографию?')) remove.mutate(image.id);
                 }}
-                className="bg-ink-900/70 absolute top-2 right-2 rounded-full px-2.5 py-1 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100"
+                className="bg-ink/80 absolute top-2 right-2 px-2.5 py-1 text-xs font-medium text-bg opacity-0 transition group-hover:opacity-100"
               >
                 Удалить
               </button>

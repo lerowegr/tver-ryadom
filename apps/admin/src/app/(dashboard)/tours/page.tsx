@@ -21,7 +21,7 @@ export default function ToursPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-ink-900 text-2xl font-bold">Экскурсии</h1>
+        <h1 className="font-display text-ink text-[1.75rem] leading-tight">Экскурсии</h1>
         <div className="flex items-center gap-3">
           <select
             value={status}
@@ -54,21 +54,21 @@ export default function ToursPage() {
             {tours.data?.items.map((tour) => (
               <tr key={tour.id}>
                 <td className="py-3 pr-4">
-                  <Link href={`/tours/${tour.id}`} className="text-ink-900 hover:text-terra-600 font-semibold">
+                  <Link href={`/tours/${tour.id}`} className="text-ink hover:text-ink font-medium">
                     {tour.title}
                   </Link>
                 </td>
-                <td className="text-bark-600 py-3 pr-4 text-xs">{tour.slug}</td>
-                <td className="py-3 pr-4 font-semibold whitespace-nowrap">
+                <td className="text-muted py-3 pr-4 text-xs">{tour.slug}</td>
+                <td className="py-3 pr-4 font-medium whitespace-nowrap">
                   {formatPrice(tour.price)}
-                  <span className="text-bark-500 ml-1 text-xs font-normal">
+                  <span className="text-faint ml-1 text-xs font-normal">
                     {tour.priceType === 'per_person' ? '/чел' : '/группа'}
                   </span>
                 </td>
-                <td className="text-bark-700 py-3 pr-4 whitespace-nowrap">
+                <td className="text-muted py-3 pr-4 whitespace-nowrap">
                   {formatDuration(tour.durationMinutes)}
                 </td>
-                <td className="text-bark-700 py-3 pr-4">
+                <td className="text-muted py-3 pr-4">
                   {tour.ratingCount > 0 ? `${tour.ratingAvg.toFixed(1)} (${tour.ratingCount})` : '—'}
                 </td>
                 <td className="py-3">

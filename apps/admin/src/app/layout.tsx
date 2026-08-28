@@ -1,12 +1,19 @@
 import type { Metadata } from 'next';
-import { Manrope } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-manrope',
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+// Только для логотипа в боковой панели — как на сайте.
+const playfair = Playfair_Display({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-playfair',
   display: 'swap',
 });
 
@@ -18,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ru" className={manrope.variable}>
+    <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>

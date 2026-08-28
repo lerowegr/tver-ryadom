@@ -23,7 +23,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-ink-900 text-2xl font-bold">Пользователи</h1>
+        <h1 className="font-display text-ink text-[1.75rem] leading-tight">Пользователи</h1>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -55,23 +55,23 @@ export default function UsersPage() {
           <Table head={['Имя', 'Email', 'Телефон', 'Роль', 'Броней', 'Telegram', 'Регистрация']}>
             {users.data?.items.map((u) => (
               <tr key={u.id}>
-                <td className="py-3 pr-4 font-semibold">{u.name}</td>
-                <td className="text-bark-700 py-3 pr-4">{u.email ?? '—'}</td>
-                <td className="text-bark-700 py-3 pr-4 whitespace-nowrap">
+                <td className="py-3 pr-4 font-medium">{u.name}</td>
+                <td className="text-muted py-3 pr-4">{u.email ?? '—'}</td>
+                <td className="text-muted py-3 pr-4 whitespace-nowrap">
                   {u.phone ? formatRuPhone(u.phone) : '—'}
                 </td>
                 <td className="py-3 pr-4">
                   {u.role === 'admin' ? (
-                    <span className="bg-terra-500/10 text-terra-700 rounded-full px-2.5 py-1 text-xs font-bold">
+                    <span className="bg-transparent text-danger px-2.5 py-1 text-xs font-medium">
                       админ
                     </span>
                   ) : (
-                    <span className="text-bark-600 text-xs">клиент</span>
+                    <span className="text-muted text-xs">клиент</span>
                   )}
                 </td>
-                <td className="text-bark-700 py-3 pr-4">{u.bookingsCount}</td>
-                <td className="text-bark-700 py-3 pr-4">{u.telegramChatId ? '✓' : '—'}</td>
-                <td className="text-bark-600 py-3 text-xs whitespace-nowrap">{formatDateTime(u.createdAt)}</td>
+                <td className="text-muted py-3 pr-4">{u.bookingsCount}</td>
+                <td className="text-muted py-3 pr-4">{u.telegramChatId ? '✓' : '—'}</td>
+                <td className="text-muted py-3 text-xs whitespace-nowrap">{formatDateTime(u.createdAt)}</td>
               </tr>
             ))}
           </Table>

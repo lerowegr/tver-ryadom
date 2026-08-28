@@ -52,7 +52,7 @@ function messageBox(message: Message) {
     <p
       role="status"
       className={`rounded-xl px-4 py-3 text-sm font-medium ${
-        message.kind === 'ok' ? 'bg-sand-200/60 text-bark-800' : 'bg-terra-500/10 text-terra-700'
+        message.kind === 'ok' ? 'bg-surface-soft/60 text-ink-soft' : 'bg-transparent text-danger'
       }`}
     >
       {message.text}
@@ -135,13 +135,13 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-ink-900 text-2xl font-bold">Настройки сайта</h1>
+      <h1 className="font-display text-ink text-[1.75rem] leading-tight">Настройки сайта</h1>
 
       <Card title="Контакты и тексты">
         <form onSubmit={onSubmitMain} className="space-y-4">
           {contactFields.map((field) => (
             <div key={field.key}>
-              <label htmlFor={field.key} className="text-bark-700 mb-1.5 block text-sm font-medium">
+              <label htmlFor={field.key} className="text-muted mb-1.5 block text-sm font-medium">
                 {field.label}
               </label>
               <input id={field.key} name={field.key} defaultValue={str(field.key)} className="input" />
@@ -149,7 +149,7 @@ export default function SettingsPage() {
           ))}
           {textFields.map((field) => (
             <div key={field.key}>
-              <label htmlFor={field.key} className="text-bark-700 mb-1.5 block text-sm font-medium">
+              <label htmlFor={field.key} className="text-muted mb-1.5 block text-sm font-medium">
                 {field.label}
               </label>
               <textarea
@@ -181,7 +181,7 @@ export default function SettingsPage() {
       >
         <div className="space-y-4">
           {team.map((member, index) => (
-            <div key={index} className="bg-cream-100 space-y-3 rounded-xl p-4">
+            <div key={index} className="bg-surface-soft space-y-3 p-4">
               <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
                 <input
                   placeholder="Имя"
@@ -216,7 +216,7 @@ export default function SettingsPage() {
             </div>
           ))}
           {team.length === 0 ? (
-            <p className="text-bark-600 text-sm">Команда пуста — на сайте покажется стандартный состав.</p>
+            <p className="text-muted text-sm">Команда пуста — на сайте покажется стандартный состав.</p>
           ) : null}
           {messageBox(teamMessage)}
           <button onClick={saveTeam} disabled={save.isPending} className="btn-primary">

@@ -36,21 +36,21 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-svh items-center justify-center p-6">
-      <div className="shadow-card w-full max-w-sm rounded-3xl bg-white p-8">
-        <p className="text-ink-900 text-2xl font-bold">
-          Тверь <span className="text-terra-600 italic">рядом</span>
+      <div className="w-full max-w-sm bg-white p-8">
+        <p className="text-ink text-2xl font-medium">
+          Тверь <span className="text-ink italic">рядом</span>
         </p>
-        <p className="text-bark-600 mt-1 mb-6 text-sm">Вход в административную панель</p>
+        <p className="text-muted mt-1 mb-6 text-sm">Вход в административную панель</p>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="text-bark-700 mb-1.5 block text-sm font-medium">
+            <label htmlFor="email" className="text-muted mb-1.5 block text-sm font-medium">
               Email
             </label>
             <input id="email" name="email" type="email" required autoComplete="email" className="input" />
           </div>
           <div>
-            <label htmlFor="password" className="text-bark-700 mb-1.5 block text-sm font-medium">
+            <label htmlFor="password" className="text-muted mb-1.5 block text-sm font-medium">
               Пароль
             </label>
             <input
@@ -63,7 +63,7 @@ export default function LoginPage() {
             />
           </div>
           {error ? (
-            <p className="bg-terra-500/10 text-terra-700 rounded-xl px-4 py-3 text-sm font-medium" role="alert">
+            <p className="bg-transparent text-danger px-4 py-3 text-sm font-medium" role="alert">
               {error}
             </p>
           ) : null}
@@ -71,9 +71,9 @@ export default function LoginPage() {
             {pending ? 'Входим…' : 'Войти'}
           </button>
         </form>
-        <p className="text-bark-500 mt-4 text-xs leading-relaxed">
+        <p className="text-faint mt-4 text-xs leading-relaxed">
           Пароль администратора задаётся командой{' '}
-          <code className="bg-cream-100 rounded px-1">pnpm --filter @tver/api admin:password</code>
+          <code className="bg-surface-soft rounded px-1">pnpm --filter @tver/api admin:password</code>
         </p>
       </div>
     </div>

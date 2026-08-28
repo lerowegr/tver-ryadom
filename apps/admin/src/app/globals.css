@@ -1,42 +1,108 @@
 @import 'tailwindcss';
 
+/* ============================================================
+   Та же система, что на сайте, но плотнее: админка — рабочий
+   инструмент, здесь важнее объём информации на экране, чем воздух.
+   ============================================================ */
+:root {
+  --n-0: #fdfcfa;
+  --n-50: #f7f5f1;
+  --n-100: #efede8;
+  --n-200: #e7e4de;
+  --n-300: #d6d2ca;
+  --n-400: #b8b4ab;
+  --n-500: #8a8880;
+  --n-600: #6b6b66;
+  --n-700: #55554f;
+  --n-800: #33332e;
+  --n-900: #14140f;
+
+  /* Служебные цвета: только статусы и ошибки, не украшение */
+  --danger: #9b2c2c;
+  --success: #2f6b45;
+
+  --e-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @theme {
-  --color-cream-50: #fbf9f4;
-  --color-cream-100: #f5efe4;
-  --color-cream-200: #ede3d0;
-  --color-sand-200: #eaddc7;
-  --color-sand-300: #dbc7a6;
-  --color-sand-400: #c6a87e;
-  --color-bark-500: #a1815d;
-  --color-bark-600: #8a6d4f;
-  --color-bark-700: #6e5539;
-  --color-bark-800: #503e29;
-  --color-ink-900: #2a2014;
-  --color-terra-500: #c0703e;
-  --color-terra-600: #a65832;
-  --color-terra-700: #8c4526;
+  --color-bg: var(--n-0);
+  --color-surface: #ffffff;
+  --color-surface-soft: var(--n-50);
+  --color-ink: var(--n-900);
+  --color-ink-soft: var(--n-800);
+  --color-muted: var(--n-600);
+  --color-faint: var(--n-500);
+  --color-line: var(--n-200);
+  --color-line-strong: var(--n-300);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
 
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, 'Times New Roman', serif;
 
-  --shadow-card: 0 4px 24px -8px rgb(42 32 20 / 0.12);
+  --shadow-card: none;
 }
 
 body {
-  @apply bg-cream-50 text-ink-900 font-sans antialiased;
+  @apply bg-bg text-ink font-sans antialiased;
 }
 
+::selection {
+  @apply bg-ink text-bg;
+}
+
+/* Мелкая подпись вразрядку — тот же приём, что на сайте */
+.kicker-plain {
+  @apply text-faint text-[0.625rem] font-medium tracking-[0.18em] uppercase;
+}
+
+/* Поля: подчёркивание вместо рамки-коробки */
 .input {
-  @apply border-sand-300 text-ink-900 placeholder:text-bark-500/60 focus:border-terra-500 focus:ring-terra-500/20 w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm focus:ring-2 focus:outline-none;
+  @apply border-line text-ink placeholder:text-faint w-full border-b bg-transparent py-2.5 text-sm;
+  transition: border-color 0.4s var(--e-smooth);
+}
+.input:focus {
+  @apply border-ink outline-none;
+}
+.input[aria-invalid='true'] {
+  @apply border-danger;
 }
 
-.btn-primary {
-  @apply bg-terra-500 hover:bg-terra-600 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60;
+/* Многострочным полям одной линии снизу мало: текст «висит» без границ.
+   Им — полная рамка, как у панелей. */
+textarea.input,
+select.input {
+  @apply border-line border px-3.5 py-2.5;
+}
+textarea.input:focus,
+select.input:focus {
+  @apply border-ink;
+}
+select.input {
+  @apply cursor-pointer;
 }
 
-.btn-secondary {
-  @apply border-bark-600/30 text-bark-800 hover:border-bark-600/60 inline-flex items-center gap-2 rounded-full border bg-white px-5 py-2.5 text-sm font-semibold transition disabled:opacity-60;
-}
-
+/* Кнопки: прямые углы, верхний регистр, трекинг */
+.btn-primary,
+.btn-secondary,
 .btn-danger {
-  @apply border-terra-600/40 text-terra-700 hover:bg-terra-500/10 inline-flex items-center gap-2 rounded-full border bg-white px-5 py-2.5 text-sm font-semibold transition disabled:opacity-60;
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 px-5 py-3 text-[0.625rem] font-medium tracking-[0.16em] uppercase disabled:pointer-events-none disabled:opacity-40;
+  transition:
+    background-color 0.4s var(--e-smooth),
+    border-color 0.4s var(--e-smooth),
+    color 0.4s var(--e-smooth);
+}
+.btn-primary {
+  @apply bg-ink text-bg hover:bg-ink-soft;
+}
+.btn-secondary {
+  @apply border-line text-ink hover:border-ink hover:bg-ink hover:text-bg border;
+}
+.btn-danger {
+  @apply border-line text-danger hover:border-danger hover:bg-danger border hover:text-white;
+}
+
+/* Поверхность-панель вместо карточек с тенью */
+.panel {
+  @apply border-line bg-surface border;
 }

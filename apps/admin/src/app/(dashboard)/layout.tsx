@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   if (status !== 'authed') {
     return (
       <div className="flex min-h-svh items-center justify-center" aria-busy="true">
-        <p className="text-bark-600 animate-pulse">Проверяем доступ…</p>
+        <p className="kicker-plain text-muted animate-pulse">Проверяем доступ…</p>
       </div>
     );
   }
@@ -50,12 +50,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-svh">
-      <aside className="border-cream-200 bg-cream-100 hidden w-60 shrink-0 flex-col border-r p-5 md:flex">
-        <p className="text-ink-900 mb-8 text-lg font-bold">
-          Тверь <span className="text-terra-600 italic">рядом</span>
-          <span className="text-bark-500 mt-0.5 block text-xs font-medium">панель управления</span>
+      <aside className="border-line bg-surface-soft hidden w-64 shrink-0 flex-col border-r px-6 py-8 md:flex">
+        <p className="mb-10">
+          <span className="font-display text-ink text-xl leading-none">
+            Тверь <span className="italic">рядом</span>
+          </span>
+          <span className="kicker-plain mt-2.5 block">панель управления</span>
         </p>
-        <nav className="flex flex-1 flex-col gap-1" aria-label="Разделы админки">
+        <nav className="border-line flex flex-1 flex-col border-t" aria-label="Разделы админки">
           {nav.map((item) => {
             const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             const badge = badges[item.href];
@@ -64,25 +66,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                  active ? 'shadow-card text-ink-900 bg-white' : 'text-bark-700 hover:bg-white/60'
+                className={`border-line flex items-center justify-between border-b py-3.5 text-[0.625rem] font-medium tracking-[0.16em] uppercase transition-colors duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  active ? 'text-ink' : 'text-muted hover:text-ink'
                 }`}
               >
                 {item.label}
                 {badge ? (
-                  <span className="bg-terra-500 rounded-full px-2 py-0.5 text-xs font-bold text-white">
-                    {badge}
-                  </span>
+                  <span className="bg-ink text-bg px-1.5 py-0.5 text-[0.625rem] tabular-nums">{badge}</span>
                 ) : null}
               </Link>
             );
           })}
         </nav>
-        <div className="border-cream-200 mt-6 border-t pt-4">
-          <p className="text-ink-900 truncate text-sm font-semibold">{user?.name}</p>
+        <div className="mt-8">
+          <p className="text-ink truncate text-sm">{user?.name}</p>
           <button
             onClick={() => logout().then(() => router.replace('/login'))}
-            className="text-bark-600 hover:text-terra-600 mt-1 text-sm font-medium"
+            className="text-muted hover:text-ink mt-2 cursor-pointer text-[0.625rem] font-medium tracking-[0.16em] uppercase transition-colors duration-400"
           >
             Выйти
           </button>
@@ -90,18 +90,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <div className="border-cream-200 bg-cream-100 flex items-center gap-3 overflow-x-auto border-b p-3 md:hidden">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-bark-700 shrink-0 rounded-full bg-white px-4 py-2 text-xs font-semibold"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <div className="border-line bg-surface-soft flex items-center gap-6 overflow-x-auto border-b px-5 py-4 md:hidden">
+          {nav.map((item) => {
+            const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`shrink-0 text-[0.625rem] font-medium tracking-[0.16em] uppercase ${
+                  active ? 'text-ink' : 'text-muted'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
-        <main className="p-5 md:p-8">{children}</main>
+        <main className="p-5 md:p-10">{children}</main>
       </div>
     </div>
   );

@@ -49,7 +49,7 @@ export function TourSchedules({ tourId, schedules }: { tourId: string; schedules
     <Card title="Расписание">
       <form onSubmit={onAdd} className="mb-5 flex flex-wrap items-end gap-3">
         <div>
-          <label htmlFor="sched-date" className="text-bark-700 mb-1.5 block text-xs font-medium">
+          <label htmlFor="sched-date" className="text-muted mb-1.5 block text-xs font-medium">
             Дата и время
           </label>
           <input
@@ -62,7 +62,7 @@ export function TourSchedules({ tourId, schedules }: { tourId: string; schedules
           />
         </div>
         <div>
-          <label htmlFor="sched-cap" className="text-bark-700 mb-1.5 block text-xs font-medium">
+          <label htmlFor="sched-cap" className="text-muted mb-1.5 block text-xs font-medium">
             Мест
           </label>
           <input id="sched-cap" name="capacity" type="number" min={1} max={200} defaultValue={10} required className="input w-24" />
@@ -73,7 +73,7 @@ export function TourSchedules({ tourId, schedules }: { tourId: string; schedules
       </form>
 
       {error ? (
-        <p className="bg-terra-500/10 text-terra-700 mb-4 rounded-xl px-4 py-3 text-sm font-medium" role="alert">
+        <p className="bg-transparent text-danger mb-4 px-4 py-3 text-sm font-medium" role="alert">
           {error}
         </p>
       ) : null}
@@ -88,11 +88,11 @@ export function TourSchedules({ tourId, schedules }: { tourId: string; schedules
               <li
                 key={slot.id}
                 className={`flex flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3 ${
-                  isPast ? 'bg-cream-100 opacity-60' : 'bg-cream-100'
+                  isPast ? 'bg-surface-soft opacity-60' : 'bg-surface-soft'
                 }`}
               >
-                <span className="text-ink-900 text-sm font-semibold">{formatDateTime(slot.startsAt)}</span>
-                <span className="text-bark-700 text-xs">
+                <span className="text-ink text-sm font-medium">{formatDateTime(slot.startsAt)}</span>
+                <span className="text-muted text-xs">
                   занято {slot.bookedCount} из {slot.capacity}
                   {slot.status !== 'open' ? ` · ${slot.status === 'cancelled' ? 'отменён' : 'закрыт'}` : ''}
                 </span>

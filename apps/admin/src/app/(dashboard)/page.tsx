@@ -24,22 +24,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-ink-900 text-2xl font-bold">Дашборд</h1>
+      <h1 className="font-display text-ink text-[1.75rem] leading-tight">Дашборд</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => {
           const inner = (
             <>
-              <p className="text-bark-600 text-xs font-semibold tracking-wide uppercase">{card.label}</p>
-              <p className="text-ink-900 mt-2 text-3xl font-bold">{card.value}</p>
+              <p className="text-muted text-xs font-medium tracking-wide uppercase">{card.label}</p>
+              <p className="text-ink mt-2 text-3xl font-medium">{card.value}</p>
             </>
           );
           return card.href ? (
-            <Link key={card.label} href={card.href} className="shadow-card hover:shadow-lg block rounded-2xl bg-white p-5 transition">
+            <Link key={card.label} href={card.href} className="hover:shadow-lg block bg-white p-5 transition">
               {inner}
             </Link>
           ) : (
-            <div key={card.label} className="shadow-card rounded-2xl bg-white p-5">
+            <div key={card.label} className="bg-white p-5">
               {inner}
             </div>
           );
@@ -56,11 +56,11 @@ export default function DashboardPage() {
             <Table head={['Клиент', 'Экскурсия', 'Дата', 'Чел.', 'Сумма', 'Статус']}>
               {data?.recentBookings.map((b) => (
                 <tr key={b.id}>
-                  <td className="py-3 pr-4 font-semibold">{b.contactName}</td>
-                  <td className="text-bark-700 py-3 pr-4">{b.tour?.title ?? '—'}</td>
-                  <td className="text-bark-700 py-3 pr-4 whitespace-nowrap">{formatDateTime(b.startsAt)}</td>
-                  <td className="text-bark-700 py-3 pr-4">{b.peopleCount}</td>
-                  <td className="py-3 pr-4 font-semibold whitespace-nowrap">{formatPrice(b.totalPrice)}</td>
+                  <td className="py-3 pr-4 font-medium">{b.contactName}</td>
+                  <td className="text-muted py-3 pr-4">{b.tour?.title ?? '—'}</td>
+                  <td className="text-muted py-3 pr-4 whitespace-nowrap">{formatDateTime(b.startsAt)}</td>
+                  <td className="text-muted py-3 pr-4">{b.peopleCount}</td>
+                  <td className="py-3 pr-4 font-medium whitespace-nowrap">{formatPrice(b.totalPrice)}</td>
                   <td className="py-3">
                     <BookingStatusPill status={b.status} />
                   </td>
@@ -78,12 +78,12 @@ export default function DashboardPage() {
               ) : (
                 data.bookingsByDay.map((d) => (
                   <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
-                    <span className="text-bark-700 text-xs font-bold">{d.total}</span>
+                    <span className="text-muted text-xs font-medium">{d.total}</span>
                     <div
-                      className="bg-terra-500/80 w-full rounded-t-md"
+                      className="bg-ink/80 w-full rounded-t-md"
                       style={{ height: `${Math.max(8, (d.total / maxDay) * 100)}%` }}
                     />
-                    <span className="text-bark-500 text-[10px]">{d.day.slice(5)}</span>
+                    <span className="text-faint text-[10px]">{d.day.slice(5)}</span>
                   </div>
                 ))
               )}

@@ -32,9 +32,9 @@ export default function RequestsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-ink-900 text-2xl font-bold">Заявки с формы</h1>
+      <h1 className="font-display text-ink text-[1.75rem] leading-tight">Заявки с формы</h1>
 
-      <div className="bg-cream-200 inline-flex rounded-full p-1" role="tablist">
+      <div className="bg-surface-soft inline-flex p-1" role="tablist">
         {(
           [
             ['new', 'Новые'],
@@ -46,8 +46,8 @@ export default function RequestsPage() {
             role="tab"
             aria-selected={status === key}
             onClick={() => setStatus(key)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              status === key ? 'shadow-card text-ink-900 bg-white' : 'text-bark-600'
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              status === key ? 'text-ink bg-white' : 'text-muted'
             }`}
           >
             {label}
@@ -69,8 +69,8 @@ export default function RequestsPage() {
             <Card key={request.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-ink-900 font-bold">{request.name}</p>
-                  <p className="text-bark-600 mt-0.5 text-xs">
+                  <p className="text-ink font-medium">{request.name}</p>
+                  <p className="text-muted mt-0.5 text-xs">
                     {[
                       request.phone ? formatRuPhone(request.phone) : null,
                       request.email,
@@ -98,7 +98,7 @@ export default function RequestsPage() {
                   </button>
                 )}
               </div>
-              <p className="text-bark-800 mt-3 text-sm leading-relaxed">{request.message}</p>
+              <p className="text-ink-soft mt-3 text-sm leading-relaxed">{request.message}</p>
             </Card>
           ))}
         </div>

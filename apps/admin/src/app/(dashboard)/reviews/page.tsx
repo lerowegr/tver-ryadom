@@ -36,17 +36,17 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-ink-900 text-2xl font-bold">Отзывы</h1>
+      <h1 className="font-display text-ink text-[1.75rem] leading-tight">Отзывы</h1>
 
-      <div className="bg-cream-200 inline-flex rounded-full p-1" role="tablist">
+      <div className="bg-surface-soft inline-flex p-1" role="tablist">
         {tabs.map((t) => (
           <button
             key={t.key}
             role="tab"
             aria-selected={status === t.key}
             onClick={() => setStatus(t.key)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              status === t.key ? 'shadow-card text-ink-900 bg-white' : 'text-bark-600'
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              status === t.key ? 'text-ink bg-white' : 'text-muted'
             }`}
           >
             {t.label}
@@ -68,18 +68,18 @@ export default function ReviewsPage() {
             <Card key={review.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-ink-900 font-bold">
+                  <p className="text-ink font-medium">
                     {review.authorName}
-                    <span className="text-terra-600 ml-3">{'★'.repeat(review.rating)}</span>
-                    <span className="text-sand-300">{'★'.repeat(5 - review.rating)}</span>
+                    <span className="text-ink ml-3">{'★'.repeat(review.rating)}</span>
+                    <span className="text-line-strong">{'★'.repeat(5 - review.rating)}</span>
                   </p>
-                  <p className="text-bark-600 mt-0.5 text-xs">
+                  <p className="text-muted mt-0.5 text-xs">
                     {review.tour.title} · {formatDateTime(review.createdAt)}
                   </p>
                 </div>
                 <ReviewStatusPill status={review.status} />
               </div>
-              <p className="text-bark-800 mt-3 text-sm leading-relaxed">{review.text}</p>
+              <p className="text-ink-soft mt-3 text-sm leading-relaxed">{review.text}</p>
               <div className="mt-4 flex gap-2">
                 {review.status !== 'approved' ? (
                   <button

@@ -60,7 +60,7 @@ export default function BookingsPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-ink-900 text-2xl font-bold">Бронирования</h1>
+        <h1 className="font-display text-ink text-[1.75rem] leading-tight">Бронирования</h1>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as BookingStatus | '')}
@@ -77,7 +77,7 @@ export default function BookingsPage() {
       </div>
 
       {error ? (
-        <p className="bg-terra-500/10 text-terra-700 rounded-xl px-4 py-3 text-sm font-medium" role="alert">
+        <p className="bg-transparent text-danger px-4 py-3 text-sm font-medium" role="alert">
           {error}
         </p>
       ) : null}
@@ -93,23 +93,23 @@ export default function BookingsPage() {
           <Table head={['Создана', 'Клиент', 'Экскурсия', 'Дата', 'Чел.', 'Сумма', 'Статус', 'Действия']}>
             {bookings.data?.items.map((b) => (
               <tr key={b.id} className="align-top">
-                <td className="text-bark-600 py-3 pr-4 text-xs whitespace-nowrap">
+                <td className="text-muted py-3 pr-4 text-xs whitespace-nowrap">
                   {formatDateTime(b.createdAt)}
                 </td>
                 <td className="py-3 pr-4">
-                  <p className="font-semibold">{b.contactName}</p>
-                  <p className="text-bark-600 text-xs whitespace-nowrap">{formatRuPhone(b.contactPhone)}</p>
-                  {b.contactEmail ? <p className="text-bark-600 text-xs">{b.contactEmail}</p> : null}
-                  {b.comment ? <p className="text-bark-500 mt-1 max-w-52 text-xs italic">«{b.comment}»</p> : null}
+                  <p className="font-medium">{b.contactName}</p>
+                  <p className="text-muted text-xs whitespace-nowrap">{formatRuPhone(b.contactPhone)}</p>
+                  {b.contactEmail ? <p className="text-muted text-xs">{b.contactEmail}</p> : null}
+                  {b.comment ? <p className="text-faint mt-1 max-w-52 text-xs italic">«{b.comment}»</p> : null}
                 </td>
-                <td className="text-bark-700 py-3 pr-4">{b.tour?.title ?? '—'}</td>
-                <td className="text-bark-700 py-3 pr-4 whitespace-nowrap">{formatDateTime(b.startsAt)}</td>
-                <td className="text-bark-700 py-3 pr-4">{b.peopleCount}</td>
-                <td className="py-3 pr-4 font-semibold whitespace-nowrap">{formatPrice(b.totalPrice)}</td>
+                <td className="text-muted py-3 pr-4">{b.tour?.title ?? '—'}</td>
+                <td className="text-muted py-3 pr-4 whitespace-nowrap">{formatDateTime(b.startsAt)}</td>
+                <td className="text-muted py-3 pr-4">{b.peopleCount}</td>
+                <td className="py-3 pr-4 font-medium whitespace-nowrap">{formatPrice(b.totalPrice)}</td>
                 <td className="py-3 pr-4">
                   <BookingStatusPill status={b.status} />
                   {b.adminComment ? (
-                    <p className="text-bark-500 mt-1 max-w-40 text-xs">{b.adminComment}</p>
+                    <p className="text-faint mt-1 max-w-40 text-xs">{b.adminComment}</p>
                   ) : null}
                 </td>
                 <td className="py-3">
