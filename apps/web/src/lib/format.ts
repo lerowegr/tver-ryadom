@@ -45,3 +45,13 @@ export function primaryBadge<T extends { slug: string }>(badges: T[]): T | undef
       (badgePriority.indexOf(a.slug) + 1 || 99) - (badgePriority.indexOf(b.slug) + 1 || 99),
   )[0];
 }
+
+/**
+ * Абсолютный адрес аватара. Ключ приходит с профилем, база — тот же адрес
+ * API, который раздаёт остальные картинки из хранилища.
+ */
+export function avatarUrl(key: string | null | undefined): string | null {
+  if (!key) return null;
+  const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+  return `${base}/images/${key}`;
+}

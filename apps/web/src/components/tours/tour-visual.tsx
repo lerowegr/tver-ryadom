@@ -42,7 +42,15 @@ export function TourVisual({
   const src = image?.variants?.[variant] ?? image?.variants?.card;
   if (src) {
     // Обычный <img>: варианты уже подготовлены при загрузке в R2, next/image не нужен.
-    return <img src={src} alt={image?.alt ?? title} className={`h-full w-full object-cover ${className}`} />;
+    return (
+      <img
+        src={src}
+        alt={image?.alt ?? title}
+        loading="lazy"
+        decoding="async"
+        className={`h-full w-full object-cover ${className}`}
+      />
+    );
   }
 
   const idx = hashOf(slug) % palettes.length;

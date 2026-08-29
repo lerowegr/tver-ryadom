@@ -102,6 +102,8 @@ export interface PublicUserDto {
   role: 'user' | 'admin';
   emailVerified: boolean;
   telegramLinked: boolean;
+  /** Ключ файла в хранилище; абсолютный адрес собирает avatarUrl(). */
+  avatarKey: string | null;
   createdAt: string;
 }
 

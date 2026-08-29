@@ -7,6 +7,7 @@ import { site } from '@/config/site';
 import { Container } from '@/components/ui/container';
 import { MenuIcon, XIcon } from '@/components/ui/icons';
 import { useAuth } from '@/components/providers';
+import { avatarUrl } from '@/lib/format';
 
 const smooth = 'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]';
 
@@ -19,8 +20,14 @@ function AccountLink({ className = '' }: { className?: string }) {
         href="/account"
         className={`text-ink hover:text-muted flex cursor-pointer items-center gap-2.5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase ${smooth} ${className}`}
       >
-        <span className="border-line-strong flex h-7 w-7 items-center justify-center border text-[0.625rem]" aria-hidden>
-          {user.name[0]?.toUpperCase() ?? '?'}
+        <span className="border-line-strong block h-7 w-7 shrink-0 overflow-hidden border" aria-hidden>
+          {avatarUrl(user.avatarKey) ? (
+            <img src={avatarUrl(user.avatarKey)!} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center text-[0.625rem]">
+              {user.name[0]?.toUpperCase() ?? '?'}
+            </span>
+          )}
         </span>
         <span className="max-w-[9rem] truncate">{user.name}</span>
       </Link>

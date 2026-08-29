@@ -15,6 +15,13 @@
       "when": 1783934881351,
       "tag": "0001_funny_quasimodo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788044480560,
+      "tag": "0002_workable_charles_xavier",
+      "breakpoints": true
     }
   ]
 }

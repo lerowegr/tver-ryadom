@@ -65,7 +65,9 @@ export async function authFetch<T>(path: string, init?: RequestInit): Promise<T>
       credentials: 'include',
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        // Для FormData заголовок ставит браузер — ему нужно вписать границу
+        // частей multipart, и наш JSON-тип сломал бы разбор на сервере.
+        ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...init?.headers,
       },

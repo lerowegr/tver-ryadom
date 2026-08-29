@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { AvatarEditor } from '@/components/account/avatar-editor';
 import { useAuth } from '@/components/providers';
 import { TelegramIcon } from '@/components/ui/icons';
 import { ApiRequestError } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
+import { avatarUrl } from '@/lib/format';
 import type { PublicUserDto } from '@/lib/types';
 
 type TelegramLink = { available: false } | { available: true; url: string };
@@ -19,8 +21,44 @@ export default function ProfilePage() {
   const { user, setUser } = useAuth();
   const profile = useFormState();
   const password = useFormState();
+  const [editingAvatar, setEditingAvatar] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   if (!user) return null;
+
+  const saveAvatar = async (blob: Blob) => {
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      const form = new FormData();
+      form.append('file', blob, 'avatar.webp');
+      await authFetch('/auth/avatar', { method: 'POST', body: form });
+      const fresh = await authFetch<PublicUserDto>('/auth/me');
+      setUser(fresh);
+      setEditingAvatar(false);
+    } catch (error) {
+      setAvatarError(
+        error instanceof ApiRequestError ? error.message : 'Не удалось сохранить фото',
+      );
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    setAvatarBusy(true);
+    try {
+      await authFetch('/auth/avatar', { method: 'DELETE' });
+      setUser(await authFetch<PublicUserDto>('/auth/me'));
+    } catch (error) {
+      setAvatarError(error instanceof ApiRequestError ? error.message : 'Не удалось удалить фото');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const currentAvatar = avatarUrl(user.avatarKey);
 
   const saveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -75,6 +113,43 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
+      {editingAvatar ? (
+        <AvatarEditor onSave={saveAvatar} onCancel={() => setEditingAvatar(false)} busy={avatarBusy} />
+      ) : (
+        <section className="border-line flex flex-wrap items-center gap-8 border p-8 md:p-10">
+          <span className="border-line block h-24 w-24 shrink-0 overflow-hidden border">
+            {currentAvatar ? (
+              <img src={currentAvatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="bg-surface-soft text-faint font-display flex h-full w-full items-center justify-center text-3xl">
+                {user.name[0]?.toUpperCase() ?? '?'}
+              </span>
+            )}
+          </span>
+          <div>
+            <p className="kicker-plain text-faint mb-3">Фото профиля</p>
+            <div className="flex flex-wrap items-center gap-6">
+              <button
+                onClick={() => setEditingAvatar(true)}
+                className="border-line text-ink hover:border-ink hover:bg-ink hover:text-bg cursor-pointer border px-6 py-3 text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
+              >
+                {currentAvatar ? 'Заменить' : 'Загрузить'}
+              </button>
+              {currentAvatar ? (
+                <button
+                  onClick={removeAvatar}
+                  disabled={avatarBusy}
+                  className="link-underline text-muted hover:text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase disabled:opacity-40"
+                >
+                  Удалить
+                </button>
+              ) : null}
+            </div>
+            {avatarError ? <p className="field-error mt-3">{avatarError}</p> : null}
+          </div>
+        </section>
+      )}
+
       <section className="border-line border p-8 md:p-10" aria-labelledby="profile-data">
         <h2 id="profile-data" className="text-ink mb-1 text-lg font-medium">
           Личные данные

@@ -23,9 +23,12 @@ const patchSchema = z.object({
 
 export const adminImageRoutes = new Hono<AppEnv>()
   /**
-   * Загрузка фото экскурсии (multipart/form-data, поле file).
-   * Сейчас в R2 сохраняется оригинал; генерация thumb/card/hero-вариантов
-   * (WASM-ресайз) — отдельная оптимизация на этапе деплоя.
+   * Загрузка фото экскурсии (multipart/form-data).
+   *
+   * Размеры готовит браузер и присылает их полями hero/card/thumb: в Workers
+   * ресайз потребовал бы WASM-кодек и упёрся бы в лимит процессорного времени,
+   * а у загружающего изображение и так уже в памяти. Поле file остаётся для
+   * совместимости — если вариантов нет, оригинал кладётся во все размеры.
    */
   .post('/tours/:tourId/images', async (c) => {
     const tourId = c.req.param('tourId');
@@ -37,30 +40,54 @@ export const adminImageRoutes = new Hono<AppEnv>()
     if (!tour) throw notFound('Экскурсия не найдена');
 
     const form = await c.req.formData().catch(() => null);
-    const file = form?.get('file');
-    if (!(file instanceof File)) throw validationError('Приложите файл изображения в поле file');
-    const ext = EXT_BY_TYPE[file.type];
-    if (!ext) throw validationError('Поддерживаются JPEG, PNG и WebP');
-    if (file.size > MAX_SIZE) throw validationError('Файл больше 8 МБ');
+    if (!form) throw validationError('Ожидается multipart/form-data');
 
-    const key = `tours/${tourId}/${crypto.randomUUID()}.${ext}`;
-    await c.env.IMAGES.put(key, await file.arrayBuffer(), {
-      httpMetadata: { contentType: file.type },
-    });
+    const folder = `tours/${tourId}`;
+    const variants: Record<string, string> = {};
+
+    /** Кладёт файл в R2 и возвращает ключ. */
+    const store = async (file: File, name: string): Promise<string> => {
+      const ext = EXT_BY_TYPE[file.type];
+      if (!ext) throw validationError('Поддерживаются JPEG, PNG и WebP');
+      if (file.size > MAX_SIZE) throw validationError('Файл больше 8 МБ');
+      const key = `${folder}/${crypto.randomUUID()}-${name}.${ext}`;
+      await c.env.IMAGES.put(key, await file.arrayBuffer(), {
+        httpMetadata: { contentType: file.type },
+      });
+      return key;
+    };
+
+    for (const name of ['hero', 'card', 'thumb'] as const) {
+      const part = form.get(name);
+      if (part instanceof File && part.size > 0) variants[name] = await store(part, name);
+    }
+
+    const original = form.get('file');
+    if (original instanceof File && original.size > 0) {
+      variants.original = await store(original, 'original');
+    }
+
+    // Основной ключ — самый крупный доступный размер.
+    const primary = variants.hero ?? variants.original ?? variants.card ?? variants.thumb;
+    if (!primary) throw validationError('Приложите изображение');
+    variants.original ??= primary;
+    variants.hero ??= primary;
+    variants.card ??= variants.hero;
+    variants.thumb ??= variants.card;
 
     const [orderRow] = await db
       .select({ total: count() })
       .from(tourImages)
       .where(eq(tourImages.tourId, tourId));
 
-    const altRaw = form?.get('alt');
+    const altRaw = form.get('alt');
     const image = {
       id: crypto.randomUUID(),
       tourId,
-      r2Key: key,
+      r2Key: primary,
       alt: typeof altRaw === 'string' && altRaw.trim() ? altRaw.trim() : tour.title,
       sortOrder: orderRow?.total ?? 0,
-      variants: { original: key, thumb: key, card: key, hero: key },
+      variants,
     };
     await db.insert(tourImages).values(image);
 

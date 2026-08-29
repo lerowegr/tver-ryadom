@@ -25,6 +25,8 @@ export function toPublicUser(user: UserRow) {
     role: user.role,
     emailVerified: user.emailVerifiedAt !== null,
     telegramLinked: user.telegramChatId !== null,
+    /** Ключ в R2; в абсолютный URL превращает слой маршрутов. */
+    avatarKey: user.avatarKey,
     createdAt: user.createdAt,
   };
 }

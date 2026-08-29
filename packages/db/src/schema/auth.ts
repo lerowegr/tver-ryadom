@@ -13,6 +13,8 @@ export const users = sqliteTable(
     /** Nullable: для OAuth/Telegram-аккаунтов без пароля. */
     passwordHash: text('password_hash'),
     role: text('role', { enum: USER_ROLES }).notNull().default('user'),
+    /** Ключ файла в R2. Кадрирует пользователь в кабинете, хранится квадрат. */
+    avatarKey: text('avatar_key'),
     emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
     telegramChatId: text('telegram_chat_id'),
     createdAt: createdAt(),

@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { ApiRequestError, authFetch } from '@/lib/api';
+import { formatBytes, makeVariants } from '@/lib/image';
 import type { AdminImage } from '@/lib/types';
 import { Card, Empty } from '@/components/ui';
 
@@ -10,13 +11,24 @@ export function TourImages({ tourId, images }: { tourId: string; images: AdminIm
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin-tour', tourId] });
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
+      // Размеры готовим здесь: сервер их только раскладывает по хранилищу.
+      const variants = await makeVariants(file);
       const form = new FormData();
-      form.append('file', file);
+      form.append('hero', variants.hero, 'hero.webp');
+      form.append('card', variants.card, 'card.webp');
+      form.append('thumb', variants.thumb, 'thumb.webp');
+
+      const total = variants.hero.size + variants.card.size + variants.thumb.size;
+      setSaved(
+        `${file.name}: ${formatBytes(file.size)} → ${formatBytes(total)} на три размера`,
+      );
+
       return authFetch(`/admin/tours/${tourId}/images`, { method: 'POST', body: form });
     },
     onSuccess: () => {
@@ -54,8 +66,13 @@ export function TourImages({ tourId, images }: { tourId: string; images: AdminIm
         </>
       }
     >
+      {saved && !error ? (
+        <p className="text-muted mb-4 text-xs" role="status">
+          {saved}
+        </p>
+      ) : null}
       {error ? (
-        <p className="bg-transparent text-danger mb-4 px-4 py-3 text-sm font-medium" role="alert">
+        <p className="border-danger text-danger mb-4 border-l-2 py-2 pl-4 text-sm" role="alert">
           {error}
         </p>
       ) : null}
