@@ -6,7 +6,7 @@ import { BookingForm } from '@/components/tours/booking-form';
 import { FavoriteButton } from '@/components/tours/favorite-button';
 import { ProgramTimeline } from '@/components/tours/program-timeline';
 import { RouteMap } from '@/components/tours/route-map';
-import { RouteSchematic } from '@/components/tours/route-schematic';
+import { RouteMapEmbed } from '@/components/tours/route-map-embed';
 import { TourVisual } from '@/components/tours/tour-visual';
 import { Container } from '@/components/ui/container';
 import { CarIcon, CheckIcon, ClockIcon, MapPinIcon, RubleIcon, WalkIcon, XIcon } from '@/components/ui/icons';
@@ -178,10 +178,12 @@ export default async function TourPage({ params }: { params: Params }) {
             {tour.routePoints.length > 0 ? (
               <section aria-labelledby="route">
                 <SectionTitle id="route">Маршрут</SectionTitle>
+                {/* С ключом — JS-карта с линией маршрута и нумерованными
+                    метками; без ключа — виджет, которому ключ не нужен. */}
                 {process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY ? (
                   <RouteMap points={tour.routePoints} />
                 ) : (
-                  <RouteSchematic points={tour.routePoints} />
+                  <RouteMapEmbed points={tour.routePoints} />
                 )}
                 <ol className="border-line mt-10 grid gap-x-10 border-t sm:grid-cols-2">
                   {tour.routePoints.map((point, i) => (

@@ -155,6 +155,21 @@ body {
   @apply w-full;
 }
 
+/* Появление блока при попадании во вьюпорт. Прячем только когда JS жив:
+   раньше это делала библиотека анимации через inline-стиль прямо в серверной
+   разметке, и без JS блоки оставались невидимыми навсегда. */
+.js-motion .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s var(--e-smooth),
+    transform 0.7s var(--e-smooth);
+}
+.js-motion .reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
 /* Начальные состояния для GSAP. Ставятся только когда JS жив
    (класс js-motion вешает инлайн-скрипт до первой отрисовки):
    если скрипт не выполнится, контент виден без анимации. */
@@ -180,5 +195,10 @@ body {
   }
   .js-motion .hero-photo {
     clip-path: none;
+  }
+  .js-motion .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

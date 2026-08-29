@@ -13,6 +13,19 @@ const listFilterSchema = paginationSchema.extend({
   status: z.enum(REVIEW_STATUSES).optional(),
 });
 
+/**
+ * Отзыв, заведённый вручную из админки. Экскурсовод получает их в мессенджерах
+ * и по телефону, поэтому нужен способ внести отзыв, минуя форму на сайте.
+ * По умолчанию сразу опубликован: модерировать собственную запись незачем.
+ */
+const adminReviewCreateSchema = z.object({
+  tourId: z.string().trim().min(1),
+  authorName: z.string().trim().min(2).max(100),
+  rating: z.number().int().min(1).max(5),
+  text: z.string().trim().min(10, 'Отзыв должен быть не короче 10 символов').max(2000),
+  status: z.enum(REVIEW_STATUSES).default('approved'),
+});
+
 /** Пересчитывает денормализованный рейтинг тура по одобренным отзывам. */
 async function recalcTourRating(db: Db, tourId: string) {
   const [row] = await db
@@ -40,6 +53,29 @@ export const adminReviewRoutes = new Hono<AppEnv>()
       offset: (filter.page - 1) * filter.limit,
     });
     return paginated(c, rows, totalRow?.total ?? 0, filter.page, filter.limit);
+  })
+
+  .post('/', validate('json', adminReviewCreateSchema), async (c) => {
+    const input = c.req.valid('json');
+    const db = c.get('db');
+
+    const tour = await db.query.tours.findFirst({
+      where: eq(tours.id, input.tourId),
+      columns: { id: true },
+    });
+    if (!tour) throw notFound('Экскурсия не найдена');
+
+    const id = crypto.randomUUID();
+    await db.insert(reviews).values({
+      id,
+      tourId: input.tourId,
+      authorName: input.authorName,
+      rating: input.rating,
+      text: input.text,
+      status: input.status,
+    });
+    await recalcTourRating(db, input.tourId);
+    return ok(c, { id, status: input.status }, 201);
   })
 
   .patch('/:id', validate('json', reviewModerateSchema), async (c) => {
