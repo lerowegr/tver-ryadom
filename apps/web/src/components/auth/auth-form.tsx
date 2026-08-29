@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/providers';
-import { SegmentedTabs, smoothEase } from '@/components/ui/segmented-tabs';
+import { SegmentedTabs } from '@/components/ui/segmented-tabs';
 import { ApiRequestError } from '@/lib/api';
 
 type Mode = 'login' | 'register';
@@ -85,26 +84,33 @@ export function AuthForm() {
       />
 
       <form onSubmit={onSubmit} className="mt-9 space-y-7" noValidate>
-        <AnimatePresence initial={false}>
-          {mode === 'register' ? (
-            <motion.div
-              key="name"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.45, ease: smoothEase }}
-              className="overflow-hidden"
-            >
+        {/* Раскрытие на CSS-сетке: тот же эффект, что давал
+            AnimatePresence, но без анимационной библиотеки. */}
+        <div
+          className={`grid transition-[grid-template-rows,opacity] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            mode === 'register' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+          aria-hidden={mode !== 'register'}
+        >
+          <div className="overflow-hidden">
               <label htmlFor="auth-name" className="sr-only">
                 Имя
               </label>
-              <input id="auth-name" name="name" placeholder="Ваше имя" required className="field" />
+              <input
+                id="auth-name"
+                name="name"
+                placeholder="Ваше имя"
+                required
+                /* Отключаем в свёрнутом виде: поле остаётся в DOM, и без этого
+                   required не дал бы отправить форму входа. */
+                disabled={mode !== 'register'}
+                className="field"
+              />
               {fieldErrors.name ? (
                 <p className="field-error">{fieldErrors.name}</p>
               ) : null}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+          </div>
+        </div>
 
         <div>
           <label htmlFor="auth-email" className="sr-only">
@@ -124,16 +130,15 @@ export function AuthForm() {
           ) : null}
         </div>
 
-        <AnimatePresence initial={false}>
-          {mode === 'register' ? (
-            <motion.div
-              key="phone"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.45, ease: smoothEase }}
-              className="overflow-hidden"
-            >
+        {/* Раскрытие на CSS-сетке: тот же эффект, что давал
+            AnimatePresence, но без анимационной библиотеки. */}
+        <div
+          className={`grid transition-[grid-template-rows,opacity] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            mode === 'register' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+          aria-hidden={mode !== 'register'}
+        >
+          <div className="overflow-hidden">
               <label htmlFor="auth-phone" className="sr-only">
                 Телефон
               </label>
@@ -143,14 +148,14 @@ export function AuthForm() {
                 type="tel"
                 placeholder="Телефон (необязательно)"
                 autoComplete="tel"
+                disabled={mode !== 'register'}
                 className="field"
               />
               {fieldErrors.phone ? (
                 <p className="field-error">{fieldErrors.phone}</p>
               ) : null}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+          </div>
+        </div>
 
         <div>
           <label htmlFor="auth-password" className="sr-only">

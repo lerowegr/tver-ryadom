@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { site } from '@/config/site';
 import { Container } from '@/components/ui/container';
@@ -97,6 +96,7 @@ export function Header() {
             className="text-ink -mr-2 cursor-pointer p-2 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
+            aria-controls="mobile-nav"
             aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
           >
             {open ? <XIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
@@ -104,37 +104,37 @@ export function Header() {
         </div>
       </Container>
 
-      <AnimatePresence>
-        {open ? (
-          <motion.nav
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="border-line overflow-hidden border-t lg:hidden"
-            aria-label="Мобильная навигация"
-          >
-            <Container className="flex flex-col gap-6 py-8">
-              {site.nav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <AccountLink />
+      {/* Раскрытие на CSS-сетке вместо AnimatePresence: ради одного этого
+          меню в бандл тянулась вся анимационная библиотека. */}
+      <div
+        id="mobile-nav"
+        className={`grid overflow-hidden transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden ${
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        }`}
+      >
+        <nav className="border-line min-h-0 border-t" aria-label="Мобильная навигация">
+          <Container className="flex flex-col gap-6 py-8">
+            {site.nav.map((item) => (
               <Link
-                href="/contacts"
-                className="border-line-strong text-ink mt-2 cursor-pointer border px-7 py-4 text-center text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
+                key={item.href}
+                href={item.href}
+                tabIndex={open ? undefined : -1}
+                className="text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
               >
-                Связаться
+                {item.label}
               </Link>
-            </Container>
-          </motion.nav>
-        ) : null}
-      </AnimatePresence>
+            ))}
+            <AccountLink />
+            <Link
+              href="/contacts"
+              tabIndex={open ? undefined : -1}
+              className="border-line-strong text-ink mt-2 cursor-pointer border px-7 py-4 text-center text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
+            >
+              Связаться
+            </Link>
+          </Container>
+        </nav>
+      </div>
     </header>
   );
 }

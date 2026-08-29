@@ -1,14 +1,14 @@
 'use client';
 
-import { motion } from 'motion/react';
-import { useId } from 'react';
-
 /** Изинг в духе «easy ease» из After Effects. */
 export const smoothEase = [0.22, 1, 0.36, 1] as const;
 
 /**
- * Переключатель-«пилюля»: активный фон плавно перетекает между вкладками
- * (motion layoutId), а не переключается скачком.
+ * Переключатель-«пилюля»: активный фон плавно переезжает между вкладками.
+ *
+ * Раньше перетекание делал layoutId из motion — ради одного этого эффекта
+ * в бандл попадала вся библиотека (119 КБ). Теперь это одна абсолютная
+ * плашка, которую двигает transform: тот же эффект, ноль зависимостей.
  */
 export function SegmentedTabs<T extends string>({
   value,
@@ -23,10 +23,23 @@ export function SegmentedTabs<T extends string>({
   ariaLabel: string;
   className?: string;
 }) {
-  const groupId = useId();
+  const index = Math.max(
+    0,
+    options.findIndex((o) => o.value === value),
+  );
+  const share = 100 / options.length;
 
   return (
-    <div className={`border-line inline-flex border ${className}`} role="tablist" aria-label={ariaLabel}>
+    <div
+      className={`border-line relative inline-flex border ${className}`}
+      role="tablist"
+      aria-label={ariaLabel}
+    >
+      <span
+        aria-hidden
+        className="bg-ink absolute inset-y-0 left-0 transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{ width: `${share}%`, transform: `translateX(${index * 100}%)` }}
+      />
       {options.map((option) => {
         const active = value === option.value;
         return (
@@ -37,13 +50,6 @@ export function SegmentedTabs<T extends string>({
             onClick={() => onChange(option.value)}
             className="relative flex-1 cursor-pointer px-6 py-3.5 text-[0.6875rem] font-medium tracking-[0.18em] whitespace-nowrap uppercase"
           >
-            {active ? (
-              <motion.span
-                layoutId={`segment-${groupId}`}
-                className="bg-ink absolute inset-0"
-                transition={{ duration: 0.45, ease: smoothEase }}
-              />
-            ) : null}
             <span
               className={`relative z-10 transition-colors duration-300 ${
                 active ? 'text-bg' : 'text-muted hover:text-ink'

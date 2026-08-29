@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { ApiRequestError, authFetch } from '@/lib/api';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import type { AdminBooking } from '@/lib/types';
-import { BookingStatusPill, Card, Empty, Loading, QueryError, Table } from '@/components/ui';
+import { BookingStatusPill, Card, Empty, Loading, QueryError, Table, Tabs } from '@/components/ui';
 
 const actions: { status: BookingStatus; label: string; needComment?: boolean }[] = [
   { status: 'confirmed', label: 'Подтвердить' },
@@ -61,19 +61,15 @@ export default function BookingsPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-ink text-[1.75rem] leading-tight">Бронирования</h1>
-        <select
+        <Tabs
           value={status}
-          onChange={(e) => setStatus(e.target.value as BookingStatus | '')}
-          className="input w-auto"
-          aria-label="Фильтр по статусу"
-        >
-          <option value="">Все статусы</option>
-          {BOOKING_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {BOOKING_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
+          onChange={setStatus}
+          options={[
+            { value: '' as const, label: 'Все' },
+            ...BOOKING_STATUSES.map((s) => ({ value: s, label: BOOKING_STATUS_LABELS[s] })),
+          ]}
+          label="Фильтр броней по статусу"
+        />
       </div>
 
       {error ? (

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { authFetch } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { AdminReview, AdminTourListItem } from '@/lib/types';
-import { Card, Empty, Loading, QueryError, ReviewStatusPill } from '@/components/ui';
+import { Card, Empty, Loading, QueryError, ReviewStatusPill, Tabs } from '@/components/ui';
 
 const tabs: { key: ReviewStatus | ''; label: string }[] = [
   { key: 'pending', label: 'На модерации' },
@@ -125,21 +125,12 @@ export default function ReviewsPage() {
         </Card>
       ) : null}
 
-      <div className="bg-surface-soft inline-flex p-1" role="tablist">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={status === t.key}
-            onClick={() => setStatus(t.key)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              status === t.key ? 'text-ink bg-white' : 'text-muted'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={status}
+        onChange={setStatus}
+        options={tabs.map((t) => ({ value: t.key, label: t.label }))}
+        label="Фильтр отзывов по статусу"
+      />
 
       {reviews.isLoading ? (
         <Loading />

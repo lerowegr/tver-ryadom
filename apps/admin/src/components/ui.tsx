@@ -78,6 +78,44 @@ export function ReviewStatusPill({ status }: { status: ReviewStatus }) {
   return <span className={`${pill} ${reviewStatusStyles[status]}`}>{reviewStatusLabels[status]}</span>;
 }
 
+/**
+ * Переключатель разделов. Заменяет и «пилюли» со скруглением, и нативный
+ * <select>: список вариантов у него рисует операционная система, оформить
+ * его нельзя, и он выбивался из остального интерфейса.
+ */
+export function Tabs<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+}: {
+  value: T;
+  onChange: (next: T) => void;
+  options: { value: T; label: string }[];
+  label: string;
+}) {
+  return (
+    <div className="border-line inline-flex flex-wrap border" role="tablist" aria-label={label}>
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(o.value)}
+            className={`cursor-pointer px-5 py-3 text-[0.625rem] font-medium tracking-[0.16em] uppercase transition-colors duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              active ? 'bg-ink text-bg' : 'text-muted hover:text-ink'
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Table({ head, children }: { head: string[]; children: ReactNode }) {
   return (
     <div className="overflow-x-auto">

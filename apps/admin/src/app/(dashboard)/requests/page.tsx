@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { authFetch } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { AdminContactRequest } from '@/lib/types';
-import { Card, Empty, Loading, QueryError } from '@/components/ui';
+import { Card, Empty, Loading, QueryError, Tabs } from '@/components/ui';
 
 export default function RequestsPage() {
   const [status, setStatus] = useState<ContactRequestStatus>('new');
@@ -34,26 +34,15 @@ export default function RequestsPage() {
     <div className="space-y-5">
       <h1 className="font-display text-ink text-[1.75rem] leading-tight">Заявки с формы</h1>
 
-      <div className="bg-surface-soft inline-flex p-1" role="tablist">
-        {(
-          [
-            ['new', 'Новые'],
-            ['processed', 'Обработанные'],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={status === key}
-            onClick={() => setStatus(key)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              status === key ? 'text-ink bg-white' : 'text-muted'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={status}
+        onChange={setStatus}
+        options={[
+          { value: 'new' as const, label: 'Новые' },
+          { value: 'processed' as const, label: 'Обработанные' },
+        ]}
+        label="Фильтр заявок по статусу"
+      />
 
       {requests.isLoading ? (
         <Loading />
