@@ -95,7 +95,7 @@ export function TourFilters({ badges }: { badges: BadgeDto[] }) {
               key={badge.slug}
               onClick={() => toggleBadge(badge.slug)}
               aria-pressed={active}
-              className={`cursor-pointer border px-5 py-3 text-[0.6875rem] font-medium tracking-[0.14em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              className={`cursor-pointer border px-5 py-3.5 text-[0.6875rem] font-medium tracking-[0.14em] uppercase transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 active ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink'
               }`}
             >

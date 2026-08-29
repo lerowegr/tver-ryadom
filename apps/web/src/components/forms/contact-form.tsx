@@ -72,26 +72,60 @@ export function ContactForm() {
         <label htmlFor="cf-name" className="sr-only">
           Имя
         </label>
-        <input id="cf-name" placeholder="Ваше имя" {...register('name')} className="field" />
-        {errors.name ? <p className="field-error">{errors.name.message}</p> : null}
+        <input
+          id="cf-name"
+          placeholder="Ваше имя"
+          autoComplete="name"
+          aria-invalid={errors.name ? true : undefined}
+          aria-describedby={errors.name ? 'cf-name-error' : undefined}
+          {...register('name')}
+          className="field"
+        />
+        {errors.name ? (
+          <p id="cf-name-error" className="field-error">
+            {errors.name.message}
+          </p>
+        ) : null}
       </div>
       <div className="grid gap-7 sm:grid-cols-2">
         <div>
           <label htmlFor="cf-phone" className="sr-only">
             Телефон
           </label>
-          <input id="cf-phone" type="tel" placeholder="Телефон" {...register('phone')} className="field" />
+          <input
+            id="cf-phone"
+            type="tel"
+            placeholder="Телефон"
+            autoComplete="tel"
+            aria-invalid={errors.phone ? true : undefined}
+            aria-describedby={errors.phone ? 'cf-phone-error' : undefined}
+            {...register('phone')}
+            className="field"
+          />
           {errors.phone ? (
-            <p className="field-error">{errors.phone.message}</p>
+            <p id="cf-phone-error" className="field-error">
+              {errors.phone.message}
+            </p>
           ) : null}
         </div>
         <div>
           <label htmlFor="cf-email" className="sr-only">
             Email
           </label>
-          <input id="cf-email" type="email" placeholder="Email" {...register('email')} className="field" />
+          <input
+            id="cf-email"
+            type="email"
+            placeholder="Email"
+            autoComplete="email"
+            aria-invalid={errors.email ? true : undefined}
+            aria-describedby={errors.email ? 'cf-email-error' : undefined}
+            {...register('email')}
+            className="field"
+          />
           {errors.email ? (
-            <p className="field-error">{errors.email.message}</p>
+            <p id="cf-email-error" className="field-error">
+              {errors.email.message}
+            </p>
           ) : null}
         </div>
       </div>
@@ -103,11 +137,15 @@ export function ContactForm() {
           id="cf-message"
           rows={4}
           placeholder="Расскажите, что вас интересует: даты, состав группы, особые пожелания…"
+          aria-invalid={errors.message ? true : undefined}
+          aria-describedby={errors.message ? 'cf-message-error' : undefined}
           {...register('message')}
           className="field"
         />
         {errors.message ? (
-          <p className="field-error">{errors.message.message}</p>
+          <p id="cf-message-error" className="field-error">
+            {errors.message.message}
+          </p>
         ) : null}
       </div>
 

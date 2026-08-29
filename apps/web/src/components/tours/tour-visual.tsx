@@ -26,27 +26,49 @@ const silhouettes = [
   'M0 100 L0 90 L18 90 L18 78 Q26 66 34 78 L34 90 L52 90 L52 82 Q60 70 68 82 L68 90 L88 90 L88 74 L94 74 L94 66 L98 58 L102 66 L102 74 L108 74 L108 90 L120 90 L120 100 Z',
 ];
 
+/** Ширины вариантов из админки — по ним браузер выбирает подходящий файл. */
+const VARIANT_WIDTH: Record<string, number> = { thumb: 400, card: 900, hero: 1600 };
+
+/** Сколько места займёт картинка — иначе браузер считает её во всю ширину экрана. */
+const SIZES: Record<'card' | 'hero', string> = {
+  card: '(min-width: 1024px) 32vw, (min-width: 768px) 46vw, 92vw',
+  hero: '(min-width: 1024px) 42vw, 92vw',
+};
+
 export function TourVisual({
   slug,
   title,
   image,
   variant = 'card',
   className = '',
+  priority = false,
 }: {
   slug: string;
   title: string;
   image: TourImageDto | null;
   variant?: 'card' | 'hero';
   className?: string;
+  /** Картинка видна сразу при открытии страницы — грузим её первой, без lazy. */
+  priority?: boolean;
 }) {
   const src = image?.variants?.[variant] ?? image?.variants?.card;
   if (src) {
+    // Все доступные размеры отдаём браузеру: на телефоне карточке хватает
+    // варианта на 400 px, а раньше туда ехал файл на 900.
+    const srcSet = Object.entries(image?.variants ?? {})
+      .filter(([name, url]) => VARIANT_WIDTH[name] && url)
+      .map(([name, url]) => `${url} ${VARIANT_WIDTH[name]}w`)
+      .join(', ');
+
     // Обычный <img>: варианты уже подготовлены при загрузке в R2, next/image не нужен.
     return (
       <img
         src={src}
+        srcSet={srcSet || undefined}
+        sizes={srcSet ? SIZES[variant] : undefined}
         alt={image?.alt ?? title}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : undefined}
         decoding="async"
         className={`h-full w-full object-cover ${className}`}
       />

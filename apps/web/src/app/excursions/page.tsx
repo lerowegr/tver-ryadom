@@ -55,7 +55,7 @@ export default async function ExcursionsPage({ searchParams }: { searchParams: S
           <div className="mt-16 grid gap-x-10 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
             {toursPage.items.map((tour, i) => (
               <Reveal key={tour.id} delay={(i % 3) * 0.08} className="h-full">
-                <TourCard tour={tour} />
+                <TourCard tour={tour} priority={i === 0} />
               </Reveal>
             ))}
           </div>

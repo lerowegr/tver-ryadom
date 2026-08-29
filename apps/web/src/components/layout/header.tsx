@@ -50,6 +50,17 @@ export function Header() {
 
   useEffect(() => setOpen(false), [pathname]);
 
+  // Escape закрывает меню: это единственный раскрывающийся слой на сайте,
+  // и от него ждут привычного поведения.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
   return (
     <header
       /* Фон непрозрачный всегда: герой разрезан пополам — слева светлая
@@ -61,7 +72,7 @@ export function Header() {
       <Container className="!max-w-[104rem]">
         <div className="flex h-20 items-center justify-between gap-8">
           {/* Логотип */}
-          <Link href="/" className="group shrink-0" aria-label="На главную">
+          <Link href="/" className="group flex shrink-0 items-center py-3" aria-label="На главную">
             <span className="font-display text-ink text-[1.375rem] leading-none tracking-[-0.01em]">
               Тверь <span className="italic">рядом</span>
             </span>
@@ -100,7 +111,7 @@ export function Header() {
           </div>
 
           <button
-            className="text-ink -mr-2 cursor-pointer p-2 lg:hidden"
+            className="text-ink -mr-3 cursor-pointer p-3 lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-controls="mobile-nav"
@@ -120,22 +131,22 @@ export function Header() {
         }`}
       >
         <nav className="border-line min-h-0 border-t" aria-label="Мобильная навигация">
-          <Container className="flex flex-col gap-6 py-8">
+          <Container className="flex flex-col gap-1 py-5">
             {site.nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 tabIndex={open ? undefined : -1}
-                className="text-ink cursor-pointer text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
+                className="text-ink flex cursor-pointer items-center py-3.5 text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
               >
                 {item.label}
               </Link>
             ))}
-            <AccountLink />
+            <AccountLink className="py-3.5" />
             <Link
               href="/contacts"
               tabIndex={open ? undefined : -1}
-              className="border-line-strong text-ink mt-2 cursor-pointer border px-7 py-4 text-center text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
+              className="border-line-strong text-ink mt-3 cursor-pointer border px-7 py-4 text-center text-[0.6875rem] font-medium tracking-[0.18em] uppercase"
             >
               Связаться
             </Link>

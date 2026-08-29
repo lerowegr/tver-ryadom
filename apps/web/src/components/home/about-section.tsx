@@ -62,8 +62,12 @@ export function AboutSection({ intro }: { intro?: string }) {
           <div className="relative">
             <div className="about-photo relative aspect-4/5 overflow-hidden">
               <img
-                src="/photos/elena.jpg"
+                src="/photos/elena.webp"
+                srcSet="/photos/elena-600.webp 600w, /photos/elena.webp 900w"
+                sizes="(min-width: 1024px) 46vw, 92vw"
                 alt="Елена Громова, аттестованный экскурсовод по Твери"
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
             </div>

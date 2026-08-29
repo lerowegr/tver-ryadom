@@ -36,10 +36,16 @@ export default async function AboutPage() {
           <div className="mt-16 grid gap-14 lg:mt-24 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
             <Reveal>
               <div className="relative">
+                {/* Главная картинка страницы: без lazy и с высоким приоритетом —
+                    именно она определяет момент «страница загрузилась». */}
                 <div className="aspect-4/5 overflow-hidden">
                   <img
-                    src="/photos/elena.jpg"
+                    src="/photos/elena.webp"
+                    srcSet="/photos/elena-600.webp 600w, /photos/elena.webp 900w"
+                    sizes="(min-width: 1024px) 40vw, 92vw"
                     alt="Елена Громова на набережной Волги"
+                    fetchPriority="high"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 </div>

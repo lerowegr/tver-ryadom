@@ -115,7 +115,13 @@ export default async function TourPage({ params }: { params: Params }) {
           <Reveal>
             <div className="relative">
               <div className="aspect-4/5 overflow-hidden">
-                <TourVisual slug={tour.slug} title={tour.title} image={tour.images[0] ?? null} variant="hero" />
+                <TourVisual
+                  slug={tour.slug}
+                  title={tour.title}
+                  image={tour.images[0] ?? null}
+                  variant="hero"
+                  priority
+                />
               </div>
               {badge ? (
                 <span className="bg-bg/90 text-ink absolute right-0 bottom-0 px-5 py-3 text-[0.625rem] font-medium tracking-[0.18em] uppercase">

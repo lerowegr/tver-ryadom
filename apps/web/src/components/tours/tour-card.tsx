@@ -9,19 +9,29 @@ import type { TourCardDto } from '@/lib/types';
  * подпись слева под ним. Ни контейнера, ни тени, ни скруглений —
  * карточку держит сетка и воздух, а не «плашка».
  */
-export function TourCard({ tour }: { tour: TourCardDto }) {
+export function TourCard({ tour, priority = false }: { tour: TourCardDto; priority?: boolean }) {
   const badge = primaryBadge(tour.badges);
 
   return (
     <article className="group relative flex h-full flex-col">
       <div className="relative overflow-hidden">
-        <div className="aspect-4/5 w-full transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]">
-          <TourVisual slug={tour.slug} title={tour.title} image={tour.image} />
-        </div>
+        {/* Фото — вторая ссылка на ту же страницу. Для скринридера она скрыта
+            и выключена из обхода табом: иначе каждая карточка читалась бы
+            дважды. Раньше здесь была растянутая псевдоэлементом ссылка
+            заголовка, но её перекрывал ::after от .link-underline, и по фото
+            нельзя было кликнуть вовсе. */}
+        <Link
+          href={`/excursions/${tour.slug}`}
+          aria-hidden
+          tabIndex={-1}
+          className="block aspect-4/5 w-full transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
+        >
+          <TourVisual slug={tour.slug} title={tour.title} image={tour.image} priority={priority} />
+        </Link>
 
         {/* Одна отметка вместо россыпи бейджей — иначе фото превращается в доску объявлений */}
         {badge ? (
-          <span className="bg-bg/90 text-ink absolute right-0 bottom-0 px-4 py-2.5 text-[0.625rem] font-medium tracking-[0.18em] uppercase">
+          <span className="bg-bg/90 text-ink pointer-events-none absolute right-0 bottom-0 px-4 py-2.5 text-[0.625rem] font-medium tracking-[0.18em] uppercase">
             {badge.label}
           </span>
         ) : null}
@@ -35,7 +45,7 @@ export function TourCard({ tour }: { tour: TourCardDto }) {
         {tour.subtitle ? <p className="kicker-plain text-faint mb-3">{tour.subtitle}</p> : null}
 
         <h3 className="font-display text-ink text-[1.5rem] leading-[1.15]">
-          <Link href={`/excursions/${tour.slug}`} className="link-underline after:absolute after:inset-0">
+          <Link href={`/excursions/${tour.slug}`} className="link-underline">
             {tour.title}
           </Link>
         </h3>

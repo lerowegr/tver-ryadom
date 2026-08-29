@@ -100,6 +100,9 @@ export function AuthForm() {
                 id="auth-name"
                 name="name"
                 placeholder="Ваше имя"
+                autoComplete="name"
+                aria-invalid={fieldErrors.name ? true : undefined}
+                aria-describedby={fieldErrors.name ? 'auth-name-error' : undefined}
                 required
                 /* Отключаем в свёрнутом виде: поле остаётся в DOM, и без этого
                    required не дал бы отправить форму входа. */
@@ -107,7 +110,9 @@ export function AuthForm() {
                 className="field"
               />
               {fieldErrors.name ? (
-                <p className="field-error">{fieldErrors.name}</p>
+                <p id="auth-name-error" className="field-error">
+                  {fieldErrors.name}
+                </p>
               ) : null}
           </div>
         </div>
@@ -122,11 +127,15 @@ export function AuthForm() {
             type="email"
             placeholder="Email"
             autoComplete="email"
+            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-describedby={fieldErrors.email ? 'auth-email-error' : undefined}
             required
             className="field"
           />
           {fieldErrors.email ? (
-            <p className="field-error">{fieldErrors.email}</p>
+            <p id="auth-email-error" className="field-error">
+              {fieldErrors.email}
+            </p>
           ) : null}
         </div>
 
@@ -148,11 +157,15 @@ export function AuthForm() {
                 type="tel"
                 placeholder="Телефон (необязательно)"
                 autoComplete="tel"
+                aria-invalid={fieldErrors.phone ? true : undefined}
+                aria-describedby={fieldErrors.phone ? 'auth-phone-error' : undefined}
                 disabled={mode !== 'register'}
                 className="field"
               />
               {fieldErrors.phone ? (
-                <p className="field-error">{fieldErrors.phone}</p>
+                <p id="auth-phone-error" className="field-error">
+                  {fieldErrors.phone}
+                </p>
               ) : null}
           </div>
         </div>
@@ -168,11 +181,15 @@ export function AuthForm() {
             placeholder={mode === 'register' ? 'Пароль (от 8 символов)' : 'Пароль'}
             autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
             required
+            aria-invalid={fieldErrors.password ? true : undefined}
+            aria-describedby={fieldErrors.password ? 'auth-password-error' : undefined}
             minLength={mode === 'register' ? 8 : 1}
             className="field"
           />
           {fieldErrors.password ? (
-            <p className="field-error">{fieldErrors.password}</p>
+            <p id="auth-password-error" className="field-error">
+              {fieldErrors.password}
+            </p>
           ) : null}
         </div>
 

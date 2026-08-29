@@ -5,7 +5,8 @@ import { Container } from '@/components/ui/container';
 import type { SiteSettings } from '@/lib/types';
 
 const linkCls =
-  'link-underline text-muted hover:text-ink text-sm transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]';
+  'link-underline text-muted hover:text-ink inline-block py-2 text-sm ' +
+  'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]';
 
 export function Footer({ settings }: { settings: SiteSettings }) {
   const phone = settings['contacts.phone'];
@@ -37,7 +38,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
           <nav aria-label="Разделы сайта">
             <p className="kicker-plain text-faint mb-5">Разделы</p>
-            <ul className="space-y-3">
+            <ul className="space-y-0.5">
               {site.nav.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className={linkCls}>
@@ -50,7 +51,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
           <div>
             <p className="kicker-plain text-faint mb-5">Контакты</p>
-            <ul className="space-y-3">
+            <ul className="space-y-0.5">
               {phone ? (
                 <li>
                   <a href={`tel:${phone}`} className={linkCls}>
@@ -70,7 +71,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
           <div>
             <p className="kicker-plain text-faint mb-5">Мы на связи</p>
-            <ul className="space-y-3">
+            <ul className="space-y-0.5">
               {socials.map(([key, label]) =>
                 settings[key] ? (
                   <li key={key}>

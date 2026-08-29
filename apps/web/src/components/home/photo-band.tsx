@@ -50,7 +50,11 @@ export function PhotoBand() {
         {/* Запас по высоте, чтобы параллакс не оголял края */}
         <img
           src="/photos/putevoy-dvorets.jpg"
+          srcSet="/photos/putevoy-dvorets-900.webp 900w, /photos/putevoy-dvorets.jpg 1280w"
+          sizes="100vw"
           alt="Императорский путевой дворец в Твери"
+          loading="lazy"
+          decoding="async"
           className="band-img absolute inset-x-0 top-[-10%] h-[120%] w-full object-cover"
         />
       </div>

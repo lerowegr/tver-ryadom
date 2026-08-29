@@ -13,6 +13,9 @@
   --n-300: #d6d2ca;
   --n-400: #b8b4ab;
   --n-500: #8a8880;
+  /* Тот же тёплый серый, но доведённый до контраста 4.5:1 на фоне
+     страницы: --n-500 давал 3.46:1, а им набраны надписи в 11 px. */
+  --n-550: #727068;
   --n-600: #6b6b66;
   --n-700: #55554f;
   --n-800: #33332e;
@@ -42,7 +45,7 @@
   --color-ink: var(--n-900);
   --color-ink-soft: var(--n-800);
   --color-muted: var(--n-600);
-  --color-faint: var(--n-500);
+  --color-faint: var(--n-550);
   --color-line: var(--n-200);
   --color-line-strong: var(--n-300);
   --color-accent: var(--n-900);
@@ -105,7 +108,8 @@ body {
 /* Поля ввода: подчёркивание вместо рамки-коробки. Коробки утяжеляют
    страницу, а в этом жанре форма должна читаться как строка текста. */
 .field {
-  @apply border-line text-ink placeholder:text-faint w-full border-b bg-transparent py-3.5 text-sm;
+  /* Ровно 16 px: на меньшем размере iOS зумит страницу при тапе по полю. */
+  @apply border-line text-ink placeholder:text-faint w-full border-b bg-transparent py-3.5 text-base;
   transition: border-color 0.5s var(--e-smooth);
 }
 .field:focus {

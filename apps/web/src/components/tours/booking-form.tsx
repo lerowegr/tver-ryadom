@@ -234,6 +234,8 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
             {...register('peopleCount')}
             min={tour.groupMin}
             max={maxPeople}
+            aria-invalid={errors.peopleCount ? true : undefined}
+            aria-describedby={errors.peopleCount ? 'peopleCount-error' : undefined}
             className="field w-20 text-center"
           />
           <button
@@ -247,7 +249,9 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           <span className="text-muted text-xs">до {maxPeople} чел.</span>
         </div>
         {errors.peopleCount ? (
-          <p className="field-error">{errors.peopleCount.message}</p>
+          <p id="peopleCount-error" className="field-error">
+            {errors.peopleCount.message}
+          </p>
         ) : null}
       </div>
 
@@ -255,9 +259,19 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
         <label htmlFor="contactName" className="sr-only">
           Имя
         </label>
-        <input id="contactName" placeholder="Ваше имя" {...register('contactName')} className="field" />
+        <input
+          id="contactName"
+          placeholder="Ваше имя"
+          autoComplete="name"
+          aria-invalid={errors.contactName ? true : undefined}
+          aria-describedby={errors.contactName ? 'contactName-error' : undefined}
+          {...register('contactName')}
+          className="field"
+        />
         {errors.contactName ? (
-          <p className="field-error">{errors.contactName.message}</p>
+          <p id="contactName-error" className="field-error">
+            {errors.contactName.message}
+          </p>
         ) : null}
       </div>
 
@@ -269,11 +283,16 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           id="contactPhone"
           type="tel"
           placeholder="Телефон, например +7 900 123-45-67"
+          autoComplete="tel"
+          aria-invalid={errors.contactPhone ? true : undefined}
+          aria-describedby={errors.contactPhone ? 'contactPhone-error' : undefined}
           {...register('contactPhone')}
           className="field"
         />
         {errors.contactPhone ? (
-          <p className="field-error">{errors.contactPhone.message}</p>
+          <p id="contactPhone-error" className="field-error">
+            {errors.contactPhone.message}
+          </p>
         ) : null}
       </div>
 
@@ -285,11 +304,16 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           id="contactEmail"
           type="email"
           placeholder="Email (необязательно)"
+          autoComplete="email"
+          aria-invalid={errors.contactEmail ? true : undefined}
+          aria-describedby={errors.contactEmail ? 'contactEmail-error' : undefined}
           {...register('contactEmail')}
           className="field"
         />
         {errors.contactEmail ? (
-          <p className="field-error">{errors.contactEmail.message}</p>
+          <p id="contactEmail-error" className="field-error">
+            {errors.contactEmail.message}
+          </p>
         ) : null}
       </div>
 
