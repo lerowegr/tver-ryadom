@@ -14,7 +14,8 @@ export interface ImageVariants {
 
 /** Ширины по назначению: страница экскурсии, карточка каталога, превью в админке. */
 const WIDTHS = { hero: 1600, card: 900, thumb: 400 } as const;
-const QUALITY = 0.82;
+/** Крупному размеру качество выше: его разглядывают, мелкие только узнают. */
+const QUALITY = { hero: 0.82, card: 0.78, thumb: 0.75 } as const;
 
 function draw(source: ImageBitmap | HTMLCanvasElement, width: number, height: number): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -49,12 +50,12 @@ function downscale(bitmap: ImageBitmap, targetWidth: number): HTMLCanvasElement 
   return draw(current, targetWidth, Math.round(height * scale));
 }
 
-function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+function toBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Не удалось сжать изображение'))),
       'image/webp',
-      QUALITY,
+      quality,
     );
   });
 }
@@ -67,7 +68,12 @@ export async function makeVariants(file: File): Promise<ImageVariants> {
       const scaled = downscale(bitmap, width);
       const canvas =
         scaled instanceof HTMLCanvasElement ? scaled : draw(scaled, scaled.width, scaled.height);
-      result[name] = await toBlob(canvas);
+      const blob = await toBlob(canvas, QUALITY[name]);
+
+      // Если исходник уже меньше целевой ширины, пережатие может дать файл
+      // тяжелее оригинала — тогда оригинал и оставляем.
+      result[name] =
+        bitmap.width <= width && blob.size >= file.size ? file : blob;
     }
     return result as ImageVariants;
   } finally {
