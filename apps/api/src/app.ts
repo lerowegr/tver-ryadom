@@ -10,6 +10,7 @@ import { authenticate } from './middleware/auth';
 import { adminRoutes } from './modules/admin/routes';
 import { authRoutes } from './modules/auth/routes';
 import { getBot } from './modules/bot/bot';
+import { readWebhookSecret } from './modules/bot/setup';
 import { bookingRoutes } from './modules/bookings/routes';
 import { buildIcs, loadRange, readFeedToken } from './modules/calendar/service';
 import { contactRoutes } from './modules/contact/routes';
@@ -115,13 +116,13 @@ export function buildApp(options: BuildAppOptions = {}) {
   });
 
   app.post('/webhook/telegram/:secret', async (c) => {
-    if (
-      !c.env.TELEGRAM_BOT_TOKEN ||
-      !c.env.TELEGRAM_WEBHOOK_SECRET ||
-      c.req.param('secret') !== c.env.TELEGRAM_WEBHOOK_SECRET
-    ) {
-      throw notFound();
-    }
+    if (!c.env.TELEGRAM_BOT_TOKEN) throw notFound();
+    // Секрет берётся из переменной окружения, а если её нет — из настроек,
+    // куда его завела кнопка подключения. Так для запуска бота достаточно
+    // одного токена вместо двух секретов подряд.
+    const expected = await readWebhookSecret(c.get('db'), c.env);
+    if (!expected || c.req.param('secret') !== expected) throw notFound();
+
     const bot = getBot(c.env, c.get('db'));
     return webhookCallback(bot, 'hono')(c);
   });

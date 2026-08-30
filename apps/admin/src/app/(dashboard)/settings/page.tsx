@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { ApiRequestError, authFetch } from '@/lib/api';
 import { Card, Loading, QueryError } from '@/components/ui';
+import { TelegramSetup } from '@/components/telegram-setup';
 
 const contactFields = [
   { key: 'company.name', label: 'Название компании' },
@@ -136,6 +137,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="font-display text-ink text-[1.75rem] leading-tight">Настройки сайта</h1>
+
+      <TelegramSetup />
 
       <Card title="Контакты и тексты">
         <form onSubmit={onSubmitMain} className="space-y-4">

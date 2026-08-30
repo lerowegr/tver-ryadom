@@ -1,7 +1,7 @@
 import type { Db } from '@tver/db';
 import { bookings, schedules, tours, users } from '@tver/db';
 import { formatPrice } from '@tver/shared';
-import { and, eq, gt, inArray, isNotNull } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNotNull, or } from 'drizzle-orm';
 import { Bot } from 'grammy';
 import type { Bindings } from '../../env';
 import { verifyLinkCode } from '../../lib/tg-link';
@@ -83,24 +83,36 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     }
     const now = new Date();
     const futureSlots = db.select({ id: schedules.id }).from(schedules).where(gt(schedules.startsAt, now));
-    const upcoming = await db.query.bookings.findMany({
+    // Бронь может быть привязана к слоту расписания либо к своей дате.
+    // Раньше здесь были только слоты, и заявки «нужна другая дата» —
+    // а это частый путь с сайта — не показывались вовсе.
+    const found = await db.query.bookings.findMany({
       where: and(
         eq(bookings.userId, user.id),
         inArray(bookings.status, ['pending', 'confirmed']),
-        inArray(bookings.scheduleId, futureSlots),
+        or(inArray(bookings.scheduleId, futureSlots), gt(bookings.desiredDate, now)),
       ),
       with: { tour: { columns: { title: true } }, schedule: { columns: { startsAt: true } } },
-      orderBy: (b, { asc }) => [asc(b.createdAt)],
-      limit: 10,
+      limit: 20,
     });
+
+    // Сортируем по фактической дате: она лежит в разных полях, и одним
+    // orderBy этого не выразить.
+    const upcoming = found
+      .map((b) => ({ ...b, when: b.schedule?.startsAt ?? b.desiredDate ?? null }))
+      .sort((a, b) => (a.when?.getTime() ?? 0) - (b.when?.getTime() ?? 0))
+      .slice(0, 10);
     if (upcoming.length === 0) {
       await ctx.reply(`Предстоящих экскурсий нет. Выбрать новую: ${siteUrl}/excursions`);
       return;
     }
-    const lines = upcoming.map(
-      (b) =>
-        `${b.status === 'confirmed' ? '✅' : '🕐'} <b>${b.tour?.title ?? 'Экскурсия'}</b>\n${b.schedule ? formatMsk(b.schedule.startsAt) : 'дата согласовывается'} · ${b.peopleCount} чел. · ${formatPrice(b.totalPrice)}`,
-    );
+    const lines = upcoming.map((b) => {
+      const when = b.when
+        ? `${formatMsk(b.when)}${b.schedule ? '' : ' (дата на согласовании)'}`
+        : 'дата согласовывается';
+      const mark = b.status === 'confirmed' ? '\u2705' : '\u{1F550}';
+      return `${mark} <b>${b.tour?.title ?? 'Экскурсия'}</b>\n${when} · ${b.peopleCount} чел. · ${formatPrice(b.totalPrice)}`;
+    });
     await ctx.reply(lines.join('\n\n'), { parse_mode: 'HTML' });
   });
 

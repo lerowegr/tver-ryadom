@@ -13,6 +13,7 @@ import { clearRefreshCookie, getRefreshCookie, setRefreshCookie } from '../../li
 import { unauthorized, validationError } from '../../lib/errors';
 import { ok } from '../../lib/respond';
 import { imagesBaseOf } from '../../lib/images';
+import { resolveBotUsername } from '../bot/setup';
 import { createLinkCode } from '../../lib/tg-link';
 import { requireAuth } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
@@ -111,11 +112,14 @@ export const authRoutes = new Hono<AppEnv>()
 
   /** Deep-link для привязки Telegram-аккаунта (код живёт 15 минут). */
   .get('/telegram-link', requireAuth, async (c) => {
-    if (!c.env.TELEGRAM_BOT_USERNAME) return ok(c, { available: false as const });
+    // Имя бота приходит либо из переменной окружения, либо из настроек —
+    // туда его записывает подключение бота в админке.
+    const username = await resolveBotUsername(c.get('db'), c.env);
+    if (!username) return ok(c, { available: false as const });
     const user = c.get('user')!;
     const code = await createLinkCode(c.env.JWT_SECRET, user.id);
     return ok(c, {
       available: true as const,
-      url: `https://t.me/${c.env.TELEGRAM_BOT_USERNAME}?start=${code}`,
+      url: `https://t.me/${username}?start=${code}`,
     });
   });
