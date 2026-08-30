@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth } from '@/components/providers';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { CheckIcon } from '@/components/ui/icons';
 import { ApiRequestError } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
@@ -188,12 +189,11 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           </div>
         ) : (
           <div>
-            <input
-              type="datetime-local"
-              {...register('desiredDate')}
-              min={new Date(Date.now() + 3600_000).toISOString().slice(0, 16)}
-              className="field"
-              aria-label="Желаемые дата и время"
+            <DateTimePicker
+              value={watch('desiredDate') ?? ''}
+              onChange={(next) => setValue('desiredDate', next, { shouldValidate: true })}
+              ariaLabel="Желаемые дата и время"
+              placeholder="Выберите дату и время"
             />
             {hasSlots ? (
               <button
