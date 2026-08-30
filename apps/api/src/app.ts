@@ -11,6 +11,8 @@ import { adminRoutes } from './modules/admin/routes';
 import { authRoutes } from './modules/auth/routes';
 import { getBot } from './modules/bot/bot';
 import { readWebhookSecret } from './modules/bot/setup';
+import { handleMaxUpdate } from './modules/channels/max';
+import { handleVkUpdate } from './modules/channels/vk';
 import { bookingRoutes } from './modules/bookings/routes';
 import { buildIcs, loadRange, readFeedToken } from './modules/calendar/service';
 import { contactRoutes } from './modules/contact/routes';
@@ -113,6 +115,23 @@ export function buildApp(options: BuildAppOptions = {}) {
         'Cache-Control': 'public, max-age=3600',
       },
     });
+  });
+
+  /**
+   * Вебхуки ВКонтакте и MAX.
+   *
+   * Секрет здесь идёт в теле запроса, а не в адресе: так устроен Callback
+   * API сообщества, и подстроиться приходится нам. Проверку делает сам
+   * обработчик канала.
+   */
+  app.post('/webhook/vk', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    return handleVkUpdate(c.get('db'), c.env, body);
+  });
+
+  app.post('/webhook/max', async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    return handleMaxUpdate(c.get('db'), c.env, body);
   });
 
   app.post('/webhook/telegram/:secret', async (c) => {

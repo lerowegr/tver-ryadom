@@ -26,6 +26,10 @@ export interface Bindings {
   TELEGRAM_BOT_USERNAME?: string;
   /** Секрет в URL вебхука, чтобы посторонние не слали апдейты (secret). */
   TELEGRAM_WEBHOOK_SECRET?: string;
+  /** Токен сообщества ВКонтакте (secret). Пусто — канал выключен. */
+  VK_GROUP_TOKEN?: string;
+  /** Токен бота MAX (secret). Пусто — канал выключен. */
+  MAX_BOT_TOKEN?: string;
   /** Ключ Resend (secret). Пусто — email-канал выключен. */
   RESEND_API_KEY?: string;
   /** Адрес отправителя писем, например "Тверь рядом <hello@tver-ryadom.ru>". */

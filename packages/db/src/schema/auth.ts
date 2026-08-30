@@ -17,12 +17,18 @@ export const users = sqliteTable(
     avatarKey: text('avatar_key'),
     emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
     telegramChatId: text('telegram_chat_id'),
+    /** Идентификатор во «ВКонтакте»: один человек — одна запись на все каналы. */
+    vkUserId: text('vk_user_id'),
+    /** Идентификатор в MAX. */
+    maxUserId: text('max_user_id'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex('users_email_idx').on(t.email),
     uniqueIndex('users_telegram_chat_idx').on(t.telegramChatId),
+    uniqueIndex('users_vk_idx').on(t.vkUserId),
+    uniqueIndex('users_max_idx').on(t.maxUserId),
   ],
 );
 

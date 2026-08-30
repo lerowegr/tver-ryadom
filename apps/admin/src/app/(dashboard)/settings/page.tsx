@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { ApiRequestError, authFetch } from '@/lib/api';
 import { Card, Loading, QueryError } from '@/components/ui';
+import { ChannelsSetup } from '@/components/channels-setup';
 import { TelegramSetup } from '@/components/telegram-setup';
 
 const contactFields = [
@@ -139,6 +140,9 @@ export default function SettingsPage() {
       <h1 className="font-display text-ink text-[1.75rem] leading-tight">Настройки сайта</h1>
 
       <TelegramSetup />
+      <ChannelsSetup
+        apiOrigin={(process.env.NEXT_PUBLIC_API_URL ?? '').replace(new RegExp('/api/v1$'), '')}
+      />
 
       <Card title="Контакты и тексты">
         <form onSubmit={onSubmitMain} className="space-y-4">

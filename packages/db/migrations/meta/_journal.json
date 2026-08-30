@@ -29,6 +29,13 @@
       "when": 1788104258851,
       "tag": "0003_silly_silhouette",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788127448235,
+      "tag": "0004_secret_veda",
+      "breakpoints": true
     }
   ]
 }
