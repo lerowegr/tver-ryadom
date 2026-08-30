@@ -1,14 +1,17 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 /** Изинг в духе «easy ease» из After Effects. */
 export const smoothEase = [0.22, 1, 0.36, 1] as const;
 
 /**
  * Переключатель-«пилюля»: активный фон плавно переезжает между вкладками.
  *
- * Раньше перетекание делал layoutId из motion — ради одного этого эффекта
- * в бандл попадала вся библиотека (119 КБ). Теперь это одна абсолютная
- * плашка, которую двигает transform: тот же эффект, ноль зависимостей.
+ * Положение и ширина плашки измеряются по самой кнопке. Раньше плашке
+ * задавалась ровная доля ширины — сто процентов, делённые на число вкладок, —
+ * но вкладки получают ширину по своему тексту и равными не выходят:
+ * «Предстоящие» шире, чем «Все», и плашка обрезала слово.
  */
 export function SegmentedTabs<T extends string>({
   value,
@@ -23,28 +26,55 @@ export function SegmentedTabs<T extends string>({
   ariaLabel: string;
   className?: string;
 }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [box, setBox] = useState<{ left: number; width: number } | null>(null);
+
   const index = Math.max(
     0,
     options.findIndex((o) => o.value === value),
   );
-  const share = 100 / options.length;
+
+  const measure = useCallback(() => {
+    const el = tabs.current[index];
+    if (!el) return;
+    setBox({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [index]);
+
+  useEffect(() => {
+    measure();
+    const el = wrap.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    // Ширина вкладок меняется вместе с шириной страницы и после подгрузки шрифта.
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [measure]);
 
   return (
     <div
+      ref={wrap}
       className={`border-line relative inline-flex border ${className}`}
       role="tablist"
       aria-label={ariaLabel}
     >
-      <span
-        aria-hidden
-        className="bg-ink absolute inset-y-0 left-0 transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
-        style={{ width: `${share}%`, transform: `translateX(${index * 100}%)` }}
-      />
-      {options.map((option) => {
+      {/* До первого замера плашки нет: показать её в неверном месте хуже,
+          чем показать на кадр позже. */}
+      {box ? (
+        <span
+          aria-hidden
+          className="bg-ink absolute inset-y-0 left-0 transition-[transform,width] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{ width: box.width, transform: `translateX(${box.left}px)` }}
+        />
+      ) : null}
+      {options.map((option, i) => {
         const active = value === option.value;
         return (
           <button
             key={option.value}
+            ref={(el) => {
+              tabs.current[i] = el;
+            }}
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.value)}

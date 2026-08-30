@@ -24,6 +24,7 @@
   /* Служебный красный. Не бренд-акцент: используется только в ошибках
      валидации, где монохром не даёт человеку понять, что пошло не так. */
   --danger: #9b2c2c;
+  --danger-deep: #7d2222;
 
   /* Единственный «цветной» примитив. Сейчас не используется:
      выбран монохром, цвет на сайте даёт только фотография.
@@ -50,6 +51,7 @@
   --color-line-strong: var(--n-300);
   --color-accent: var(--n-900);
   --color-danger: var(--danger);
+  --color-danger-deep: var(--danger-deep);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-playfair), Georgia, 'Times New Roman', serif;
@@ -315,4 +317,47 @@ body {
 }
 .route-map .maplibregl-ctrl-attrib a {
   color: var(--color-muted);
+}
+
+/* ============================================================
+   ОКНО ПОДТВЕРЖДЕНИЯ
+   ============================================================ */
+
+.dialog-veil {
+  background: color-mix(in srgb, var(--color-ink) 38%, transparent);
+  animation: veil-in 0.3s var(--e-smooth) both;
+}
+
+.dialog-panel {
+  border: 1px solid var(--color-ink);
+  animation: panel-in 0.34s var(--e-smooth) both;
+}
+
+/* Красное свечение вокруг окна: опасное действие должно читаться
+   до того, как человек начнёт вчитываться в текст. */
+.dialog-panel.is-danger {
+  border-color: var(--color-danger);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--color-danger) 14%, transparent),
+    0 0 34px color-mix(in srgb, var(--color-danger) 34%, transparent),
+    0 28px 70px -24px color-mix(in srgb, var(--color-danger) 55%, transparent);
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-veil,
+  .dialog-panel {
+    animation: none;
+  }
 }

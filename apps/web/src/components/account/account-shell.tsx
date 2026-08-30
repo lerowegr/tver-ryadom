@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@/components/providers';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Container } from '@/components/ui/container';
 import { authFetch } from '@/lib/auth';
 
@@ -24,6 +25,11 @@ export function AccountShell({ children }: { children: ReactNode }) {
   const { status, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  // Выход подтверждаем: промахнуться по нему легко, а вернуться —
+  // только через повторный ввод пароля.
+  const [askLogout, setAskLogout] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const summary = useQuery({
     queryKey: ['notifications', 'summary'],
@@ -75,8 +81,8 @@ export function AccountShell({ children }: { children: ReactNode }) {
               );
             })}
             <button
-              onClick={() => logout().then(() => router.push('/'))}
-              className="text-muted hover:text-ink shrink-0 cursor-pointer py-4 text-left text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
+              onClick={() => setAskLogout(true)}
+              className="text-muted hover:text-danger shrink-0 cursor-pointer py-4 text-left text-[0.6875rem] font-medium tracking-[0.18em] uppercase transition-colors duration-500"
             >
               Выйти
             </button>
@@ -84,6 +90,27 @@ export function AccountShell({ children }: { children: ReactNode }) {
           <div className="min-w-0">{children}</div>
         </div>
       </Container>
+
+      <ConfirmDialog
+        open={askLogout}
+        tone="danger"
+        title="Выйти из аккаунта?"
+        text="Брони и избранное останутся на месте — чтобы вернуться к ним, нужно будет войти снова."
+        confirmLabel="Выйти"
+        cancelLabel="Остаться"
+        busy={leaving}
+        onCancel={() => setAskLogout(false)}
+        onConfirm={async () => {
+          setLeaving(true);
+          try {
+            await logout();
+            router.push('/');
+          } finally {
+            setLeaving(false);
+            setAskLogout(false);
+          }
+        }}
+      />
     </div>
   );
 }
