@@ -89,14 +89,18 @@ async function dropDraft(db: Db, chatId: string): Promise<void> {
    Общие куски интерфейса
    ============================================================ */
 
-export function mainMenu(): InlineKeyboard {
-  return new InlineKeyboard()
+export function mainMenu(admin = false): InlineKeyboard {
+  const keyboard = new InlineKeyboard()
     .text('🗺 Экскурсии', 't:list')
     .row()
     .text('📋 Мои брони', 'my:list')
     .text('👤 Кабинет', 'me')
     .row()
     .text('ℹ️ Про экскурсии', 'about');
+  // Кнопка управления видна только администратору: остальным она
+  // не нужна, а лишний ряд в меню только мешает.
+  if (admin) keyboard.row().text('⚙️ Управление', 'a:home');
+  return keyboard;
 }
 
 function hours(minutes: number): string {

@@ -12,7 +12,7 @@ import type { AppEnv } from '../../env';
 import { conflict, notFound } from '../../lib/errors';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
-import { notifyUser } from '../notifications/dispatch';
+import { changeBookingStatus } from './booking-status';
 import { formatMsk } from '../notifications/templates';
 
 const listFilterSchema = paginationSchema.extend({
@@ -72,63 +72,15 @@ export const adminBookingRoutes = new Hono<AppEnv>()
   })
 
   .patch('/:id', validate('json', bookingAdminUpdateSchema), async (c) => {
-    const id = c.req.param('id');
     const input = c.req.valid('json');
-    const db = c.get('db');
-
-    const booking = await db.query.bookings.findFirst({
-      where: eq(bookings.id, id),
-      with: {
-        tour: { columns: { title: true } },
-        schedule: { columns: { startsAt: true } },
-      },
-    });
-    if (!booking) throw notFound('Бронирование не найдено');
-
-    if (booking.status !== input.status) {
-      if (!transitions[booking.status]?.includes(input.status)) {
-        throw conflict(`Нельзя перевести бронь из «${booking.status}» в «${input.status}»`);
-      }
-
-      await db
-        .update(bookings)
-        .set({
-          status: input.status,
-          adminComment: input.adminComment ?? booking.adminComment,
-          updatedAt: new Date(),
-        })
-        .where(eq(bookings.id, id));
-
-      // Отмена возвращает места в слот расписания.
-      if (input.status === 'cancelled' && booking.scheduleId) {
-        await db
-          .update(schedules)
-          .set({ bookedCount: sql`max(0, ${schedules.bookedCount} - ${booking.peopleCount})` })
-          .where(eq(schedules.id, booking.scheduleId));
-      }
-
-      if (booking.userId) {
-        // ЛК + Telegram + email — доставку внешних каналов выполнит cron.
-        await notifyUser(db, booking.userId, `booking_${input.status}`, {
-          bookingId: booking.id,
-          tourTitle: booking.tour?.title,
-          startsAt: booking.schedule
-            ? formatMsk(booking.schedule.startsAt)
-            : booking.desiredDate
-              ? formatMsk(booking.desiredDate)
-              : undefined,
-          peopleCount: booking.peopleCount,
-          totalPriceLabel: formatPrice(booking.totalPrice),
-          comment: input.adminComment,
-          siteUrl: c.env.SITE_URL,
-        });
-      }
-    } else if (input.adminComment !== undefined) {
-      await db
-        .update(bookings)
-        .set({ adminComment: input.adminComment, updatedAt: new Date() })
-        .where(eq(bookings.id, id));
-    }
-
-    return ok(c, { id, status: input.status });
+    // Правила перехода, возврат мест и уведомления живут в службе:
+    // ровно то же самое делает бот.
+    const result = await changeBookingStatus(
+      c.get('db'),
+      c.req.param('id'),
+      input.status,
+      input.adminComment,
+      c.env.SITE_URL,
+    );
+    return ok(c, { id: result.id, status: result.status });
   });

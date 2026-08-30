@@ -27,6 +27,17 @@ import {
   writeState,
 } from './flows';
 import { sendAbout, welcomeText } from './screens';
+import {
+  decideBooking,
+  decideReview,
+  isAdmin,
+  markRequest,
+  sendAdminHome,
+  sendPendingBookings,
+  sendPendingReviews,
+  sendRequests,
+  sendToday,
+} from './admin';
 
 interface DbRef {
   db: Db;
@@ -57,12 +68,27 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
 
   const greet = async (ctx: Context, replace: boolean) => {
     const text = await welcomeText(ref.db);
+    const admin = await isAdmin(ref.db, chat(ctx));
     if (replace) await safeDelete(ctx);
     await ctx.reply(text, {
       parse_mode: 'HTML',
       link_preview_options: { is_disabled: true },
-      reply_markup: mainMenu(),
+      reply_markup: mainMenu(admin),
     });
+  };
+
+  /**
+   * Обёртка администраторских кнопок.
+   *
+   * Проверяем роль на каждое нажатие, а не один раз при показе меню:
+   * идентификатор кнопки виден в переписке, и подобрать его несложно.
+   */
+  const onlyAdmin = (handler: (ctx: Context) => Promise<void>) => async (ctx: Context) => {
+    if (!(await isAdmin(ref.db, chat(ctx)))) {
+      await ctx.answerCallbackQuery('Раздел доступен только администратору');
+      return;
+    }
+    await handler(ctx);
   };
 
   /* ── Команды ────────────────────────────────────────────── */
@@ -126,6 +152,80 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     await writeState(ref.db, chat(ctx), { ...state, awaiting: field });
     await ctx.reply(`${PROMPTS[field]}\n\nЧтобы передумать — отправьте /me`);
   });
+
+  /* ── Управление ─────────────────────────────────────────── */
+
+  bot.command('admin', async (ctx) => {
+    if (!(await isAdmin(ref.db, chat(ctx)))) return;
+    await sendAdminHome(ctx, ref.db);
+  });
+
+  bot.callbackQuery(
+    'a:home',
+    onlyAdmin(async (ctx) => {
+      await ctx.answerCallbackQuery();
+      await sendAdminHome(ctx, ref.db);
+    }),
+  );
+
+  bot.callbackQuery(
+    'a:bk',
+    onlyAdmin(async (ctx) => {
+      await ctx.answerCallbackQuery();
+      await sendPendingBookings(ctx, ref.db);
+    }),
+  );
+
+  bot.callbackQuery(
+    'a:rv',
+    onlyAdmin(async (ctx) => {
+      await ctx.answerCallbackQuery();
+      await sendPendingReviews(ctx, ref.db);
+    }),
+  );
+
+  bot.callbackQuery(
+    'a:rq',
+    onlyAdmin(async (ctx) => {
+      await ctx.answerCallbackQuery();
+      await sendRequests(ctx, ref.db);
+    }),
+  );
+
+  bot.callbackQuery(
+    'a:day',
+    onlyAdmin(async (ctx) => {
+      await ctx.answerCallbackQuery();
+      await sendToday(ctx, ref.db);
+    }),
+  );
+
+  bot.callbackQuery(
+    /^a:bk:(ok|no):(.+)$/,
+    onlyAdmin(async (ctx) => {
+      const match = ctx.callbackQuery?.data?.match(/^a:bk:(ok|no):(.+)$/);
+      if (!match) return;
+      await decideBooking(ctx, ref.db, match[2]!, match[1] === 'ok', siteUrl);
+    }),
+  );
+
+  bot.callbackQuery(
+    /^a:rv:(ok|no):(.+)$/,
+    onlyAdmin(async (ctx) => {
+      const match = ctx.callbackQuery?.data?.match(/^a:rv:(ok|no):(.+)$/);
+      if (!match) return;
+      await decideReview(ctx, ref.db, match[2]!, match[1] === 'ok');
+    }),
+  );
+
+  bot.callbackQuery(
+    /^a:rq:ok:(.+)$/,
+    onlyAdmin(async (ctx) => {
+      const match = ctx.callbackQuery?.data?.match(/^a:rq:ok:(.+)$/);
+      if (!match) return;
+      await markRequest(ctx, ref.db, match[1]!);
+    }),
+  );
 
   /* ── Экскурсии ──────────────────────────────────────────── */
 

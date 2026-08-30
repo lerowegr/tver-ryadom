@@ -27,7 +27,8 @@ const adminReviewCreateSchema = z.object({
 });
 
 /** Пересчитывает денормализованный рейтинг тура по одобренным отзывам. */
-async function recalcTourRating(db: Db, tourId: string) {
+/** Пересчёт рейтинга тура. Экспортируется: то же делает модерация из бота. */
+export async function recalcTourRating(db: Db, tourId: string) {
   const [row] = await db
     .select({ avgRating: avg(reviews.rating), total: count() })
     .from(reviews)
