@@ -14,8 +14,9 @@ import {
   mainMenu,
   placeBooking,
   readDraft,
+  safeDelete,
+  sendCarousel,
   sendMyBookings,
-  sendTourCards,
   sendTourDetails,
   startBooking,
   toggleReminder,
@@ -76,7 +77,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() }),
   );
 
-  bot.command('tours', (ctx) => sendTourCards(ctx, ref.db, imagesBase));
+  bot.command('tours', (ctx) => sendCarousel(ctx, ref.db, imagesBase, 0, false));
   bot.command('mybookings', (ctx) =>
     sendMyBookings(ctx, ref.db, String(ctx.chat.id), siteUrl),
   );
@@ -88,9 +89,29 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     await ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() });
   });
 
+  bot.callbackQuery('menu', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await safeDelete(ctx);
+    await ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() });
+  });
+
   bot.callbackQuery('t:list', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await sendTourCards(ctx, ref.db, imagesBase);
+    await sendCarousel(ctx, ref.db, imagesBase, 0, false);
+  });
+
+  // Счётчик «2 из 3» — не кнопка, но нажать её можно: гасим часики.
+  bot.callbackQuery('t:noop', (ctx) => ctx.answerCallbackQuery());
+
+  // «Свернуть»: убираем сообщение, из которого нажали, и всё.
+  bot.callbackQuery('t:back', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await safeDelete(ctx);
+  });
+
+  bot.callbackQuery(/^t:i:(-?\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[1]), true);
   });
 
   bot.callbackQuery('my:list', async (ctx) => {
@@ -98,7 +119,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     await sendMyBookings(ctx, ref.db, String(ctx.chat?.id), siteUrl);
   });
 
-  bot.callbackQuery(/^t:(?!list$)(.+)$/, async (ctx) => {
+  bot.callbackQuery(/^t:(?!list$|noop$|back$|i:)(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await sendTourDetails(ctx, ref.db, ctx.match[1]!);
   });
@@ -152,7 +173,8 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
   bot.callbackQuery('b:x', async (ctx) => {
     await ctx.answerCallbackQuery('Отменено');
     await dropDraft(ref.db, String(ctx.chat?.id));
-    await ctx.reply('Заявка отменена.', { reply_markup: mainMenu() });
+    // Возвращаем туда, откуда пришли: карточка вместо тупика с меню.
+    await sendCarousel(ctx, ref.db, imagesBase, 0, true);
   });
 
   bot.callbackQuery(/^my:r:(.+)$/, (ctx) =>

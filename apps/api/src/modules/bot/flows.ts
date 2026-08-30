@@ -93,6 +93,53 @@ function escapeHtml(value: string): string {
 }
 
 /* ============================================================
+   Навигация без следа
+   ============================================================ */
+
+/**
+ * Удаление текущего сообщения.
+ *
+ * Телеграм отказывает, если сообщение старше двух суток или у бота нет
+ * прав. Это не повод ронять шаг — просто идём дальше.
+ */
+export async function safeDelete(ctx: Context): Promise<void> {
+  try {
+    await ctx.deleteMessage();
+  } catch {
+    /* сообщение уже удалено или слишком старое */
+  }
+}
+
+/**
+ * Показывает экран на месте текущего сообщения.
+ *
+ * Сначала пробуем заменить текст: тогда в переписке не копится лента из
+ * промежуточных шагов. Если текущее сообщение — фотография, править её в
+ * текст нельзя, поэтому удаляем и отправляем новое.
+ */
+async function show(ctx: Context, text: string, keyboard: InlineKeyboard): Promise<void> {
+  try {
+    await ctx.editMessageText(text, {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      reply_markup: keyboard,
+    });
+    return;
+  } catch {
+    /* не текстовое сообщение или редактировать нечего */
+  }
+  await safeDelete(ctx);
+  // Отдельным сообщением, а не заменой карточки: описание длинное и в
+  // подпись под фото не поместится. Кнопка «Свернуть» это сообщение
+  // удаляет, и карусель снова оказывается последней в переписке.
+  await ctx.reply(text, {
+    parse_mode: 'HTML',
+    link_preview_options: { is_disabled: true },
+    reply_markup: keyboard,
+  });
+}
+
+/* ============================================================
    Экскурсии
    ============================================================ */
 
@@ -104,48 +151,90 @@ async function publishedTours(db: Db) {
   });
 }
 
-/** Карточка: фото, короткое описание и две кнопки. */
-export async function sendTourCards(ctx: Context, db: Db, imagesBase: string): Promise<void> {
+/**
+ * Карусель экскурсий: одна карточка на экране, листается стрелками.
+ *
+ * Раньше бот высыпал все карточки подряд — переписка забивалась, а вернуться
+ * к первой можно было только прокруткой. Теперь карточка одна и заменяет
+ * саму себя; список кольцевой, поэтому с последней стрелка ведёт к первой.
+ */
+export async function sendCarousel(
+  ctx: Context,
+  db: Db,
+  imagesBase: string,
+  index: number,
+  replace: boolean,
+): Promise<void> {
   const list = await publishedTours(db);
   if (list.length === 0) {
     await ctx.reply('Экскурсий пока нет — загляните позже.');
     return;
   }
 
-  for (const tour of list) {
-    const caption = clamp(
-      `<b>${escapeHtml(tour.title)}</b>\n` +
-        (tour.subtitle ? `<i>${escapeHtml(tour.subtitle)}</i>\n` : '') +
-        `\n${escapeHtml(tour.shortDescription)}\n` +
-        `\n💰 ${priceLine(tour.price, tour.priceType)}\n⏱ ${hours(tour.durationMinutes)}`,
-      1000,
-    );
-    const keyboard = new InlineKeyboard()
-      .text('Подробнее', `t:${tour.id}`)
-      .text('Забронировать', `b:go:${tour.id}`);
+  // Кольцо: с последней вперёд — на первую, с первой назад — на последнюю.
+  const i = ((index % list.length) + list.length) % list.length;
+  const tour = list[i]!;
 
-    const image = tour.images?.[0];
-    const photo = image
-      ? toImageUrls({ r2Key: image.r2Key, alt: image.alt, variants: image.variants }, imagesBase)
-          .variants.card
-      : null;
+  const caption = clamp(
+    `<b>${escapeHtml(tour.title)}</b>
+` +
+      (tour.subtitle ? `<i>${escapeHtml(tour.subtitle)}</i>
+` : '') +
+      `
+${escapeHtml(tour.shortDescription)}
+` +
+      `
+💰 ${priceLine(tour.price, tour.priceType)}
+⏱ ${hours(tour.durationMinutes)}`,
+    1000,
+  );
 
-    // Фото может не загрузиться (битая ссылка, недоступный бакет) — тогда
-    // карточка всё равно должна дойти, просто текстом.
+  const keyboard = new InlineKeyboard();
+  if (list.length > 1) {
+    keyboard
+      .text('‹', `t:i:${i - 1}`)
+      .text(`${i + 1} из ${list.length}`, 't:noop')
+      .text('›', `t:i:${i + 1}`)
+      .row();
+  }
+  keyboard
+    .text('Подробнее', `t:${tour.id}`)
+    .text('Забронировать', `b:go:${tour.id}`)
+    .row()
+    .text('← Меню', 'menu');
+
+  const image = tour.images?.[0];
+  const photo = image
+    ? toImageUrls({ r2Key: image.r2Key, alt: image.alt, variants: image.variants }, imagesBase)
+        .variants.card
+    : null;
+
+  if (replace) {
+    // Замена картинки на месте — самый плавный вариант, но он возможен
+    // только когда и текущая, и новая карточка с фотографией.
     if (photo) {
       try {
-        await ctx.replyWithPhoto(photo, {
-          caption,
-          parse_mode: 'HTML',
-          reply_markup: keyboard,
-        });
-        continue;
+        await ctx.editMessageMedia(
+          { type: 'photo', media: photo, caption, parse_mode: 'HTML' },
+          { reply_markup: keyboard },
+        );
+        return;
       } catch {
-        /* падаем в текстовый вариант ниже */
+        /* текущее сообщение без фото — удалим и отправим заново */
       }
     }
-    await ctx.reply(caption, { parse_mode: 'HTML', reply_markup: keyboard });
+    await safeDelete(ctx);
   }
+
+  if (photo) {
+    try {
+      await ctx.replyWithPhoto(photo, { caption, parse_mode: 'HTML', reply_markup: keyboard });
+      return;
+    } catch {
+      /* фото недоступно — карточка всё равно должна дойти */
+    }
+  }
+  await ctx.reply(caption, { parse_mode: 'HTML', reply_markup: keyboard });
 }
 
 export async function sendTourDetails(ctx: Context, db: Db, tourId: string): Promise<void> {
@@ -177,7 +266,7 @@ export async function sendTourDetails(ctx: Context, db: Db, tourId: string): Pro
     reply_markup: new InlineKeyboard()
       .text('Забронировать', `b:go:${tour.id}`)
       .row()
-      .text('← К списку', 't:list'),
+      .text('← Свернуть', 't:back'),
   });
 }
 
@@ -215,10 +304,7 @@ export async function startBooking(ctx: Context, db: Db, chatId: string, tourId:
   }
   keyboard.text('📅 Другая дата', 'b:days').row().text('Отмена', 'b:x');
 
-  await ctx.reply(
-    `<b>${escapeHtml(tour.title)}</b>\n\nВыберите дату:`,
-    { parse_mode: 'HTML', reply_markup: keyboard },
-  );
+  await show(ctx, `<b>${escapeHtml(tour.title)}</b>\n\nВыберите дату:`, keyboard);
 }
 
 /** Шаг 1б: календарь на две недели вперёд. */
@@ -236,7 +322,7 @@ export async function askDay(ctx: Context, db: Db, chatId: string) {
   }
   keyboard.row().text('Отмена', 'b:x');
 
-  await ctx.reply('На какой день?', { reply_markup: keyboard });
+  await show(ctx, 'На какой день?', keyboard);
 }
 
 export async function askTime(ctx: Context, db: Db, chatId: string, day: string) {
@@ -251,7 +337,7 @@ export async function askTime(ctx: Context, db: Db, chatId: string, day: string)
   });
   keyboard.row().text('Отмена', 'b:x');
 
-  await ctx.reply('Во сколько начнём?', { reply_markup: keyboard });
+  await show(ctx, 'Во сколько начнём?', keyboard);
 }
 
 /** Шаг 2: число участников. */
@@ -275,7 +361,7 @@ export async function askPeople(ctx: Context, db: Db, chatId: string, patch: Par
   }
   keyboard.row().text('Отмена', 'b:x');
 
-  await ctx.reply('Сколько человек пойдёт?', { reply_markup: keyboard });
+  await show(ctx, 'Сколько человек пойдёт?', keyboard);
 }
 
 /** Шаг 3: показать итог и попросить подтверждение. */
@@ -291,20 +377,15 @@ export async function askConfirm(ctx: Context, db: Db, chatId: string, people: n
   const when = await describeWhen(db, next);
   const total = tour.priceType === 'per_person' ? tour.price * people : tour.price;
 
-  await ctx.reply(
+  await show(
+    ctx,
     `<b>Проверьте заявку</b>\n\n` +
       `🌿 ${escapeHtml(tour.title)}\n` +
       `📅 ${when}\n` +
       `👥 ${people} чел.\n` +
       `💰 ${formatPrice(total)}\n\n` +
       `Это заявка, а не оплата: мы свяжемся и подтвердим.`,
-    {
-      parse_mode: 'HTML',
-      reply_markup: new InlineKeyboard()
-        .text('✅ Отправить заявку', 'b:ok')
-        .row()
-        .text('Отмена', 'b:x'),
-    },
+    new InlineKeyboard().text('✅ Отправить заявку', 'b:ok').row().text('Отмена', 'b:x'),
   );
 }
 
@@ -478,7 +559,8 @@ export async function sendMyBookings(ctx: Context, db: Db, chatId: string, siteU
         reply_markup: new InlineKeyboard()
           .text(b.reminderOff ? '🔔 Включить напоминание' : '🔕 Выключить напоминание', `my:r:${b.id}`)
           .row()
-          .text('Отменить бронь', `my:c:${b.id}`),
+          .text('Отменить бронь', `my:c:${b.id}`)
+          .text('← Свернуть', 't:back'),
       },
     );
   }
