@@ -11,6 +11,7 @@ import { adminRoutes } from './modules/admin/routes';
 import { authRoutes } from './modules/auth/routes';
 import { getBot } from './modules/bot/bot';
 import { bookingRoutes } from './modules/bookings/routes';
+import { buildIcs, loadRange, readFeedToken } from './modules/calendar/service';
 import { contactRoutes } from './modules/contact/routes';
 import { favoriteRoutes } from './modules/favorites/routes';
 import { notificationRoutes } from './modules/notifications/routes';
@@ -82,6 +83,37 @@ export function buildApp(options: BuildAppOptions = {}) {
   });
 
   // Вебхук Telegram-бота; секрет в пути отсекает посторонние запросы.
+  /**
+   * Лента занятости для внешних календарей.
+   *
+   * Google Календарь, Apple и Outlook подписываются по обычному адресу без
+   * заголовков авторизации, поэтому доступ даёт длинный секрет в самом URL.
+   * Его можно сменить одной кнопкой в админке — старая ссылка тут же умрёт.
+   */
+  app.get('/calendar/:file', async (c) => {
+    const token = c.req.param('file').replace(/\.ics$/, '');
+    const db = c.get('db');
+    const actual = await readFeedToken(db);
+    if (!actual || token.length < 16 || token !== actual) throw notFound();
+
+    const now = Date.now();
+    // Месяц назад — чтобы в календаре осталась недавняя история, и год вперёд.
+    const entries = await loadRange(
+      db,
+      new Date(now - 30 * 86_400_000),
+      new Date(now + 365 * 86_400_000),
+    );
+
+    return new Response(buildIcs(entries, c.env.SITE_URL ?? new URL(c.req.url).origin), {
+      headers: {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': 'inline; filename="tver-ryadom.ics"',
+        // Подписчики опрашивают ленту часто — час кэша экономит запросы.
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  });
+
   app.post('/webhook/telegram/:secret', async (c) => {
     if (
       !c.env.TELEGRAM_BOT_TOKEN ||

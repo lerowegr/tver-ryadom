@@ -12,6 +12,7 @@ const nav = [
   { href: '/', label: 'Дашборд' },
   { href: '/tours', label: 'Экскурсии' },
   { href: '/bookings', label: 'Бронирования' },
+  { href: '/calendar', label: 'Календарь' },
   { href: '/reviews', label: 'Отзывы' },
   { href: '/users', label: 'Пользователи' },
   { href: '/requests', label: 'Заявки' },
