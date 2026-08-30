@@ -1,10 +1,11 @@
-import { botDrafts, bookings, schedules, tours, users, type Db } from '@tver/db';
+import { botDrafts, bookings, favorites, schedules, tours, users, type Db } from '@tver/db';
 import { bookingCreateSchema, formatPrice } from '@tver/shared';
 import { and, asc, eq, gt, inArray, or } from 'drizzle-orm';
 import { InlineKeyboard, Keyboard, type Context } from 'grammy';
 import { toImageUrls } from '../../lib/images';
 import { createBooking } from '../bookings/service';
 import { formatMsk } from '../notifications/templates';
+import { cabinetText, ensureAccount } from './cabinet';
 
 /**
  * Экраны бота: карточки экскурсий и бронирование в несколько нажатий.
@@ -36,24 +37,48 @@ const dayLabel = new Intl.DateTimeFormat('ru-RU', {
    Черновик
    ============================================================ */
 
-async function readDraft(db: Db, chatId: string): Promise<Draft | null> {
+/**
+ * Что бот помнит про чат между сообщениями.
+ *
+ * Кроме недособранной брони здесь лежит признак «жду ответа на такое-то
+ * поле кабинета»: без него присланный текст не отличить от вопроса
+ * администратору.
+ */
+export interface BotState {
+  booking?: Draft;
+  awaiting?: 'name' | 'phone' | 'email' | 'photo';
+}
+
+export async function readState(db: Db, chatId: string): Promise<BotState> {
   const row = await db.query.botDrafts.findFirst({ where: eq(botDrafts.chatId, chatId) });
-  if (!row) return null;
+  if (!row) return {};
   try {
-    return JSON.parse(row.payload) as Draft;
+    const parsed = JSON.parse(row.payload) as BotState & Draft;
+    // Записи первой версии хранили бронь без обёртки — разбираем и такие.
+    if ('tourId' in parsed && parsed.tourId) return { booking: parsed as Draft };
+    return parsed;
   } catch {
-    return null;
+    return {};
   }
 }
 
-async function writeDraft(db: Db, chatId: string, draft: Draft): Promise<void> {
+export async function writeState(db: Db, chatId: string, state: BotState): Promise<void> {
   await db
     .insert(botDrafts)
-    .values({ chatId, payload: JSON.stringify(draft) })
+    .values({ chatId, payload: JSON.stringify(state) })
     .onConflictDoUpdate({
       target: botDrafts.chatId,
-      set: { payload: JSON.stringify(draft), updatedAt: new Date() },
+      set: { payload: JSON.stringify(state), updatedAt: new Date() },
     });
+}
+
+async function readDraft(db: Db, chatId: string): Promise<Draft | null> {
+  return (await readState(db, chatId)).booking ?? null;
+}
+
+async function writeDraft(db: Db, chatId: string, draft: Draft): Promise<void> {
+  const state = await readState(db, chatId);
+  await writeState(db, chatId, { ...state, booking: draft });
 }
 
 async function dropDraft(db: Db, chatId: string): Promise<void> {
@@ -69,8 +94,9 @@ export function mainMenu(): InlineKeyboard {
     .text('🗺 Экскурсии', 't:list')
     .row()
     .text('📋 Мои брони', 'my:list')
+    .text('👤 Кабинет', 'me')
     .row()
-    .text('ℹ️ Как это работает', 'help');
+    .text('ℹ️ Про экскурсии', 'about');
 }
 
 function hours(minutes: number): string {
@@ -164,6 +190,7 @@ export async function sendCarousel(
   imagesBase: string,
   index: number,
   replace: boolean,
+  chatId?: string,
 ): Promise<void> {
   const list = await publishedTours(db);
   if (list.length === 0) {
@@ -189,6 +216,22 @@ ${escapeHtml(tour.shortDescription)}
     1000,
   );
 
+  // Сердечко показывает текущее состояние, а не действие: так понятнее,
+  // добавлена уже экскурсия или нет.
+  let liked = false;
+  if (chatId) {
+    const account = await db.query.users.findFirst({
+      where: eq(users.telegramChatId, chatId),
+      columns: { id: true },
+    });
+    if (account) {
+      const row = await db.query.favorites.findFirst({
+        where: and(eq(favorites.userId, account.id), eq(favorites.tourId, tour.id)),
+      });
+      liked = Boolean(row);
+    }
+  }
+
   const keyboard = new InlineKeyboard();
   if (list.length > 1) {
     keyboard
@@ -200,6 +243,8 @@ ${escapeHtml(tour.shortDescription)}
   keyboard
     .text('Подробнее', `t:${tour.id}`)
     .text('Забронировать', `b:go:${tour.id}`)
+    .row()
+    .text(liked ? '❤️ В избранном' : '🤍 В избранное', `fav:t:${tour.id}:${i}`)
     .row()
     .text('← Меню', 'menu');
 
@@ -260,14 +305,23 @@ export async function sendTourDetails(ctx: Context, db: Db, tourId: string): Pro
     3800,
   );
 
-  await ctx.reply(text, {
-    parse_mode: 'HTML',
-    link_preview_options: { is_disabled: true },
-    reply_markup: new InlineKeyboard()
+  // Индекс нужен, чтобы «Назад» вернуло к той же карточке, а не к первой.
+  const list = await publishedTours(db);
+  const index = Math.max(
+    0,
+    list.findIndex((t) => t.id === tour.id),
+  );
+
+  // Описание заменяет карточку, а не ложится под неё: на экране всегда
+  // ровно одно сообщение, как в остальных шагах.
+  await show(
+    ctx,
+    text,
+    new InlineKeyboard()
       .text('Забронировать', `b:go:${tour.id}`)
       .row()
-      .text('← Свернуть', 't:back'),
-  });
+      .text('← Назад к карточке', `t:i:${index}`),
+  );
 }
 
 /* ============================================================
@@ -583,4 +637,88 @@ export async function toggleReminder(ctx: Context, db: Db, chatId: string, booki
   const next = !booking.reminderOff;
   await db.update(bookings).set({ reminderOff: next }).where(eq(bookings.id, bookingId));
   await ctx.answerCallbackQuery(next ? 'Напоминание выключено' : 'Напомним за сутки');
+}
+
+/* ============================================================
+   Избранное
+   ============================================================ */
+
+/**
+ * Переключатель сердечка.
+ *
+ * Аккаунт заводим на месте: человек мог прийти в бота, не заходя на сайт,
+ * а избранное без учётной записи хранить негде.
+ */
+export async function toggleFavorite(
+  db: Db,
+  chatId: string,
+  tourId: string,
+  displayName: string,
+): Promise<boolean> {
+  const account = await ensureAccount(db, chatId, displayName);
+  const existing = await db.query.favorites.findFirst({
+    where: and(eq(favorites.userId, account.id), eq(favorites.tourId, tourId)),
+  });
+
+  if (existing) {
+    await db
+      .delete(favorites)
+      .where(and(eq(favorites.userId, account.id), eq(favorites.tourId, tourId)));
+    return false;
+  }
+  await db.insert(favorites).values({ userId: account.id, tourId });
+  return true;
+}
+
+export async function sendFavorites(
+  ctx: Context,
+  db: Db,
+  chatId: string,
+  displayName: string,
+): Promise<void> {
+  const account = await ensureAccount(db, chatId, displayName);
+  const rows = await db
+    .select({
+      id: tours.id,
+      title: tours.title,
+      price: tours.price,
+      priceType: tours.priceType,
+      durationMinutes: tours.durationMinutes,
+    })
+    .from(favorites)
+    .innerJoin(tours, eq(tours.id, favorites.tourId))
+    .where(and(eq(favorites.userId, account.id), eq(tours.status, 'published')));
+
+  if (rows.length === 0) {
+    await show(
+      ctx,
+      '❤️ <b>Избранное</b>\n\nПока пусто. Открывайте карточку экскурсии и нажимайте сердечко — она появится здесь.',
+      new InlineKeyboard().text('🗺 К экскурсиям', 't:list').row().text('← Меню', 'menu'),
+    );
+    return;
+  }
+
+  const keyboard = new InlineKeyboard();
+  for (const row of rows) {
+    keyboard.text(row.title, `t:${row.id}`).row();
+  }
+  keyboard.text('← Меню', 'menu');
+
+  const lines = rows.map(
+    (row) =>
+      `• <b>${escapeHtml(row.title)}</b>\n  ${priceLine(row.price, row.priceType)} · ${hours(row.durationMinutes)}`,
+  );
+
+  await show(ctx, `❤️ <b>Избранное</b>\n\n${lines.join('\n')}`, keyboard);
+}
+
+/** Экран кабинета — здесь, чтобы переиспользовать замену сообщения. */
+export async function sendCabinet(
+  ctx: Context,
+  db: Db,
+  chatId: string,
+  displayName: string,
+): Promise<void> {
+  const { text, keyboard } = await cabinetText(db, chatId, displayName);
+  await show(ctx, text, keyboard);
 }

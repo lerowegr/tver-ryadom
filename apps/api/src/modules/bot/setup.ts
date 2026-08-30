@@ -19,7 +19,9 @@ const COMMANDS = [
   { command: 'menu', description: 'Главное меню' },
   { command: 'tours', description: 'Экскурсии с фото и ценами' },
   { command: 'mybookings', description: 'Мои брони и напоминания' },
-  { command: 'help', description: 'Что умеет бот' },
+  { command: 'favorites', description: 'Избранные маршруты' },
+  { command: 'me', description: 'Личный кабинет' },
+  { command: 'help', description: 'Про экскурсии и Елену' },
 ];
 
 export interface BotStatus {

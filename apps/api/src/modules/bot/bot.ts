@@ -1,9 +1,10 @@
 import type { Db } from '@tver/db';
 import { users } from '@tver/db';
 import { and, eq, isNotNull } from 'drizzle-orm';
-import { Bot } from 'grammy';
+import { Bot, type Context } from 'grammy';
 import type { Bindings } from '../../env';
 import { verifyLinkCode } from '../../lib/tg-link';
+import { PROMPTS, applyEdit, saveAvatar, type Awaiting } from './cabinet';
 import {
   askConfirm,
   askDay,
@@ -13,14 +14,19 @@ import {
   dropDraft,
   mainMenu,
   placeBooking,
-  readDraft,
+  readState,
   safeDelete,
+  sendCabinet,
   sendCarousel,
+  sendFavorites,
   sendMyBookings,
   sendTourDetails,
   startBooking,
+  toggleFavorite,
   toggleReminder,
+  writeState,
 } from './flows';
+import { sendAbout, welcomeText } from './screens';
 
 interface DbRef {
   db: Db;
@@ -29,20 +35,37 @@ interface DbRef {
 /** Москва круглый год на UTC+3, перевода часов нет. */
 const MSK_OFFSET = '+03:00';
 
-const WELCOME = (siteUrl: string) =>
-  `👋 Это бот «Тверь рядом» — авторские экскурсии по Твери.
+/** Имя из профиля Telegram — им подписываем впервые заведённый аккаунт. */
+function displayName(ctx: Context): string {
+  return (
+    [ctx.from?.first_name, ctx.from?.last_name].filter(Boolean).join(' ').trim() ||
+    ctx.from?.username ||
+    'Гость'
+  );
+}
 
-Здесь можно посмотреть маршруты с фотографиями, забронировать место в несколько нажатий и следить за своими бронями.
-
-Чтобы брони с сайта были видны и здесь, привяжите аккаунт: на ${siteUrl}/account нажмите «Привязать Telegram».
-
-Любое сообщение здесь мы передадим администратору.`;
+function chat(ctx: Context): string {
+  return String(ctx.chat?.id);
+}
 
 export function buildBot(env: Bindings, ref: DbRef): Bot {
   if (!env.TELEGRAM_BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN не задан');
   const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
+  const token = env.TELEGRAM_BOT_TOKEN;
   const siteUrl = env.SITE_URL ?? 'http://localhost:3000';
   const imagesBase = (env.IMAGES_BASE_URL ?? `${siteUrl}/images`).replace(/\/$/, '');
+
+  const greet = async (ctx: Context, replace: boolean) => {
+    const text = await welcomeText(ref.db);
+    if (replace) await safeDelete(ctx);
+    await ctx.reply(text, {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      reply_markup: mainMenu(),
+    });
+  };
+
+  /* ── Команды ────────────────────────────────────────────── */
 
   bot.command('start', async (ctx) => {
     const code = ctx.match?.trim();
@@ -53,7 +76,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
         return;
       }
       const db = ref.db;
-      const chatId = String(ctx.chat.id);
+      const chatId = chat(ctx);
       // Один Telegram — один аккаунт: отвязываем чат от прежних пользователей.
       await db.update(users).set({ telegramChatId: null }).where(eq(users.telegramChatId, chatId));
       await db
@@ -65,45 +88,55 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
         columns: { name: true },
       });
       await ctx.reply(
-        `✅ Готово, ${user?.name ?? 'друг'}! Аккаунт привязан.\n\nТеперь подтверждения броней и напоминания приходят сюда.`,
+        `✅ Готово, ${user?.name ?? 'друг'}! Аккаунт привязан.\n\nТеперь брони с сайта видны здесь, а подтверждения и напоминания приходят сюда.`,
         { reply_markup: mainMenu() },
       );
       return;
     }
-    await ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() });
+    await greet(ctx, false);
   });
 
-  bot.command(['menu', 'help'], (ctx) =>
-    ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() }),
-  );
+  bot.command(['menu', 'help'], (ctx) => greet(ctx, false));
+  bot.command('tours', (ctx) => sendCarousel(ctx, ref.db, imagesBase, 0, false, chat(ctx)));
+  bot.command('mybookings', (ctx) => sendMyBookings(ctx, ref.db, chat(ctx), siteUrl));
+  bot.command('me', (ctx) => sendCabinet(ctx, ref.db, chat(ctx), displayName(ctx)));
+  bot.command('favorites', (ctx) => sendFavorites(ctx, ref.db, chat(ctx), displayName(ctx)));
 
-  bot.command('tours', (ctx) => sendCarousel(ctx, ref.db, imagesBase, 0, false));
-  bot.command('mybookings', (ctx) =>
-    sendMyBookings(ctx, ref.db, String(ctx.chat.id), siteUrl),
-  );
-
-  /* ── Кнопки ─────────────────────────────────────────────── */
-
-  bot.callbackQuery('help', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() });
-  });
+  /* ── Меню и содержательные экраны ───────────────────────── */
 
   bot.callbackQuery('menu', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await safeDelete(ctx);
-    await ctx.reply(WELCOME(siteUrl), { reply_markup: mainMenu() });
+    await greet(ctx, true);
   });
+
+  bot.callbackQuery('about', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await sendAbout(ctx, ref.db);
+  });
+
+  bot.callbackQuery('me', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await sendCabinet(ctx, ref.db, chat(ctx), displayName(ctx));
+  });
+
+  bot.callbackQuery(/^me:e:(name|phone|email|photo)$/, async (ctx) => {
+    const field = ctx.match[1] as Awaiting;
+    await ctx.answerCallbackQuery();
+    const state = await readState(ref.db, chat(ctx));
+    await writeState(ref.db, chat(ctx), { ...state, awaiting: field });
+    await ctx.reply(`${PROMPTS[field]}\n\nЧтобы передумать — отправьте /me`);
+  });
+
+  /* ── Экскурсии ──────────────────────────────────────────── */
 
   bot.callbackQuery('t:list', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await sendCarousel(ctx, ref.db, imagesBase, 0, false);
+    await sendCarousel(ctx, ref.db, imagesBase, 0, false, chat(ctx));
   });
 
   // Счётчик «2 из 3» — не кнопка, но нажать её можно: гасим часики.
   bot.callbackQuery('t:noop', (ctx) => ctx.answerCallbackQuery());
 
-  // «Свернуть»: убираем сообщение, из которого нажали, и всё.
   bot.callbackQuery('t:back', async (ctx) => {
     await ctx.answerCallbackQuery();
     await safeDelete(ctx);
@@ -111,12 +144,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
 
   bot.callbackQuery(/^t:i:(-?\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[1]), true);
-  });
-
-  bot.callbackQuery('my:list', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await sendMyBookings(ctx, ref.db, String(ctx.chat?.id), siteUrl);
+    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[1]), true, chat(ctx));
   });
 
   bot.callbackQuery(/^t:(?!list$|noop$|back$|i:)(.+)$/, async (ctx) => {
@@ -124,19 +152,35 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     await sendTourDetails(ctx, ref.db, ctx.match[1]!);
   });
 
+  /* ── Избранное ──────────────────────────────────────────── */
+
+  bot.callbackQuery('fav:list', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await sendFavorites(ctx, ref.db, chat(ctx), displayName(ctx));
+  });
+
+  bot.callbackQuery(/^fav:t:(.+):(\d+)$/, async (ctx) => {
+    const added = await toggleFavorite(ref.db, chat(ctx), ctx.match[1]!, displayName(ctx));
+    await ctx.answerCallbackQuery(added ? 'Добавлено в избранное' : 'Убрано из избранного');
+    // Перерисовываем ту же карточку, чтобы сердечко сменилось на месте.
+    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[2]), true, chat(ctx));
+  });
+
+  /* ── Бронирование ───────────────────────────────────────── */
+
   bot.callbackQuery(/^b:go:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await startBooking(ctx, ref.db, String(ctx.chat?.id), ctx.match[1]!);
+    await startBooking(ctx, ref.db, chat(ctx), ctx.match[1]!);
   });
 
   bot.callbackQuery('b:days', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askDay(ctx, ref.db, String(ctx.chat?.id));
+    await askDay(ctx, ref.db, chat(ctx));
   });
 
   bot.callbackQuery(/^b:s:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askPeople(ctx, ref.db, String(ctx.chat?.id), {
+    await askPeople(ctx, ref.db, chat(ctx), {
       scheduleId: ctx.match[1]!,
       desiredDate: undefined,
     });
@@ -144,15 +188,14 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
 
   bot.callbackQuery(/^b:d:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askTime(ctx, ref.db, String(ctx.chat?.id), ctx.match[1]!);
+    await askTime(ctx, ref.db, chat(ctx), ctx.match[1]!);
   });
 
   bot.callbackQuery(/^b:h:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    const chatId = String(ctx.chat?.id);
-    const draft = await readDraft(ref.db, chatId);
+    const chatId = chat(ctx);
+    const draft = (await readState(ref.db, chatId)).booking;
     if (!draft?.desiredDate) return void ctx.reply('Начните заново: /tours');
-    // Дата и время складываются здесь: время приходит отдельным нажатием.
     // Пояс указываем явно: воркер живёт по UTC и «10:00» без смещения понял
     // бы как десять утра по Гринвичу, то есть час дня по Москве.
     await askPeople(ctx, ref.db, chatId, {
@@ -162,24 +205,29 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
 
   bot.callbackQuery(/^b:p:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await askConfirm(ctx, ref.db, String(ctx.chat?.id), Number(ctx.match[1]));
+    await askConfirm(ctx, ref.db, chat(ctx), Number(ctx.match[1]));
   });
 
   bot.callbackQuery('b:ok', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await confirmBooking(ctx, ref.db, String(ctx.chat?.id), siteUrl);
+    await confirmBooking(ctx, ref.db, chat(ctx), siteUrl);
   });
 
   bot.callbackQuery('b:x', async (ctx) => {
     await ctx.answerCallbackQuery('Отменено');
-    await dropDraft(ref.db, String(ctx.chat?.id));
+    await dropDraft(ref.db, chat(ctx));
     // Возвращаем туда, откуда пришли: карточка вместо тупика с меню.
-    await sendCarousel(ctx, ref.db, imagesBase, 0, true);
+    await sendCarousel(ctx, ref.db, imagesBase, 0, true, chat(ctx));
   });
 
-  bot.callbackQuery(/^my:r:(.+)$/, (ctx) =>
-    toggleReminder(ctx, ref.db, String(ctx.chat?.id), ctx.match[1]!),
-  );
+  /* ── Брони ──────────────────────────────────────────────── */
+
+  bot.callbackQuery('my:list', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await sendMyBookings(ctx, ref.db, chat(ctx), siteUrl);
+  });
+
+  bot.callbackQuery(/^my:r:(.+)$/, (ctx) => toggleReminder(ctx, ref.db, chat(ctx), ctx.match[1]!));
 
   bot.callbackQuery(/^my:c:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -188,31 +236,37 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     );
   });
 
-  /* ── Контакт: последний шаг брони ───────────────────────── */
+  /* ── Контакт: телефон для брони либо для кабинета ───────── */
 
   bot.on('message:contact', async (ctx) => {
     const db = ref.db;
-    const chatId = String(ctx.chat.id);
-    const draft = await readDraft(db, chatId);
-    if (!draft?.people) {
+    const chatId = chat(ctx);
+    const state = await readState(db, chatId);
+    const contact = ctx.message.contact;
+
+    // Чужой контакт не подходит: и бронь, и кабинет — про самого человека.
+    if (contact.user_id && contact.user_id !== ctx.from?.id) {
+      await ctx.reply('Нужен ваш собственный номер — нажмите кнопку ещё раз.');
+      return;
+    }
+
+    if (state.awaiting === 'phone') {
+      const result = await applyEdit(db, chatId, 'phone', contact.phone_number, displayName(ctx));
+      await writeState(db, chatId, { ...state, awaiting: undefined });
+      await ctx.reply(result.message, { reply_markup: { remove_keyboard: true } });
+      await sendCabinet(ctx, db, chatId, displayName(ctx));
+      return;
+    }
+
+    if (!state.booking?.people) {
       await ctx.reply('Спасибо! Номер пригодится, когда будете бронировать.', {
         reply_markup: { remove_keyboard: true },
       });
       return;
     }
 
-    const contact = ctx.message.contact;
-    // Чужой контакт не подходит: подтверждать бронь будем по номеру того,
-    // кто её оформляет.
-    if (contact.user_id && contact.user_id !== ctx.from?.id) {
-      await ctx.reply('Нужен ваш собственный номер — нажмите кнопку ещё раз.');
-      return;
-    }
-
     const name =
-      [contact.first_name, contact.last_name].filter(Boolean).join(' ').trim() ||
-      ctx.from?.first_name ||
-      'Гость';
+      [contact.first_name, contact.last_name].filter(Boolean).join(' ').trim() || displayName(ctx);
 
     const account = await db.query.users.findFirst({
       where: eq(users.telegramChatId, chatId),
@@ -220,14 +274,54 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     });
 
     await ctx.reply('Секунду, оформляю…', { reply_markup: { remove_keyboard: true } });
-    await placeBooking(ctx, db, chatId, draft, name, contact.phone_number, account?.id, siteUrl);
+    await placeBooking(
+      ctx,
+      db,
+      chatId,
+      state.booking,
+      name,
+      contact.phone_number,
+      account?.id,
+      siteUrl,
+    );
   });
 
-  /* ── Свободный текст — администраторам ──────────────────── */
+  /* ── Фото: аватарка ─────────────────────────────────────── */
+
+  bot.on('message:photo', async (ctx) => {
+    const db = ref.db;
+    const chatId = chat(ctx);
+    const state = await readState(db, chatId);
+    if (state.awaiting !== 'photo') {
+      await ctx.reply('Красивое фото! Чтобы поставить его на аватарку, откройте /me → «Фото».');
+      return;
+    }
+    const message = await saveAvatar(ctx, db, chatId, displayName(ctx), token, env.IMAGES);
+    await writeState(db, chatId, { ...state, awaiting: undefined });
+    await ctx.reply(message);
+    await sendCabinet(ctx, db, chatId, displayName(ctx));
+  });
+
+  /* ── Свободный текст ────────────────────────────────────── */
 
   bot.on('message:text', async (ctx) => {
     const db = ref.db;
-    const chatId = String(ctx.chat.id);
+    const chatId = chat(ctx);
+    const state = await readState(db, chatId);
+
+    // Ждём ответ на поле кабинета — значит это он, а не вопрос администратору.
+    if (state.awaiting && state.awaiting !== 'photo') {
+      const result = await applyEdit(db, chatId, state.awaiting, ctx.message.text, displayName(ctx));
+      if (!result.ok) {
+        await ctx.reply(result.message);
+        return;
+      }
+      await writeState(db, chatId, { ...state, awaiting: undefined });
+      await ctx.reply(result.message);
+      await sendCabinet(ctx, db, chatId, displayName(ctx));
+      return;
+    }
+
     const admins = await db.query.users.findMany({
       where: and(eq(users.role, 'admin'), isNotNull(users.telegramChatId)),
       columns: { telegramChatId: true },
@@ -255,7 +349,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     }
     await ctx.reply(
       admins.length > 0
-        ? 'Передали администратору — ответим в ближайшее время! 🙌'
+        ? 'Передали Елене — ответим в ближайшее время! 🙌'
         : 'Спасибо! Мы получили сообщение и скоро ответим.',
       { reply_markup: mainMenu() },
     );
