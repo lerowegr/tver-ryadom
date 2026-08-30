@@ -22,6 +22,8 @@ export async function enqueueReminders(db: Db, siteUrl?: string) {
     where: and(
       eq(bookings.status, 'confirmed'),
       isNull(bookings.reminderSentAt),
+      // Человек мог выключить напоминание по этой брони в боте.
+      eq(bookings.reminderOff, false),
       inArray(bookings.scheduleId, windowSlots),
     ),
     with: {

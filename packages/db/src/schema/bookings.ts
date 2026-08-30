@@ -30,6 +30,8 @@ export const bookings = sqliteTable(
     source: text('source', { enum: BOOKING_SOURCES }).notNull().default('web'),
     /** Когда отправлено напоминание за сутки (защита от дублей в cron). */
     reminderSentAt: integer('reminder_sent_at', { mode: 'timestamp' }),
+    /** Человек выключил напоминание об этой экскурсии. */
+    reminderOff: integer('reminder_off', { mode: 'boolean' }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

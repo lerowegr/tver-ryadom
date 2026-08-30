@@ -3,4 +3,5 @@ export * from './tours';
 export * from './bookings';
 export * from './content';
 export * from './notifications';
+export * from './bot';
 export * from './relations';

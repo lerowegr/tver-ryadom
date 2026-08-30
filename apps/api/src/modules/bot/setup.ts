@@ -16,8 +16,9 @@ const USERNAME_KEY = 'telegram.username';
 
 /** Меню команд — то самое синее «Меню» рядом с полем ввода. */
 const COMMANDS = [
-  { command: 'tours', description: 'Список экскурсий' },
-  { command: 'mybookings', description: 'Мои брони' },
+  { command: 'menu', description: 'Главное меню' },
+  { command: 'tours', description: 'Экскурсии с фото и ценами' },
+  { command: 'mybookings', description: 'Мои брони и напоминания' },
   { command: 'help', description: 'Что умеет бот' },
 ];
 

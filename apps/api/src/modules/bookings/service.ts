@@ -39,6 +39,8 @@ export async function createBooking(
   input: BookingCreateInput,
   user?: AuthUser,
   siteUrl?: string,
+  /** Откуда пришла заявка: с сайта, из бота или заведена админом. */
+  source: 'web' | 'telegram' | 'admin' = 'web',
 ) {
   const tour = await db.query.tours.findFirst({
     where: and(eq(tours.id, input.tourId), eq(tours.status, 'published')),
@@ -99,7 +101,7 @@ export async function createBooking(
     contactPhone: input.contactPhone,
     contactEmail: input.contactEmail ?? null,
     comment: input.comment ?? null,
-    source: 'web',
+    source,
   });
 
   const payload = {
