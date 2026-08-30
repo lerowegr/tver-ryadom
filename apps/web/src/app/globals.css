@@ -206,3 +206,113 @@ body {
     transition: none;
   }
 }
+
+/* ============================================================
+   КАРТА МАРШРУТА (MapLibre)
+
+   Собственные стили библиотеки приезжают отдельным куском и могут
+   встать в каскад ПОСЛЕ этого файла, поэтому каждый селектор ниже
+   намеренно на ступень специфичнее оригинала.
+   ============================================================ */
+
+/* Метка: кнопка 44×44 ради пальца, видимый квадрат — 30. */
+.route-pin {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.route-pin span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: var(--color-ink);
+  color: var(--color-bg);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition:
+    transform 0.4s var(--e-smooth),
+    background-color 0.4s var(--e-smooth);
+}
+.route-pin:hover span,
+.route-pin:focus-visible span {
+  transform: scale(1.18);
+}
+.route-pin:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: -4px;
+}
+/* Открытая точка выворачивается: видно, к какой метке относится окошко. */
+.route-pin.is-open span {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+  transform: scale(1.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-pin span {
+    transition: none;
+  }
+}
+
+/* Окошко: прямые углы, волосяная рамка, без теней и скруглений */
+.route-map .maplibregl-popup-content,
+.route-popup-shell .maplibregl-popup-content {
+  padding: 1rem 1.15rem 1.15rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-ink);
+  border-radius: 0;
+  box-shadow: none;
+}
+.route-map .maplibregl-popup-tip,
+.route-popup-shell .maplibregl-popup-tip {
+  border-top-color: var(--color-ink);
+  border-bottom-color: var(--color-ink);
+}
+
+.route-popup__num {
+  margin: 0 0 0.4rem;
+  color: var(--color-faint);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.route-popup__title {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  line-height: 1.25;
+}
+.route-popup__text {
+  margin: 0.55rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* Кнопки масштаба и подпись источника — в языке сайта */
+.route-map .maplibregl-ctrl-group {
+  background: var(--color-bg);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 0;
+  box-shadow: none;
+}
+.route-map .maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-line);
+}
+.route-map .maplibregl-ctrl-attrib {
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  font-size: 0.625rem;
+}
+.route-map .maplibregl-ctrl-attrib a {
+  color: var(--color-muted);
+}
