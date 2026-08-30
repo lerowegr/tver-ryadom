@@ -247,12 +247,12 @@ export default async function TourPage({ params }: { params: Params }) {
                 </p>
                 {tour.meetingLat && tour.meetingLng ? (
                   <a
-                    href={`https://yandex.ru/maps/?pt=${tour.meetingLng},${tour.meetingLat}&z=16`}
+                    href={`https://www.openstreetmap.org/?mlat=${tour.meetingLat}&mlon=${tour.meetingLng}#map=17/${tour.meetingLat}/${tour.meetingLng}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="link-underline text-muted mt-3 ml-7 inline-block text-sm"
                   >
-                    Открыть в Яндекс.Картах
+                    Открыть на карте
                   </a>
                 ) : null}
               </section>

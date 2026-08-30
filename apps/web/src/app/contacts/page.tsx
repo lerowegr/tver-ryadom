@@ -90,7 +90,7 @@ export default async function ContactsPage() {
                 Обычно — у Императорского путевого дворца. Точное место приходит после бронирования.
               </p>
               <a
-                href="https://yandex.ru/maps/?pt=35.8988,56.8626&z=16"
+                href="https://www.openstreetmap.org/?mlat=56.8626&mlon=35.8988#map=17/56.8626/35.8988"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="link-underline text-muted mt-4 inline-block text-sm"
