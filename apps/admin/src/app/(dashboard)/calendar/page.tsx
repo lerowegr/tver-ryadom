@@ -50,6 +50,20 @@ const STATUS_RU: Record<string, string> = {
   cancelled: 'отменён',
 };
 
+type Preset = 'today' | 'week' | 'month' | 'custom' | null;
+
+/** Готовые периоды. «Свой промежуток» набирается двумя кликами по сетке. */
+const PRESETS: { value: Exclude<Preset, null>; label: string }[] = [
+  { value: 'today', label: 'Сегодня' },
+  { value: 'week', label: 'Эта неделя' },
+  { value: 'month', label: 'Этот месяц' },
+  { value: 'custom', label: 'Свой промежуток' },
+];
+interface Range {
+  from: string;
+  to: string;
+}
+
 function key(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -65,10 +79,17 @@ export default function CalendarPage() {
     return { year: now.getFullYear(), month: now.getMonth() };
   });
   const [picked, setPicked] = useState<string | null>(null);
+  const [range, setRange] = useState<Range | null>(null);
+  const [preset, setPreset] = useState<Preset>(null);
+  /** Первый клик своего промежутка: ждём второй, чтобы понять границы. */
+  const [pendingFrom, setPendingFrom] = useState<string | null>(null);
 
-  // Берём месяц с запасом в неделю по краям: в сетке видны дни соседних месяцев.
-  const from = key(new Date(view.year, view.month, -7));
-  const to = key(new Date(view.year, view.month + 1, 7));
+  // Сетка месяца показывает дни соседних, поэтому берём запас по краям.
+  // Если выбран период — грузим и его: он может уходить за пределы месяца.
+  const monthFrom = key(new Date(view.year, view.month, -7));
+  const monthTo = key(new Date(view.year, view.month + 1, 7));
+  const from = range && range.from < monthFrom ? range.from : monthFrom;
+  const to = range && range.to > monthTo ? range.to : monthTo;
 
   const calendar = useQuery({
     queryKey: ['admin-calendar', from, to],
@@ -111,6 +132,60 @@ export default function CalendarPage() {
       return { year: d.getFullYear(), month: d.getMonth() };
     });
 
+  /** Пресеты периода. Неделя — календарная, с понедельника. */
+  const applyPreset = (next: Preset) => {
+    setPicked(null);
+    setPendingFrom(null);
+    setPreset(next);
+
+    const now = new Date();
+    if (next === 'today') {
+      setRange({ from: key(now), to: key(now) });
+    } else if (next === 'week') {
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      setRange({ from: key(monday), to: key(sunday) });
+      setView({ year: monday.getFullYear(), month: monday.getMonth() });
+    } else if (next === 'month') {
+      const first = new Date(view.year, view.month, 1);
+      const last = new Date(view.year, view.month + 1, 0);
+      setRange({ from: key(first), to: key(last) });
+    } else {
+      // «Свой промежуток» и «Очистить» период сами не задают.
+      setRange(null);
+    }
+  };
+
+  /** Клик по дню: в режиме своего промежутка набирает границы, иначе — один день. */
+  const onDayClick = (k: string) => {
+    if (preset !== 'custom') {
+      setRange(null);
+      setPicked(picked === k ? null : k);
+      return;
+    }
+    if (!pendingFrom) {
+      setPendingFrom(k);
+      setRange(null);
+      return;
+    }
+    // Второй клик может оказаться раньше первого — тогда меняем местами.
+    const [a, b] = pendingFrom <= k ? [pendingFrom, k] : [k, pendingFrom];
+    setRange({ from: a, to: b });
+    setPendingFrom(null);
+  };
+
+  /** Записи выбранного периода, сгруппированные по дням. */
+  const inRange = useMemo(() => {
+    if (!range) return null;
+    const days: { day: string; items: Entry[] }[] = [];
+    for (const [day, items] of byDay) {
+      if (day >= range.from && day <= range.to) days.push({ day, items });
+    }
+    return days.sort((a, b) => a.day.localeCompare(b.day));
+  }, [range, byDay]);
+
   const today = key(new Date());
   const chosen = picked ? (byDay.get(picked) ?? []) : [];
 
@@ -140,6 +215,46 @@ export default function CalendarPage() {
           <Loading />
         ) : (
           <>
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              {PRESETS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => applyPreset(item.value)}
+                  aria-pressed={preset === item.value}
+                  className={`cursor-pointer border px-4 py-2 text-xs transition-colors duration-300 ${
+                    preset === item.value
+                      ? 'border-ink bg-ink text-bg'
+                      : 'border-line text-muted hover:border-ink hover:text-ink'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+              {preset || picked ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreset(null);
+                    setRange(null);
+                    setPicked(null);
+                    setPendingFrom(null);
+                  }}
+                  className="text-muted hover:text-ink cursor-pointer px-3 py-2 text-xs underline"
+                >
+                  Очистить
+                </button>
+              ) : null}
+            </div>
+
+            {preset === 'custom' ? (
+              <p className="text-muted mb-4 text-xs">
+                {pendingFrom
+                  ? `Начало — ${human(dayTitle, new Date(`${pendingFrom}T00:00`))}. Теперь выберите конец.`
+                  : 'Нажмите день начала, затем день конца промежутка.'}
+              </p>
+            ) : null}
+
             <div className="grid grid-cols-7 gap-px">
               {WEEKDAYS.map((w) => (
                 <span key={w} className="text-faint pb-2 text-center text-[0.625rem] tracking-[0.1em] uppercase">
@@ -150,17 +265,20 @@ export default function CalendarPage() {
                 const entries = byDay.get(cell.k) ?? [];
                 const slots = entries.filter((e) => e.kind === 'slot').length;
                 const requests = entries.length - slots;
-                const active = picked === cell.k;
+                const inSelected = Boolean(range && cell.k >= range.from && cell.k <= range.to);
+                const active = picked === cell.k || cell.k === pendingFrom;
                 return (
                   <button
                     key={cell.k}
                     type="button"
-                    onClick={() => setPicked(active ? null : cell.k)}
+                    onClick={() => onDayClick(cell.k)}
                     aria-current={cell.k === today ? 'date' : undefined}
                     aria-pressed={active}
                     className={`flex min-h-[4.5rem] cursor-pointer flex-col items-start gap-1 p-2 text-left transition-colors duration-300 ${
                       active ? 'bg-ink text-bg' : 'hover:bg-surface-soft'
-                    } ${cell.k === today && !active ? 'ring-line-strong ring-1' : ''}`}
+                    } ${inSelected && !active ? 'bg-surface-soft' : ''} ${
+                      cell.k === today && !active ? 'ring-line-strong ring-1' : ''
+                    }`}
                   >
                     <span
                       className={`text-xs tabular-nums ${
@@ -202,6 +320,49 @@ export default function CalendarPage() {
           </>
         )}
       </Card>
+
+      {inRange ? (
+        <Card
+          title={
+            range!.from === range!.to
+              ? human(dayTitle, new Date(`${range!.from}T00:00`))
+              : `${human(dayTitle, new Date(`${range!.from}T00:00`))} — ${human(dayTitle, new Date(`${range!.to}T00:00`))}`
+          }
+        >
+          {inRange.length === 0 ? (
+            <p className="text-muted text-sm">За выбранный период ничего не назначено.</p>
+          ) : (
+            <div className="space-y-6">
+              <p className="text-muted text-sm">
+                Событий: {inRange.reduce((sum, d) => sum + d.items.length, 0)} за{' '}
+                {inRange.length} {inRange.length === 1 ? 'день' : 'дн.'}
+              </p>
+              {inRange.map(({ day, items }) => (
+                <div key={day}>
+                  <p className="text-ink mb-2 text-sm first-letter:uppercase">
+                    {human(dayTitle, new Date(`${day}T00:00`))}
+                  </p>
+                  <div className="space-y-2">
+                    {items.map((entry) => (
+                      <div key={entry.id} className="bg-surface-soft flex flex-wrap justify-between gap-3 p-3">
+                        <span className="text-ink text-sm">
+                          <span className="tabular-nums">{clock.format(new Date(entry.startsAt))}</span> —{' '}
+                          {entry.tourTitle}
+                        </span>
+                        <span className="text-muted text-xs">
+                          {entry.kind === 'slot'
+                            ? `${entry.booked}/${entry.capacity} мест`
+                            : `заявка · ${entry.people} чел.`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      ) : null}
 
       {picked ? (
         <Card title={human(dayTitle, new Date(`${picked}T00:00`))}>
