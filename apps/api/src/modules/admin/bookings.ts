@@ -1,32 +1,22 @@
-import { bookings, schedules } from '@tver/db';
+import { bookings } from '@tver/db';
 import {
   BOOKING_STATUSES,
   bookingAdminUpdateSchema,
   paginationSchema,
 } from '@tver/shared';
-import { formatPrice } from '@tver/shared';
-import { and, count, eq, sql, type SQL } from 'drizzle-orm';
+import { and, count, eq, type SQL } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../../env';
-import { conflict, notFound } from '../../lib/errors';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
 import { changeBookingStatus } from './booking-status';
-import { formatMsk } from '../notifications/templates';
 
 const listFilterSchema = paginationSchema.extend({
   status: z.enum(BOOKING_STATUSES).optional(),
   tourId: z.string().optional(),
 });
 
-/** Разрешённые переходы статусов брони для администратора. */
-const transitions: Record<string, string[]> = {
-  pending: ['confirmed', 'cancelled', 'completed'],
-  confirmed: ['cancelled', 'completed'],
-  cancelled: [],
-  completed: [],
-};
 
 export const adminBookingRoutes = new Hono<AppEnv>()
   .get('/', validate('query', listFilterSchema), async (c) => {
