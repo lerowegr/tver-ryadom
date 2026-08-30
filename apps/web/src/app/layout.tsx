@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { Providers } from '@/components/providers';
+import { TelegramWebApp } from '@/components/telegram-webapp';
 import { site } from '@/config/site';
 import { getSettings } from '@/lib/data';
 import './globals.css';
@@ -58,7 +59,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         />
       </head>
       <body>
+        {/* Скрипт мини-приложения. Вне Telegram он безвреден: просто не
+            создаёт объект WebApp, и мост ничего не делает. */}
+        <script src="https://telegram.org/js/telegram-web-app.js" async />
         <Providers>
+          <TelegramWebApp />
           <Header />
           <main id="main">{children}</main>
           <Footer settings={settings} />

@@ -117,3 +117,22 @@ export async function logoutRequest(): Promise<void> {
     accessToken = null;
   }
 }
+
+/**
+ * Вход из мини-приложения Telegram.
+ *
+ * Пароля здесь нет: личность подтверждает сам Telegram подписью в initData,
+ * а проверяет её сервер. Отдельная функция, а не ветка в loginRequest —
+ * у них разные входные данные и разный смысл.
+ */
+export async function loginByTelegram(initData: string): Promise<SessionData> {
+  const res = await fetch(`${apiBase()}/api/v1/auth/telegram-webapp`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ initData }),
+  });
+  const data = await parse<SessionData>(res);
+  accessToken = data.accessToken;
+  return data;
+}

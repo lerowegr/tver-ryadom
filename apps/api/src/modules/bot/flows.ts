@@ -89,7 +89,16 @@ async function dropDraft(db: Db, chatId: string): Promise<void> {
    Общие куски интерфейса
    ============================================================ */
 
-export function mainMenu(admin = false): InlineKeyboard {
+/**
+ * Мини-приложение открывается только по https: на http Telegram отвергает
+ * всю клавиатуру, и сообщение не доходит вовсе. В разработке адрес
+ * локальный, поэтому кнопки там просто нет.
+ */
+export function webAppUrl(siteUrl: string | undefined): string | null {
+  return siteUrl && siteUrl.startsWith('https://') ? siteUrl : null;
+}
+
+export function mainMenu(admin = false, siteUrl?: string): InlineKeyboard {
   const keyboard = new InlineKeyboard()
     .text('🗺 Экскурсии', 't:list')
     .row()
@@ -99,6 +108,8 @@ export function mainMenu(admin = false): InlineKeyboard {
     .text('ℹ️ Про экскурсии', 'about');
   // Кнопка управления видна только администратору: остальным она
   // не нужна, а лишний ряд в меню только мешает.
+  const app = webAppUrl(siteUrl);
+  if (app) keyboard.row().webApp('📱 Открыть приложение', app);
   if (admin) keyboard.row().text('⚙️ Управление', 'a:home');
   return keyboard;
 }
@@ -195,6 +206,7 @@ export async function sendCarousel(
   index: number,
   replace: boolean,
   chatId?: string,
+  siteUrl?: string,
 ): Promise<void> {
   const list = await publishedTours(db);
   if (list.length === 0) {
@@ -249,8 +261,10 @@ ${escapeHtml(tour.shortDescription)}
     .text('Забронировать', `b:go:${tour.id}`)
     .row()
     .text(liked ? '❤️ В избранном' : '🤍 В избранное', `fav:t:${tour.id}:${i}`)
-    .row()
-    .text('← Меню', 'menu');
+    .row();
+  const app = webAppUrl(siteUrl);
+  if (app) keyboard.webApp('📱 Открыть в приложении', `${app}/excursions/${tour.slug}`).row();
+  keyboard.text('← Меню', 'menu');
 
   const image = tour.images?.[0];
   const photo = image

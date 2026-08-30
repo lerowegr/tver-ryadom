@@ -5,6 +5,7 @@ import { and, eq, gt, isNull, ne } from 'drizzle-orm';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from '../../lib/crypto';
 import { conflict, notFound, unauthorized, validationError } from '../../lib/errors';
 import { signAccessToken } from '../../lib/jwt';
+import { verifyInitData } from './webapp';
 
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const BAD_CREDENTIALS = 'Неверный email или пароль';
@@ -33,7 +34,7 @@ export function toPublicUser(user: UserRow) {
 
 export type PublicUser = ReturnType<typeof toPublicUser>;
 
-async function issueSession(db: Db, secret: string, user: UserRow, meta: SessionMeta) {
+export async function issueSession(db: Db, secret: string, user: UserRow, meta: SessionMeta) {
   const sessionId = crypto.randomUUID();
   const refreshToken = randomToken();
   await db.insert(sessions).values({
@@ -146,4 +147,42 @@ export async function changePassword(
     .update(sessions)
     .set({ revokedAt: new Date() })
     .where(and(eq(sessions.userId, userId), ne(sessions.id, sessionId), isNull(sessions.revokedAt)));
+}
+
+/**
+ * Вход из мини-приложения Telegram.
+ *
+ * Учётная запись ищется по тому же идентификатору, что пишет бот: в личной
+ * переписке идентификатор чата и человека совпадают. Поэтому вход в
+ * мини-приложении и переписка с ботом попадают в одну запись, а брони с
+ * сайта видны там же — отдельной синхронизации не требуется.
+ */
+export async function loginByWebApp(
+  db: Db,
+  secret: string,
+  botToken: string,
+  initData: string,
+  meta: SessionMeta,
+) {
+  const profile = await verifyInitData(initData, botToken);
+  if (!profile) throw unauthorized('Не удалось подтвердить вход через Telegram');
+
+  const existing = await db.query.users.findFirst({
+    where: eq(users.telegramChatId, profile.id),
+  });
+  if (existing) return issueSession(db, secret, existing, meta);
+
+  const id = crypto.randomUUID();
+  const name = [profile.firstName, profile.lastName].filter(Boolean).join(' ').trim() || 'Гость';
+  await db.insert(users).values({
+    id,
+    name,
+    telegramChatId: profile.id,
+    // Ни почты, ни пароля: вход подтверждён самим Telegram.
+    email: null,
+    passwordHash: null,
+  });
+  const created = await db.query.users.findFirst({ where: eq(users.id, id) });
+  if (!created) throw unauthorized('Не удалось создать учётную запись');
+  return issueSession(db, secret, created, meta);
 }

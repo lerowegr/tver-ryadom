@@ -73,7 +73,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     await ctx.reply(text, {
       parse_mode: 'HTML',
       link_preview_options: { is_disabled: true },
-      reply_markup: mainMenu(admin),
+      reply_markup: mainMenu(admin, siteUrl),
     });
   };
 
@@ -115,7 +115,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
       });
       await ctx.reply(
         `✅ Готово, ${user?.name ?? 'друг'}! Аккаунт привязан.\n\nТеперь брони с сайта видны здесь, а подтверждения и напоминания приходят сюда.`,
-        { reply_markup: mainMenu() },
+        { reply_markup: mainMenu(false, siteUrl) },
       );
       return;
     }
@@ -123,7 +123,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
   });
 
   bot.command(['menu', 'help'], (ctx) => greet(ctx, false));
-  bot.command('tours', (ctx) => sendCarousel(ctx, ref.db, imagesBase, 0, false, chat(ctx)));
+  bot.command('tours', (ctx) => sendCarousel(ctx, ref.db, imagesBase, 0, false, chat(ctx), siteUrl));
   bot.command('mybookings', (ctx) => sendMyBookings(ctx, ref.db, chat(ctx), siteUrl));
   bot.command('me', (ctx) => sendCabinet(ctx, ref.db, chat(ctx), displayName(ctx)));
   bot.command('favorites', (ctx) => sendFavorites(ctx, ref.db, chat(ctx), displayName(ctx)));
@@ -231,7 +231,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
 
   bot.callbackQuery('t:list', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await sendCarousel(ctx, ref.db, imagesBase, 0, false, chat(ctx));
+    await sendCarousel(ctx, ref.db, imagesBase, 0, false, chat(ctx), siteUrl);
   });
 
   // Счётчик «2 из 3» — не кнопка, но нажать её можно: гасим часики.
@@ -244,7 +244,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
 
   bot.callbackQuery(/^t:i:(-?\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[1]), true, chat(ctx));
+    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[1]), true, chat(ctx), siteUrl);
   });
 
   bot.callbackQuery(/^t:(?!list$|noop$|back$|i:)(.+)$/, async (ctx) => {
@@ -263,7 +263,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     const added = await toggleFavorite(ref.db, chat(ctx), ctx.match[1]!, displayName(ctx));
     await ctx.answerCallbackQuery(added ? 'Добавлено в избранное' : 'Убрано из избранного');
     // Перерисовываем ту же карточку, чтобы сердечко сменилось на месте.
-    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[2]), true, chat(ctx));
+    await sendCarousel(ctx, ref.db, imagesBase, Number(ctx.match[2]), true, chat(ctx), siteUrl);
   });
 
   /* ── Бронирование ───────────────────────────────────────── */
@@ -317,7 +317,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
     await ctx.answerCallbackQuery('Отменено');
     await dropDraft(ref.db, chat(ctx));
     // Возвращаем туда, откуда пришли: карточка вместо тупика с меню.
-    await sendCarousel(ctx, ref.db, imagesBase, 0, true, chat(ctx));
+    await sendCarousel(ctx, ref.db, imagesBase, 0, true, chat(ctx), siteUrl);
   });
 
   /* ── Брони ──────────────────────────────────────────────── */
@@ -451,7 +451,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
       admins.length > 0
         ? 'Передали Елене — ответим в ближайшее время! 🙌'
         : 'Спасибо! Мы получили сообщение и скоро ответим.',
-      { reply_markup: mainMenu() },
+      { reply_markup: mainMenu(false, siteUrl) },
     );
   });
 

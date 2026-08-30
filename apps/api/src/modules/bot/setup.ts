@@ -159,6 +159,17 @@ export async function configureBot(db: Db, env: Bindings, origin: string): Promi
 
   await telegram(env.TELEGRAM_BOT_TOKEN, 'setMyCommands', { commands: COMMANDS });
 
+  // Кнопка рядом с полем ввода открывает мини-приложение — это тот же сайт,
+  // только внутри Telegram. Только по https: на http кнопка не создаётся.
+  const site = env.SITE_URL;
+  await telegram(
+    env.TELEGRAM_BOT_TOKEN,
+    'setChatMenuButton',
+    site?.startsWith('https://')
+      ? { menu_button: { type: 'web_app', text: 'Экскурсии', web_app: { url: site } } }
+      : { menu_button: { type: 'commands' } },
+  );
+
   return botStatus(db, env);
 }
 

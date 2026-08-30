@@ -21,6 +21,7 @@ import {
   changePassword,
   getMe,
   login,
+  loginByWebApp,
   logoutByRefreshToken,
   refreshSession,
   register,
@@ -111,6 +112,29 @@ export const authRoutes = new Hono<AppEnv>()
   })
 
   /** Deep-link для привязки Telegram-аккаунта (код живёт 15 минут). */
+  /**
+   * Вход из мини-приложения Telegram.
+   *
+   * Пароль здесь не нужен: личность подтверждает сам Telegram подписью в
+   * initData. Проверяем её на сервере — присланному без проверки верить
+   * нельзя, подделать строку тривиально.
+   */
+  .post('/telegram-webapp', async (c) => {
+    if (!c.env.TELEGRAM_BOT_TOKEN) throw validationError('Telegram-бот не подключён');
+    const payload = await c.req
+      .json<{ initData?: string }>()
+      .catch(() => ({}) as { initData?: string });
+    const result = await loginByWebApp(
+      c.get('db'),
+      c.env.JWT_SECRET,
+      c.env.TELEGRAM_BOT_TOKEN,
+      payload.initData ?? '',
+      requestMeta(c),
+    );
+    setRefreshCookie(c, result.refreshToken);
+    return ok(c, { user: result.user, accessToken: result.accessToken });
+  })
+
   .get('/telegram-link', requireAuth, async (c) => {
     // Имя бота приходит либо из переменной окружения, либо из настроек —
     // туда его записывает подключение бота в админке.
