@@ -31,3 +31,7 @@ coverage/
 .DS_Store
 Thumbs.db
 *.local.db
+
+# Воркер MapLibre копируется в public/ при запуске и сборке
+apps/web/public/maplibre/
+apps/admin/public/maplibre/

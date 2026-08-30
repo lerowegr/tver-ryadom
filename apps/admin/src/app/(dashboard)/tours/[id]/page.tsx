@@ -1,16 +1,28 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TOUR_STATUSES, TOUR_STATUS_LABELS } from '@tver/shared';
 import { useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ApiRequestError, authFetch } from '@/lib/api';
 import { slugify } from '@/lib/translit';
 import type { AdminTourDetail } from '@/lib/types';
 import { Card, Loading } from '@/components/ui';
 import { TourImages } from '@/components/tour-images';
 import { TourSchedules } from '@/components/tour-schedules';
+
+/* Карта тянет 500 КБ библиотеки — грузим её только на странице тура и
+   только после того, как остальная форма уже показана. */
+const RoutePointMap = dynamic(() => import('@/components/route-point-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-surface-soft flex h-[24rem] w-full items-center justify-center">
+      <p className="text-muted text-sm">Загружаем карту…</p>
+    </div>
+  ),
+});
 
 interface TourFormValues {
   title: string;
@@ -172,6 +184,12 @@ export default function TourEditPage() {
 
   const program = useFieldArray({ control, name: 'program' });
   const routePoints = useFieldArray({ control, name: 'routePoints' });
+
+  // Точка, которую сейчас ставим на карте.
+  const [activePoint, setActivePoint] = useState(0);
+  // Следим за значениями, а не за полями массива: карте нужны сами координаты,
+  // а они меняются и от ввода руками, и от перетаскивания метки.
+  const watchedPoints = useWatch({ control, name: 'routePoints' }) ?? [];
 
   const onSubmit = handleSubmit(async (values) => {
     setSaving(true);
@@ -421,20 +439,59 @@ export default function TourEditPage() {
           {routePoints.fields.length === 0 ? (
             <p className="text-muted text-sm">Точки с координатами рисуют маршрут на карте.</p>
           ) : (
-            <div className="space-y-3">
-              {routePoints.fields.map((field, index) => (
-                <div key={field.id} className="bg-surface-soft grid gap-3 p-4 sm:grid-cols-[1fr_7rem_7rem_auto]">
-                  <div className="space-y-2">
-                    <input placeholder="Название точки" {...register(`routePoints.${index}.title`)} className="input" />
-                    <input placeholder="Описание (необязательно)" {...register(`routePoints.${index}.description`)} className="input" />
-                  </div>
-                  <input placeholder="Широта" {...register(`routePoints.${index}.lat`)} className="input self-start" />
-                  <input placeholder="Долгота" {...register(`routePoints.${index}.lng`)} className="input self-start" />
-                  <button type="button" onClick={() => routePoints.remove(index)} className="btn-danger self-start !px-3 !py-2 text-xs">
-                    ✕
-                  </button>
-                </div>
-              ))}
+            <div className="space-y-5">
+              <RoutePointMap
+                points={watchedPoints.map((point) => ({
+                  title: point?.title ?? '',
+                  lat: point?.lat ?? '',
+                  lng: point?.lng ?? '',
+                }))}
+                activeIndex={Math.min(activePoint, routePoints.fields.length - 1)}
+                onSelect={setActivePoint}
+                onMove={(index, lat, lng) => {
+                  // Шесть знаков — примерно десять сантиметров на местности,
+                  // больше в координатах точки смысла нет.
+                  setValue(`routePoints.${index}.lat`, lat.toFixed(6), { shouldDirty: true });
+                  setValue(`routePoints.${index}.lng`, lng.toFixed(6), { shouldDirty: true });
+                  setActivePoint(index);
+                }}
+              />
+
+              <div className="space-y-3">
+                {routePoints.fields.map((field, index) => {
+                  const active = index === Math.min(activePoint, routePoints.fields.length - 1);
+                  return (
+                    <div
+                      key={field.id}
+                      onFocusCapture={() => setActivePoint(index)}
+                      className={`grid gap-3 p-4 sm:grid-cols-[auto_1fr_7rem_7rem_auto] ${
+                        active ? 'bg-surface-soft ring-ink ring-1' : 'bg-surface-soft'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActivePoint(index)}
+                        aria-pressed={active}
+                        aria-label={`Ставить на карте точку ${index + 1}`}
+                        className={`flex h-8 w-8 cursor-pointer items-center justify-center self-start text-xs tabular-nums ${
+                          active ? 'bg-ink text-bg' : 'border-line text-muted border'
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                      <div className="space-y-2">
+                        <input placeholder="Название точки" {...register(`routePoints.${index}.title`)} className="input" />
+                        <input placeholder="Описание (необязательно)" {...register(`routePoints.${index}.description`)} className="input" />
+                      </div>
+                      <input placeholder="Широта" {...register(`routePoints.${index}.lat`)} className="input self-start" />
+                      <input placeholder="Долгота" {...register(`routePoints.${index}.lng`)} className="input self-start" />
+                      <button type="button" onClick={() => routePoints.remove(index)} className="btn-danger self-start !px-3 !py-2 text-xs">
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </Card>

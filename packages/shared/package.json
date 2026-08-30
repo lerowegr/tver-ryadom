@@ -5,14 +5,16 @@
   "type": "module",
   "description": "Общие zod-схемы, типы API и доменные константы",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./map": "./src/map/style.ts"
   },
   "scripts": {
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@tver/config": "workspace:*"
+    "@tver/config": "workspace:*",
+    "maplibre-gl": "^6.6.0"
   },
   "dependencies": {
     "zod": "^3.25.76"

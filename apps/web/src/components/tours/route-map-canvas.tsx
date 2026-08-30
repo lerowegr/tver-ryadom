@@ -7,11 +7,25 @@ import {
   Marker,
   NavigationControl,
   Popup,
+  setWorkerUrl,
 } from 'maplibre-gl';
 import { useEffect, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { ATTRIBUTION, mapStyle } from '@/components/tours/map-style';
+import { ATTRIBUTION, mapStyle } from '@tver/shared/map';
 import type { RoutePointDto } from '@/lib/types';
+
+/**
+ * Адрес воркера указываем явно.
+ *
+ * С шестой версии библиотека держит воркер отдельным файлом и вычисляет путь
+ * к нему из адреса собственного модуля. В сборке это хешированный кусок в
+ * /_next/static/chunks, рядом с которым воркера нет: сборщик не распознаёт
+ * динамический шаблон и файл не выкладывает. Воркер не стартует, карта
+ * остаётся пустой — и ни одной ошибки в консоли.
+ *
+ * Копию в public/ кладёт scripts/copy-map-worker.mjs перед запуском и сборкой.
+ */
+setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 /** Запас вокруг крайних точек, чтобы метки не липли к рамке. */
 const PADDING = { top: 64, right: 48, bottom: 64, left: 48 };

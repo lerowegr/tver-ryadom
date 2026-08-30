@@ -38,6 +38,9 @@ importers:
       '@tver/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      maplibre-gl:
+        specifier: ^6.6.0
+        version: 6.6.0
       next:
         specifier: ^15.5.20
         version: 15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -231,6 +234,9 @@ importers:
       '@tver/config':
         specifier: workspace:*
         version: link:../config
+      maplibre-gl:
+        specifier: ^6.6.0
+        version: 6.6.0
 
 packages:
 

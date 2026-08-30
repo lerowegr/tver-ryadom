@@ -9,6 +9,9 @@ if not exist "package.json" (
   echo [ОШИБКА] Не найден apps\admin. Запускайте скрипт из папки проекта.
   exit /b 1
 )
+rem Воркер карты кладётся в public/ — без него MapLibre молча не стартует.
+node "%~dp0copy-map-worker.mjs"
+
 where pnpm >nul 2>&1 && (
   pnpm exec next dev --port 3001
 ) || (
