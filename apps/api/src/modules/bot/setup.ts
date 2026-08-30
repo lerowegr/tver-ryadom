@@ -23,6 +23,14 @@ const COMMANDS = [
 
 export interface BotStatus {
   tokenSet: boolean;
+  /**
+   * Длина токена — не сам он.
+   *
+   * Нужна ровно для одного случая: секрет в списке воркера есть, а код его
+   * не видит. Ноль означает пустое значение (при вводе токен не отображается,
+   * и вставка легко проходит мимо), отсутствие поля — что привязки нет вовсе.
+   */
+  tokenLength: number;
   username: string | null;
   webhookUrl: string | null;
   pendingUpdates: number | null;
@@ -95,7 +103,14 @@ async function telegram<T>(token: string, method: string, body?: unknown): Promi
 
 export async function botStatus(db: Db, env: Bindings): Promise<BotStatus> {
   if (!env.TELEGRAM_BOT_TOKEN) {
-    return { tokenSet: false, username: null, webhookUrl: null, pendingUpdates: null, lastError: null };
+    return {
+      tokenSet: false,
+      tokenLength: env.TELEGRAM_BOT_TOKEN === undefined ? -1 : env.TELEGRAM_BOT_TOKEN.length,
+      username: null,
+      webhookUrl: null,
+      pendingUpdates: null,
+      lastError: null,
+    };
   }
   const username = await resolveBotUsername(db, env);
   try {
@@ -106,6 +121,7 @@ export async function botStatus(db: Db, env: Bindings): Promise<BotStatus> {
     }>(env.TELEGRAM_BOT_TOKEN, 'getWebhookInfo');
     return {
       tokenSet: true,
+      tokenLength: env.TELEGRAM_BOT_TOKEN.length,
       username,
       webhookUrl: info.url || null,
       pendingUpdates: info.pending_update_count ?? 0,
@@ -114,6 +130,7 @@ export async function botStatus(db: Db, env: Bindings): Promise<BotStatus> {
   } catch (error) {
     return {
       tokenSet: true,
+      tokenLength: env.TELEGRAM_BOT_TOKEN.length,
       username,
       webhookUrl: null,
       pendingUpdates: null,
