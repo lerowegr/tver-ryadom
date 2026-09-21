@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { normalizeRuPhone } from '@tver/shared';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -9,10 +10,10 @@ import { z } from 'zod';
 import { useAuth } from '@/components/providers';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { CheckIcon } from '@/components/ui/icons';
-import { ApiRequestError } from '@/lib/api';
+import { api, ApiRequestError } from '@/lib/api';
 import { authFetch } from '@/lib/auth';
 import { formatDateTime, formatPrice } from '@/lib/format';
-import type { BookingCreatedDto, ScheduleDto } from '@/lib/types';
+import type { AvailabilityBlockDto, BookingCreatedDto, ScheduleDto } from '@/lib/types';
 
 interface BookingFormProps {
   tour: {
@@ -22,8 +23,19 @@ interface BookingFormProps {
     priceType: 'per_person' | 'per_group';
     groupMin: number;
     groupMax: number | null;
+    durationMinutes: number;
     schedules: ScheduleDto[];
   };
+}
+
+/** Календарь листается вперёд, поэтому занятость берём сразу на год. */
+function availabilityRange(): { from: string; to: string } {
+  const key = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const now = new Date();
+  const year = new Date(now);
+  year.setFullYear(year.getFullYear() + 1);
+  return { from: key(now), to: key(year) };
 }
 
 export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
@@ -33,6 +45,16 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
   const [customDate, setCustomDate] = useState(!hasSlots);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [created, setCreated] = useState<BookingCreatedDto | null>(null);
+
+  // Занятые дни и часы: их календарь не предложит. Сервер проверяет то же
+  // самое ещё раз — между открытием страницы и отправкой время могло уйти.
+  const range = useMemo(availabilityRange, []);
+  const availability = useQuery({
+    queryKey: ['availability', range.from, range.to],
+    queryFn: () =>
+      api<{ blocks: AvailabilityBlockDto[] }>(`/availability?from=${range.from}&to=${range.to}`),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const formSchema = useMemo(
     () =>
@@ -192,6 +214,8 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
             <DateTimePicker
               value={watch('desiredDate') ?? ''}
               onChange={(next) => setValue('desiredDate', next, { shouldValidate: true })}
+              blocked={availability.data?.blocks}
+              slotMinutes={tour.durationMinutes}
               ariaLabel="Желаемые дата и время"
               placeholder="Выберите дату и время"
             />

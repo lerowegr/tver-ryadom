@@ -164,6 +164,42 @@ export async function getTourBySlug(db: Db, slug: string, imagesBase: string) {
   };
 }
 
+/**
+ * Ближайшие сборные выходы по всем экскурсиям — для раздела «Расписание».
+ *
+ * Слоты и так есть у каждой экскурсии, но гость попадает на них, только если
+ * уже открыл нужную страницу. Здесь они собраны в один список: человек видит
+ * месяц целиком и выбирает дату, а не экскурсию.
+ */
+export async function listUpcomingSchedules(db: Db, imagesBase: string, limit = 60) {
+  const rows = await db.query.schedules.findMany({
+    where: (slot, { and: cond, eq: equals, gt: greater }) =>
+      cond(equals(slot.status, 'open'), greater(slot.startsAt, new Date())),
+    orderBy: (slot, { asc: sortAsc }) => [sortAsc(slot.startsAt)],
+    limit,
+    with: {
+      tour: {
+        with: {
+          images: { orderBy: (image, { asc: sortAsc }) => [sortAsc(image.sortOrder)], limit: 1 },
+          badges: { with: { badge: { columns: { slug: true, label: true } } } },
+        },
+      },
+    },
+  });
+
+  // Черновик экскурсии в расписании показывать нельзя: страницы у неё нет,
+  // и кнопка «Забронировать» вела бы в никуда.
+  return rows
+    .filter((slot) => slot.tour?.status === 'published')
+    .map((slot) => ({
+      id: slot.id,
+      startsAt: slot.startsAt,
+      capacity: slot.capacity,
+      freeSeats: Math.max(0, slot.capacity - slot.bookedCount),
+      tour: toTourCard(slot.tour, imagesBase),
+    }));
+}
+
 export async function listTourReviews(db: Db, slug: string, pagination: Pagination) {
   const tour = await db.query.tours.findFirst({
     where: and(eq(tours.slug, slug), eq(tours.status, 'published')),

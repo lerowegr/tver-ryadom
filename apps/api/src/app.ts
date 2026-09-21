@@ -8,6 +8,7 @@ import { AppError, notFound } from './lib/errors';
 import { ok } from './lib/respond';
 import { authenticate } from './middleware/auth';
 import { adminRoutes } from './modules/admin/routes';
+import { availabilityRoutes } from './modules/availability/routes';
 import { authRoutes } from './modules/auth/routes';
 import { getBot } from './modules/bot/bot';
 import { readWebhookSecret } from './modules/bot/setup';
@@ -20,7 +21,7 @@ import { favoriteRoutes } from './modules/favorites/routes';
 import { notificationRoutes } from './modules/notifications/routes';
 import { reviewRoutes } from './modules/reviews/routes';
 import { settingsRoutes } from './modules/settings/routes';
-import { badgeRoutes, tourRoutes } from './modules/tours/routes';
+import { badgeRoutes, scheduleRoutes, tourRoutes } from './modules/tours/routes';
 
 export interface BuildAppOptions {
   /** Подмена БД в тестах; в проде берётся из биндинга D1. */
@@ -150,6 +151,8 @@ export function buildApp(options: BuildAppOptions = {}) {
     .route('/auth', authRoutes)
     .route('/tours', tourRoutes)
     .route('/badges', badgeRoutes)
+    .route('/availability', availabilityRoutes)
+    .route('/schedule', scheduleRoutes)
     .route('/bookings', bookingRoutes)
     .route('/reviews', reviewRoutes)
     .route('/favorites', favoriteRoutes)

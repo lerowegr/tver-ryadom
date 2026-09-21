@@ -16,6 +16,7 @@ export const settingsRoutes = new Hono<AppEnv>().get('/', async (c) => {
         like(settings.key, 'company.%'),
         like(settings.key, 'about.%'),
         like(settings.key, 'home.%'),
+        like(settings.key, 'schedule.%'),
       ),
     );
 

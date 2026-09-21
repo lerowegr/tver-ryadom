@@ -4,7 +4,13 @@ import type { AppEnv } from '../../env';
 import { imagesBaseOf } from '../../lib/images';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
-import { getTourBySlug, listBadges, listTourReviews, listTours } from './service';
+import {
+  getTourBySlug,
+  listBadges,
+  listTourReviews,
+  listTours,
+  listUpcomingSchedules,
+} from './service';
 
 export const tourRoutes = new Hono<AppEnv>()
   .get('/', validate('query', tourFilterSchema), async (c) => {
@@ -25,4 +31,9 @@ export const tourRoutes = new Hono<AppEnv>()
 
 export const badgeRoutes = new Hono<AppEnv>().get('/', async (c) => {
   return ok(c, await listBadges(c.get('db')));
+});
+
+/** Расписание сборных экскурсий: ближайшие открытые слоты по всем маршрутам. */
+export const scheduleRoutes = new Hono<AppEnv>().get('/', async (c) => {
+  return ok(c, { items: await listUpcomingSchedules(c.get('db'), imagesBaseOf(c)) });
 });

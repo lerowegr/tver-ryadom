@@ -292,6 +292,7 @@ export default async function TourPage({ params }: { params: Params }) {
                   priceType: tour.priceType,
                   groupMin: tour.groupMin,
                   groupMax: tour.groupMax,
+                  durationMinutes: tour.durationMinutes,
                   schedules: tour.schedules,
                 }}
               />

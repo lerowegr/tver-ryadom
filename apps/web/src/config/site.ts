@@ -6,6 +6,7 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   nav: [
     { href: '/excursions', label: 'Экскурсии' },
+    { href: '/schedule', label: 'Расписание' },
     { href: '/about', label: 'Об экскурсоводе' },
     { href: '/contacts', label: 'Контакты' },
   ],
@@ -14,8 +15,7 @@ export const site = {
     'contacts.phone': '+79000000000',
     'contacts.email': 'hello@tver-ryadom.ru',
     'contacts.telegram': 'https://t.me/tver_ryadom',
-    'contacts.whatsapp': 'https://wa.me/79000000000',
-    'contacts.vk': 'https://vk.com/tver_ryadom',
+    'contacts.vk': 'https://vk.ru/tverexkursii',
     'company.name': 'Тверь рядом',
     'company.tagline': 'Покажем Тверь спокойно, живо и без скучной лекции',
   } as Record<string, string>,

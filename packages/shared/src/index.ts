@@ -9,4 +9,5 @@ export * from './schemas/booking';
 export * from './schemas/review';
 export * from './schemas/contact';
 export * from './schemas/schedule';
+export * from './schemas/availability';
 export * from './types/api';

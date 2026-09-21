@@ -3,7 +3,15 @@ import { cache } from 'react';
 import type { ApiResponse, Paginated } from '@tver/shared';
 import { site } from '@/config/site';
 import { ApiRequestError } from './api';
-import type { BadgeDto, LatestReviewDto, ReviewDto, SiteSettings, TourCardDto, TourDetailDto } from './types';
+import type {
+  BadgeDto,
+  LatestReviewDto,
+  ReviewDto,
+  ScheduleEntryDto,
+  SiteSettings,
+  TourCardDto,
+  TourDetailDto,
+} from './types';
 
 interface ApiBinding {
   fetch: (input: string, init?: RequestInit) => Promise<Response>;
@@ -75,6 +83,9 @@ export function getTourReviews(slug: string, page = 1): Promise<Paginated<Review
 }
 
 export const getBadges = cache(() => api<BadgeDto[]>('/badges'));
+
+/** Ближайшие сборные выходы по всем экскурсиям. */
+export const getSchedule = cache(() => api<{ items: ScheduleEntryDto[] }>('/schedule'));
 
 export function getLatestReviews(): Promise<LatestReviewDto[]> {
   return api<LatestReviewDto[]>('/reviews/latest');

@@ -12,15 +12,15 @@ const contactFields = [
   { key: 'contacts.phone', label: 'Телефон (+7XXXXXXXXXX)' },
   { key: 'contacts.email', label: 'Email' },
   { key: 'contacts.telegram', label: 'Ссылка Telegram' },
-  { key: 'contacts.whatsapp', label: 'Ссылка WhatsApp' },
+  { key: 'contacts.max', label: 'Ссылка МАКС' },
   { key: 'contacts.vk', label: 'Ссылка ВКонтакте' },
-  { key: 'contacts.max', label: 'Ссылка MAX' },
 ];
 
 const textFields = [
   { key: 'company.tagline', label: 'Слоган (заголовок главной)', rows: 2 },
   { key: 'home.subtitle', label: 'Подзаголовок главной страницы', rows: 3 },
   { key: 'about.intro', label: 'Вступление раздела «О компании»', rows: 4 },
+  { key: 'schedule.intro', label: 'Вступление раздела «Расписание»', rows: 3 },
 ];
 
 interface TeamMember {

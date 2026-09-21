@@ -19,6 +19,34 @@ const TIMES = Array.from({ length: 23 }, (_, i) => {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 });
 
+/** Закрытое время: пустые часы означают весь день. */
+export interface BlockedTime {
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+}
+
+interface Interval {
+  from: number;
+  to: number;
+}
+
+function minutesOf(time: string): number {
+  return Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+}
+
+/** Закрытые промежутки по дням, в минутах от полуночи. */
+function groupBlocked(blocked: BlockedTime[]): Map<string, Interval[]> {
+  const byDate = new Map<string, Interval[]>();
+  for (const block of blocked) {
+    const interval = block.startTime
+      ? { from: minutesOf(block.startTime), to: minutesOf(block.endTime ?? '24:00') }
+      : { from: 0, to: 1440 };
+    byDate.set(block.date, [...(byDate.get(block.date) ?? []), interval]);
+  }
+  return byDate;
+}
+
 const monthTitle = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' });
 const fullDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -58,6 +86,8 @@ export function DateTimePicker({
   value,
   onChange,
   minDate,
+  blocked,
+  slotMinutes = 60,
   ariaLabel = 'Дата и время',
   placeholder = 'Выберите дату и время',
 }: {
@@ -65,6 +95,10 @@ export function DateTimePicker({
   onChange: (value: string) => void;
   /** Раньше этого дня выбирать нельзя, в формате «ГГГГ-ММ-ДД». */
   minDate?: string;
+  /** Занятое время экскурсовода: такие дни и часы выбрать нельзя. */
+  blocked?: BlockedTime[];
+  /** Сколько длится экскурсия — чтобы час, наезжающий на занятый, тоже погас. */
+  slotMinutes?: number;
   ariaLabel?: string;
   placeholder?: string;
 }) {
@@ -115,9 +149,32 @@ export function DateTimePicker({
   const grid = useMemo(() => monthGrid(view.year, view.month), [view]);
   const limit = minDate ?? today ?? '';
 
+  const busy = useMemo(() => groupBlocked(blocked ?? []), [blocked]);
+
+  /** Занят ли конкретный час: экскурсия целиком должна поместиться в свободное. */
+  const timeTaken = useCallback(
+    (day: string, time: string) => {
+      const intervals = busy.get(day);
+      if (!intervals) return false;
+      const from = minutesOf(time);
+      const to = from + slotMinutes;
+      return intervals.some((i) => from < i.to && i.from < to);
+    },
+    [busy, slotMinutes],
+  );
+
+  /** День закрыт, если не остаётся ни одного времени начала. */
+  const dayTaken = useCallback(
+    (day: string) => busy.has(day) && TIMES.every((time) => timeTaken(day, time)),
+    [busy, timeTaken],
+  );
+
   const pickDay = (key: string) => {
-    // Время сохраняем, если уже выбрано, иначе ставим первое разумное.
-    onChange(`${key}T${time || '10:00'}`);
+    // Время сохраняем, если уже выбрано, иначе ставим первое разумное —
+    // но не занятое: подставить заведомо закрытый час значит соврать.
+    const keep = time && !timeTaken(key, time) ? time : null;
+    const fallback = timeTaken(key, '10:00') ? TIMES.find((t) => !timeTaken(key, t)) : '10:00';
+    onChange(`${key}T${keep ?? fallback ?? '10:00'}`);
     // Клик по дню соседнего месяца перелистывает календарь туда же:
     // иначе выбранная дата остаётся за краем сетки и её не видно.
     const picked = new Date(`${key}T00:00`);
@@ -204,7 +261,8 @@ export function DateTimePicker({
               </span>
             ))}
             {grid.map((cell) => {
-              const disabled = Boolean(limit) && cell.key < limit;
+              const closed = dayTaken(cell.key);
+              const disabled = (Boolean(limit) && cell.key < limit) || closed;
               const selected = cell.key === date;
               const isToday = cell.key === today;
               return (
@@ -215,6 +273,7 @@ export function DateTimePicker({
                   onClick={() => pickDay(cell.key)}
                   aria-current={isToday ? 'date' : undefined}
                   aria-pressed={selected}
+                  title={closed ? 'В этот день записи нет' : undefined}
                   className={`flex h-9 items-center justify-center text-xs tabular-nums transition-colors duration-300 ${
                     selected
                       ? 'bg-ink text-bg'
@@ -233,19 +292,28 @@ export function DateTimePicker({
 
           <p className="kicker-plain text-faint mt-5 mb-3">Время</p>
           <div className="grid max-h-40 grid-cols-4 gap-1 overflow-y-auto">
-            {TIMES.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => pickTime(t)}
-                aria-pressed={t === time}
-                className={`cursor-pointer py-2 text-xs tabular-nums transition-colors duration-300 ${
-                  t === time ? 'bg-ink text-bg' : 'text-muted hover:bg-surface-soft'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
+            {TIMES.map((t) => {
+              const taken = Boolean(date) && timeTaken(date, t);
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={taken}
+                  onClick={() => pickTime(t)}
+                  aria-pressed={t === time}
+                  title={taken ? 'Это время занято' : undefined}
+                  className={`py-2 text-xs tabular-nums transition-colors duration-300 ${
+                    t === time
+                      ? 'bg-ink text-bg'
+                      : taken
+                        ? 'text-line-strong cursor-not-allowed line-through'
+                        : 'text-muted hover:bg-surface-soft cursor-pointer'
+                  }`}
+                >
+                  {t}
+                </button>
+              );
+            })}
           </div>
 
           {date ? (

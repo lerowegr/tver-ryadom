@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { authFetch } from '@/lib/api';
+import { AvailabilityBlocks, type AvailabilityBlock } from '@/components/availability-blocks';
 import { Card, Loading } from '@/components/ui';
 
 /**
@@ -96,6 +97,11 @@ export default function CalendarPage() {
     queryFn: () => authFetch<{ entries: Entry[] }>(`/admin/calendar?from=${from}&to=${to}`),
   });
 
+  const availability = useQuery({
+    queryKey: ['admin-availability', from, to],
+    queryFn: () => authFetch<{ blocks: AvailabilityBlock[] }>(`/admin/availability?from=${from}&to=${to}`),
+  });
+
   const feed = useQuery({
     queryKey: ['admin-calendar-feed'],
     queryFn: () => authFetch<{ token: string; url: string }>('/admin/calendar/feed'),
@@ -186,6 +192,15 @@ export default function CalendarPage() {
     return days.sort((a, b) => a.day.localeCompare(b.day));
   }, [range, byDay]);
 
+  /** Дни, целиком закрытые для записи: на сетке они перечёркнуты. */
+  const closedDays = useMemo(() => {
+    const set = new Set<string>();
+    for (const block of availability.data?.blocks ?? []) {
+      if (!block.startTime) set.add(block.date);
+    }
+    return set;
+  }, [availability.data]);
+
   const today = key(new Date());
   const chosen = picked ? (byDay.get(picked) ?? []) : [];
 
@@ -267,6 +282,7 @@ export default function CalendarPage() {
                 const requests = entries.length - slots;
                 const inSelected = Boolean(range && cell.k >= range.from && cell.k <= range.to);
                 const active = picked === cell.k || cell.k === pendingFrom;
+                const closed = closedDays.has(cell.k);
                 return (
                   <button
                     key={cell.k}
@@ -274,6 +290,7 @@ export default function CalendarPage() {
                     onClick={() => onDayClick(cell.k)}
                     aria-current={cell.k === today ? 'date' : undefined}
                     aria-pressed={active}
+                    title={closed ? 'День закрыт для записи' : undefined}
                     className={`flex min-h-[4.5rem] cursor-pointer flex-col items-start gap-1 p-2 text-left transition-colors duration-300 ${
                       active ? 'bg-ink text-bg' : 'hover:bg-surface-soft'
                     } ${inSelected && !active ? 'bg-surface-soft' : ''} ${
@@ -281,7 +298,7 @@ export default function CalendarPage() {
                     }`}
                   >
                     <span
-                      className={`text-xs tabular-nums ${
+                      className={`text-xs tabular-nums ${closed ? 'line-through' : ''} ${
                         active ? 'text-bg' : cell.outside ? 'text-faint' : 'text-ink'
                       }`}
                     >
@@ -315,6 +332,9 @@ export default function CalendarPage() {
               </span>
               <span className="flex items-center gap-2">
                 <span className="border-ink h-1.5 w-4 border" /> заявка на свою дату
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="text-faint line-through">00</span> день закрыт для записи
               </span>
             </p>
           </>
@@ -407,6 +427,13 @@ export default function CalendarPage() {
           )}
         </Card>
       ) : null}
+
+      <AvailabilityBlocks
+        blocks={availability.data?.blocks ?? []}
+        from={from}
+        to={to}
+        defaultDate={picked}
+      />
 
       <Card title="Подписка во внешнем календаре">
         <p className="text-muted text-sm leading-relaxed">

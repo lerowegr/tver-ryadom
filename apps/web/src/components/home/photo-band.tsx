@@ -47,7 +47,9 @@ export function PhotoBand() {
   return (
     <section ref={root} className="relative h-[62svh] overflow-hidden md:h-[78svh]" aria-label="Тверь">
       <div className="absolute inset-0 overflow-hidden">
-        {/* Запас по высоте, чтобы параллакс не оголял края */}
+        {/* Запас по высоте, чтобы параллакс не оголял края. Точка привязки
+            смещена вверх по кадру: при центрировании дворец обрезало сверху,
+            а ради него полоса и стоит. */}
         <img
           src="/photos/putevoy-dvorets.jpg"
           srcSet="/photos/putevoy-dvorets-900.webp 900w, /photos/putevoy-dvorets.jpg 1280w"
@@ -55,7 +57,7 @@ export function PhotoBand() {
           alt="Императорский путевой дворец в Твери"
           loading="lazy"
           decoding="async"
-          className="band-img absolute inset-x-0 top-[-10%] h-[120%] w-full object-cover"
+          className="band-img absolute inset-x-0 top-[-10%] h-[120%] w-full object-cover object-[50%_18%]"
         />
       </div>
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/45 to-transparent" aria-hidden />

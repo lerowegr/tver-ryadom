@@ -38,6 +38,22 @@ export interface ScheduleDto {
   freeSeats: number;
 }
 
+/** Слот расписания вместе с экскурсией — для раздела «Расписание». */
+export interface ScheduleEntryDto {
+  id: string;
+  startsAt: string;
+  capacity: number;
+  freeSeats: number;
+  tour: TourCardDto;
+}
+
+/** Закрытое время экскурсовода. Пустые часы — закрыт весь день. */
+export interface AvailabilityBlockDto {
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+}
+
 export interface RoutePointDto {
   title: string;
   description: string | null;

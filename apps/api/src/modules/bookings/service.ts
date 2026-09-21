@@ -5,6 +5,7 @@ import { and, count, eq, gt, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { AuthUser } from '../../env';
 import { affectedRows } from '../../lib/db-utils';
 import { conflict, notFound, validationError } from '../../lib/errors';
+import { isBlocked } from '../availability/service';
 import { notifyAdmins, notifyUser } from '../notifications/dispatch';
 import { createNotification } from '../notifications/service';
 import { formatMsk } from '../notifications/templates';
@@ -81,6 +82,12 @@ export async function createBooking(
   } else if (input.desiredDate) {
     if (input.desiredDate.getTime() <= Date.now()) {
       throw validationError('Желаемая дата уже прошла');
+    }
+    // Своя дата не проходит через расписание, поэтому занятость проверяем
+    // здесь: закрытые дни экскурсовода иначе принимали бы заявки молча.
+    // Заявку, заведённую админом вручную, не трогаем — там виднее.
+    if (source !== 'admin' && (await isBlocked(db, input.desiredDate, tour.durationMinutes))) {
+      throw conflict('В это время экскурсовод занят. Выберите, пожалуйста, другое время.');
     }
     startsAt = input.desiredDate;
   }

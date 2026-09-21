@@ -5,7 +5,7 @@ import { getTours, safe } from '@/lib/data';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const toursPage = await safe(getTours(), { items: [], total: 0, page: 1, limit: 12, pages: 1 });
 
-  const staticPages: MetadataRoute.Sitemap = ['', '/excursions', '/about', '/contacts'].map(
+  const staticPages: MetadataRoute.Sitemap = ['', '/excursions', '/schedule', '/about', '/contacts'].map(
     (path) => ({
       url: `${site.url}${path}`,
       changeFrequency: 'weekly',

@@ -8,7 +8,7 @@ import { getSettings } from '@/lib/data';
 export const metadata: Metadata = {
   title: 'Контакты',
   description:
-    'Связаться с Еленой Громовой: телефон, почта, Telegram, WhatsApp, ВКонтакте и MAX. Помогу подобрать экскурсию по Твери и собрать маршрут под вашу компанию.',
+    'Связаться с Еленой Громовой: телефон, почта, Telegram, ВКонтакте и MAX. Помогу подобрать экскурсию по Твери и ответить на вопросы.',
 };
 
 interface Channel {
@@ -38,19 +38,21 @@ export default async function ContactsPage() {
           note: 'Самый быстрый способ',
         }
       : null,
-    settings['contacts.whatsapp']
+    settings['contacts.max']
       ? {
-          label: 'WhatsApp',
-          value: 'Написать в WhatsApp',
-          href: settings['contacts.whatsapp'],
+          label: 'МАКС',
+          value: 'Написать в МАКС',
+          href: settings['contacts.max'],
           note: 'Голосом или текстом',
         }
       : null,
     settings['contacts.vk']
-      ? { label: 'ВКонтакте', value: 'Страница ВКонтакте', href: settings['contacts.vk'], note: 'Анонсы и фотоотчёты' }
-      : null,
-    settings['contacts.max']
-      ? { label: 'MAX', value: 'Написать в MAX', href: settings['contacts.max'], note: 'Российский мессенджер' }
+      ? {
+          label: 'ВКонтакте',
+          value: 'Страница ВКонтакте',
+          href: settings['contacts.vk'],
+          note: 'Расписание сборных экскурсий, анонсы и фотоотчёты',
+        }
       : null,
   ].filter((c): c is Channel => c !== null);
 
@@ -61,8 +63,7 @@ export default async function ContactsPage() {
           <p className="kicker mb-7">Контакты</p>
           <h1 className="display text-[clamp(2.5rem,5vw,4.25rem)]">Как со мной связаться</h1>
           <p className="text-muted mt-7 text-[1.0625rem] leading-[1.75]">
-            Выберите удобный способ — помогу подобрать экскурсию, отвечу на вопросы и соберу
-            маршрут под вашу компанию.
+            Выберите удобный способ — помогу подобрать экскурсию и отвечу на вопросы.
           </p>
         </Reveal>
 
@@ -87,10 +88,10 @@ export default async function ContactsPage() {
               <p className="kicker-plain text-faint">Где встречаемся</p>
               <p className="font-display text-ink mt-4 text-[1.375rem] leading-tight">Тверь, центр города</p>
               <p className="text-muted mt-3 text-sm leading-relaxed">
-                Обычно — у Императорского путевого дворца. Точное место приходит после бронирования.
+                Обычно — на Соборной площади. Точное место приходит после бронирования.
               </p>
               <a
-                href="https://www.openstreetmap.org/?mlat=56.8626&mlon=35.8988#map=17/56.8626/35.8988"
+                href="https://www.openstreetmap.org/?mlat=56.86178&mlon=35.89833#map=17/56.86178/35.89833"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="link-underline text-muted mt-4 inline-block text-sm"

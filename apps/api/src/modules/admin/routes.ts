@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../../env';
 import { requireAdmin } from '../../middleware/auth';
+import { adminAvailabilityRoutes } from './availability';
 import { adminCalendarRoutes } from './calendar';
 import { adminChannelRoutes } from './channels';
 import { adminTelegramRoutes } from './telegram';
@@ -19,6 +20,7 @@ export const adminRoutes = new Hono<AppEnv>()
   .use('*', requireAdmin)
   .route('/stats', adminStatsRoutes)
   .route('/calendar', adminCalendarRoutes)
+  .route('/availability', adminAvailabilityRoutes)
   .route('/telegram', adminTelegramRoutes)
   .route('/channels', adminChannelRoutes)
   .route('/tours', adminTourRoutes)

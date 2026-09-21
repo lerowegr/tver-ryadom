@@ -18,9 +18,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
      Заодно ряд подписей вразрядку точнее попадает в жанр. */
   const socials = [
     ['contacts.telegram', 'Telegram'],
-    ['contacts.whatsapp', 'WhatsApp'],
+    ['contacts.max', 'МАКС'],
     ['contacts.vk', 'ВКонтакте'],
-    ['contacts.max', 'MAX'],
   ] as const;
 
   return (
