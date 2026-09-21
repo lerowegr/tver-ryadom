@@ -27,7 +27,7 @@ describe('reviews', () => {
 
     // До модерации отзыв не виден в публичном списке.
     const published = await app.request('/api/v1/tours/obzornaya-po-tveri/reviews', {}, TEST_ENV);
-    expect((await body(published)).data.total).toBe(2);
+    expect((await body(published)).data.total).toBe(20);
   });
 
   it('авторизованный: имя из профиля, повторный отзыв запрещён', async () => {
@@ -139,7 +139,8 @@ describe('публичные данные', () => {
     const res = await app.request('/api/v1/reviews/latest', {}, TEST_ENV);
     expect(res.status).toBe(200);
     const { data } = await body(res);
-    expect(data).toHaveLength(3);
+    // Лента на главной показывает шесть последних.
+    expect(data).toHaveLength(6);
     expect(data[0].tour.title).toBeTruthy();
     expect(data.every((r: { rating: number }) => r.rating >= 4)).toBe(true);
   });

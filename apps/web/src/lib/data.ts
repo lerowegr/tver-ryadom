@@ -78,8 +78,10 @@ export async function getTours(query: TourListQuery = {}): Promise<Paginated<Tou
 
 export const getTour = cache((slug: string) => api<TourDetailDto>(`/tours/${encodeURIComponent(slug)}`));
 
-export function getTourReviews(slug: string, page = 1): Promise<Paginated<ReviewDto>> {
-  return api<Paginated<ReviewDto>>(`/tours/${encodeURIComponent(slug)}/reviews?page=${page}`);
+export function getTourReviews(slug: string, page = 1, limit = 12): Promise<Paginated<ReviewDto>> {
+  return api<Paginated<ReviewDto>>(
+    `/tours/${encodeURIComponent(slug)}/reviews?page=${page}&limit=${limit}`,
+  );
 }
 
 export const getBadges = cache(() => api<BadgeDto[]>('/badges'));

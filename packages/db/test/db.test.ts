@@ -18,8 +18,11 @@ describe('миграции и seed', () => {
     expect(badges).toHaveLength(DEFAULT_BADGES.length);
 
     const reviews = await db.select().from(schema.reviews);
-    expect(reviews).toHaveLength(3);
+    expect(reviews).toHaveLength(21);
     expect(reviews.every((review) => review.status === 'approved')).toBe(true);
+    // Отзывы перенесены с площадок вместе с их датами — сегодняшним числом
+    // прошлогодний отзыв выглядел бы свежим.
+    expect(reviews.every((review) => review.createdAt.getTime() < Date.now())).toBe(true);
 
     const schedules = await db.select().from(schema.schedules);
     expect(schedules).toHaveLength(9);
@@ -41,7 +44,7 @@ describe('миграции и seed', () => {
     });
 
     expect(tour).toBeDefined();
-    expect(tour?.ratingCount).toBe(2);
+    expect(tour?.ratingCount).toBe(20);
     expect(tour?.ratingAvg).toBe(5);
     expect(tour?.badges.map((tb) => tb.badge.slug)).toContain('hit');
   });
@@ -79,7 +82,7 @@ describe('миграции и seed', () => {
     const tours = await db.select().from(schema.tours);
     expect(tours).toHaveLength(3);
     const reviews = await db.select().from(schema.reviews);
-    expect(reviews).toHaveLength(3);
+    expect(reviews).toHaveLength(21);
   });
 
   it('каскадное удаление: вместе с туром уходят точки маршрута и расписание', async () => {

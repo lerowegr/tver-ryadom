@@ -94,7 +94,7 @@ describe('tours', () => {
     const { app } = await createTestApp();
     const res = await app.request('/api/v1/tours/obzornaya-po-tveri/reviews', {}, TEST_ENV);
     const { data } = await body(res);
-    expect(data.total).toBe(2);
+    expect(data.total).toBe(20);
     expect(data.items[0].authorName).toBeTruthy();
   });
 

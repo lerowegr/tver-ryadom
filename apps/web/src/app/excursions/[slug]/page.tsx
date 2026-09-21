@@ -5,6 +5,7 @@ import { Reveal } from '@/components/motion/reveal';
 import { BookingForm } from '@/components/tours/booking-form';
 import { FavoriteButton } from '@/components/tours/favorite-button';
 import { ProgramTimeline } from '@/components/tours/program-timeline';
+import { ReviewList } from '@/components/tours/review-list';
 import { RouteMap } from '@/components/tours/route-map';
 import { TourVisual } from '@/components/tours/tour-visual';
 import { Container } from '@/components/ui/container';
@@ -12,7 +13,7 @@ import { CarIcon, CheckIcon, ClockIcon, MapPinIcon, RubleIcon, WalkIcon, XIcon }
 import { site } from '@/config/site';
 import { ApiRequestError } from '@/lib/api';
 import { getTour, getTourReviews, safe } from '@/lib/data';
-import { formatDate, formatDuration, groupLabel, primaryBadge, priceLabel } from '@/lib/format';
+import { formatDuration, groupLabel, primaryBadge, priceLabel } from '@/lib/format';
 import type { TourDetailDto } from '@/lib/types';
 
 type Params = Promise<{ slug: string }>;
@@ -52,7 +53,16 @@ function SectionTitle({ id, children }: { id: string; children: string }) {
 export default async function TourPage({ params }: { params: Params }) {
   const { slug } = await params;
   const tour = await loadTour(slug);
-  const reviews = await safe(getTourReviews(slug), { items: [], total: 0, page: 1, limit: 12, pages: 1 });
+  // Берём максимум страницы: отзывов у обзорной два десятка, и делить
+  // их постранично на странице экскурсии некуда — список раскрывается
+  // на месте.
+  const reviews = await safe(getTourReviews(slug, 1, 50), {
+    items: [],
+    total: 0,
+    page: 1,
+    limit: 50,
+    pages: 1,
+  });
 
   const byCar = tour.badges.some((b) => b.slug === 'by-car');
   const MovementIcon = byCar ? CarIcon : WalkIcon;
@@ -261,19 +271,7 @@ export default async function TourPage({ params }: { params: Params }) {
             {reviews.items.length > 0 ? (
               <section aria-labelledby="reviews">
                 <SectionTitle id="reviews">Отзывы</SectionTitle>
-                <ul className="border-line border-t">
-                  {reviews.items.map((review) => (
-                    <li key={review.id} className="border-line border-b py-8">
-                      <div className="flex flex-wrap items-baseline justify-between gap-3">
-                        <p className="text-ink text-sm font-medium">{review.authorName}</p>
-                        <p className="kicker-plain text-faint">
-                          {review.rating},0 из 5 · {formatDate(review.createdAt)}
-                        </p>
-                      </div>
-                      <p className="text-muted mt-4 text-sm leading-[1.8]">{review.text}</p>
-                    </li>
-                  ))}
-                </ul>
+                <ReviewList reviews={reviews.items} total={reviews.total} />
               </section>
             ) : null}
           </div>
