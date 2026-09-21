@@ -337,6 +337,11 @@ export default function CalendarPage() {
                 <span className="text-faint line-through">00</span> день закрыт для записи
               </span>
             </p>
+
+            <p className="text-faint mt-3 text-xs leading-relaxed">
+              Слоты — это сборные выходы: они заводятся на странице экскурсии, в блоке
+              «Расписание», и сразу попадают в раздел «Расписание» на сайте.
+            </p>
           </>
         )}
       </Card>

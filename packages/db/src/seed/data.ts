@@ -288,6 +288,10 @@ export const seedSettings: Record<string, unknown> = {
   'contacts.email': 'hello@tver-ryadom.ru',
   'contacts.telegram': 'https://t.me/tver_ryadom',
   'contacts.vk': 'https://vk.ru/tverexkursii',
+  'schedule.intro':
+    'Здесь публикуются даты экскурсий в составе сборной группы. Расписание обновляется каждый ' +
+    'месяц — оно же выходит в группе ВКонтакте. Индивидуальную экскурсию можно заказать на любой ' +
+    'свободный день на странице маршрута.',
   'company.name': 'Тверь рядом',
   'company.tagline': 'Покажем Тверь спокойно, живо и без скучной лекции',
   'home.subtitle':
