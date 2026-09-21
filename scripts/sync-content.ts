@@ -9,7 +9,7 @@
  * под известными идентификаторами. Всё, что написали живые люди через сайт,
  * остаётся на месте: перепутать эти две вещи было бы дорого.
  */
-import { seedReviews } from '../packages/db/src/seed/data.ts';
+import { seedReviews } from '../packages/db/src/seed/reviews.ts';
 
 const password = process.argv[2];
 const baseUrl = (process.argv[3] ?? 'http://localhost:8787').replace(/\/$/, '');

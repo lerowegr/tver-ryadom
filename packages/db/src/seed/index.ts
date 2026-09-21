@@ -1,7 +1,8 @@
 import { DEFAULT_BADGES } from '@tver/shared';
 import type { Db } from '../index';
 import * as schema from '../schema';
-import { seedReviews, seedSettings, seedTours } from './data';
+import { seedSettings, seedTours } from './data';
+import { seedReviews } from './reviews';
 
 /**
  * Наполняет базу демо-данными. Идемпотентен: повторный запуск ничего не дублирует.

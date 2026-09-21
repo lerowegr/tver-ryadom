@@ -1,7 +1,6 @@
 import type { SeedTour } from './types';
 
 export type { SeedReview, SeedTour } from './types';
-export { seedReviews } from './reviews';
 
 /**
  * Демо-данные по мотивам референса tour-tver.erg-gromov.workers.dev.
