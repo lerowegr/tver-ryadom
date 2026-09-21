@@ -8,17 +8,28 @@ export function priceLabel(kopecks: number, priceType: PriceType): string {
   return `${formatPrice(kopecks)} / ${suffix}`;
 }
 
+/**
+ * Все даты на сайте — московские.
+ *
+ * Без явного пояса сервер считал бы в UTC, а браузер гостя — по своему
+ * поясу: одна и та же экскурсия показывалась бы в разное время до и после
+ * гидратации. Экскурсии идут в Твери, значит и время тверское.
+ */
+const MSK = 'Europe/Moscow';
+
 const dateTimeFmt = new Intl.DateTimeFormat('ru-RU', {
   day: 'numeric',
   month: 'long',
   hour: '2-digit',
   minute: '2-digit',
+  timeZone: MSK,
 });
 
 const dateFmt = new Intl.DateTimeFormat('ru-RU', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
+  timeZone: MSK,
 });
 
 export function formatDateTime(value: string | Date): string {

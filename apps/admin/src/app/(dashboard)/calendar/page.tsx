@@ -40,7 +40,11 @@ interface Entry {
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const monthTitle = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' });
 const dayTitle = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
-const clock = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
+const clock = new Intl.DateTimeFormat('ru-RU', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Europe/Moscow',
+});
 
 const STATUS_RU: Record<string, string> = {
   pending: 'ждёт подтверждения',

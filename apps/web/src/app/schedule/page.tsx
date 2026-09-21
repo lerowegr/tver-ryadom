@@ -12,9 +12,36 @@ export const metadata: Metadata = {
     'Ближайшие сборные экскурсии по Твери и окрестностям: даты, время, свободные места и запись онлайн. Расписание обновляется каждый месяц.',
 };
 
-const monthTitle = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' });
-const dayTitle = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' });
-const clock = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
+/**
+ * Страница собирается на сервере, а он живёт в UTC: без явного пояса
+ * одиннадцать утра в Твери превратились бы в восемь. Поэтому каждый
+ * формат здесь прибит к московскому времени, и разбивка по месяцам тоже.
+ */
+const MSK = 'Europe/Moscow';
+
+const monthTitle = new Intl.DateTimeFormat('ru-RU', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: MSK,
+});
+const dayTitle = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  weekday: 'long',
+  timeZone: MSK,
+});
+const clock = new Intl.DateTimeFormat('ru-RU', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: MSK,
+});
+/** en-CA даёт ГГГГ-ММ-ДД — из него и берётся ключ месяца. */
+const isoDay = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: MSK,
+});
 
 /** Русская локаль дописывает «2026 г.» — в заголовке это канцелярит. */
 function human(formatter: Intl.DateTimeFormat, value: Date): string {
@@ -23,7 +50,7 @@ function human(formatter: Intl.DateTimeFormat, value: Date): string {
 
 /** Ключ месяца для группировки: сортируется как строка и не зависит от локали. */
 function monthKey(value: Date): string {
-  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
+  return isoDay.format(value).slice(0, 7);
 }
 
 function groupByMonth(items: ScheduleEntryDto[]) {
