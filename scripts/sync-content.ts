@@ -66,7 +66,14 @@ interface AdminReview {
   text: string;
 }
 
-const existing = await call<{ items: AdminReview[] }>('/admin/reviews?limit=100', { headers: auth });
+// Предел страницы в API — 50; отзывов пока меньше, но берём обе страницы,
+// чтобы скрипт не начал тихо пропускать записи, когда их станет больше.
+const pages = await Promise.all(
+  [1, 2].map((page) =>
+    call<{ items: AdminReview[] }>(`/admin/reviews?limit=50&page=${page}`, { headers: auth }),
+  ),
+);
+const existing = { items: pages.flatMap((p) => p.items) };
 
 for (const review of existing.items) {
   if (!DEMO_REVIEW_IDS.includes(review.id)) continue;

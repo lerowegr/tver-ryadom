@@ -37,7 +37,9 @@ export function formatDateTime(value: string | Date): string {
 }
 
 export function formatDate(value: string | Date): string {
-  return dateFmt.format(new Date(value));
+  // Русская локаль дописывает «2026 г.»; в наборе вразрядку это «Г.»
+  // читается как обрывок слова, а смысла не добавляет.
+  return dateFmt.format(new Date(value)).replace(/\s*г\.$/, '');
 }
 
 /** «до 15 человек» / «до 4 человек» / «от 1 человека». */
