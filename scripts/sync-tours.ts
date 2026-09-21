@@ -51,7 +51,14 @@ for (const tour of seedTours) {
     shortDescription: tour.shortDescription,
     fullDescription: tour.fullDescription,
     program: tour.program,
-    routePoints: tour.routePoints.map(({ title, lat, lng }) => ({ title, lat, lng })),
+    // Описания точек тоже переносим: их писала Елена, и терять их при
+    // синхронизации нельзя.
+    routePoints: tour.routePoints.map(({ title, description, lat, lng }) => ({
+      title,
+      description,
+      lat,
+      lng,
+    })),
     price: tour.price,
     priceType: tour.priceType,
     durationMinutes: tour.durationMinutes,

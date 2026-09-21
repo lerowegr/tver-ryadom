@@ -273,6 +273,9 @@ export function DateTimePicker({
                   onClick={() => pickDay(cell.key)}
                   aria-current={isToday ? 'date' : undefined}
                   aria-pressed={selected}
+                  // Без явной подписи title забирает себе имя кнопки,
+                  // и число дня для скринридера пропадает.
+                  aria-label={closed ? `${cell.day}, записи нет` : undefined}
                   title={closed ? 'В этот день записи нет' : undefined}
                   className={`flex h-9 items-center justify-center text-xs tabular-nums transition-colors duration-300 ${
                     selected
@@ -301,6 +304,7 @@ export function DateTimePicker({
                   disabled={taken}
                   onClick={() => pickTime(t)}
                   aria-pressed={t === time}
+                  aria-label={taken ? `${t}, занято` : undefined}
                   title={taken ? 'Это время занято' : undefined}
                   className={`py-2 text-xs tabular-nums transition-colors duration-300 ${
                     t === time

@@ -43,12 +43,16 @@ export default function ReviewsPage() {
   const onAdd = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const date = String(form.get('createdAt') ?? '');
     addReview.mutate({
       tourId: String(form.get('tourId') ?? ''),
       authorName: String(form.get('authorName') ?? '').trim(),
       rating: Number(form.get('rating') ?? 5),
       text: String(form.get('text') ?? '').trim(),
       status: 'approved',
+      // Пусто — значит отзыв сегодняшний; для перенесённых с площадок
+      // дата своя, иначе прошлогодний отзыв выглядел бы свежим.
+      createdAt: date ? new Date(`${date}T12:00:00+03:00`).toISOString() : undefined,
     });
   };
 
@@ -58,13 +62,20 @@ export default function ReviewsPage() {
       authFetch<Paginated<AdminReview>>(`/admin/reviews?limit=50${status ? `&status=${status}` : ''}`),
   });
 
+  const invalidateReviews = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+    queryClient.invalidateQueries({ queryKey: ['stats'] });
+  };
+
   const moderate = useMutation({
     mutationFn: ({ id, next }: { id: string; next: ReviewStatus }) =>
       authFetch(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify({ status: next }) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
-    },
+    onSuccess: invalidateReviews,
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => authFetch(`/admin/reviews/${id}`, { method: 'DELETE' }),
+    onSuccess: invalidateReviews,
   });
 
   return (
@@ -79,8 +90,8 @@ export default function ReviewsPage() {
       {adding ? (
         <Card title="Новый отзыв">
           <p className="text-muted mb-5 text-sm leading-relaxed">
-            Для отзывов, которые пришли в мессенджере или по телефону. Публикуется сразу — модерация
-            собственной записи не нужна.
+            Для отзывов, которые пришли в мессенджере, по телефону или перенесены с Авито и
+            Спутника. Публикуется сразу — модерация собственной записи не нужна.
           </p>
           <form onSubmit={onAdd} className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">
@@ -105,10 +116,16 @@ export default function ReviewsPage() {
                 </select>
               </label>
             </div>
-            <label className="block">
-              <span className="kicker-plain mb-2 block">Имя автора</span>
-              <input name="authorName" required minLength={2} className="input" placeholder="Мария" />
-            </label>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="block">
+                <span className="kicker-plain mb-2 block">Имя автора</span>
+                <input name="authorName" required minLength={2} className="input" placeholder="Мария" />
+              </label>
+              <label className="block">
+                <span className="kicker-plain mb-2 block">Дата отзыва (необязательно)</span>
+                <input name="createdAt" type="date" className="input" />
+              </label>
+            </div>
             <label className="block">
               <span className="kicker-plain mb-2 block">Текст отзыва</span>
               <textarea name="text" required minLength={10} rows={4} className="input" />
@@ -177,6 +194,19 @@ export default function ReviewsPage() {
                     Отклонить
                   </button>
                 ) : null}
+                <button
+                  onClick={() => {
+                    // Удаление необратимо, а кнопка стоит рядом с «Отклонить» —
+                    // без переспроса промах стоил бы отзыва.
+                    if (confirm(`Удалить отзыв от «${review.authorName}» навсегда?`)) {
+                      remove.mutate(review.id);
+                    }
+                  }}
+                  disabled={remove.isPending}
+                  className="btn-secondary !px-4 !py-2 text-xs"
+                >
+                  Удалить
+                </button>
               </div>
             </Card>
           ))}

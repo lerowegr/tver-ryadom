@@ -24,6 +24,12 @@ const adminReviewCreateSchema = z.object({
   rating: z.number().int().min(1).max(5),
   text: z.string().trim().min(10, 'Отзыв должен быть не короче 10 символов').max(2000),
   status: z.enum(REVIEW_STATUSES).default('approved'),
+  /**
+   * Дата отзыва. Нужна для перенесённых с Авито и Спутника: там у отзыва
+   * своя дата, и подставлять вместо неё сегодняшнюю — значит выдавать
+   * прошлогодний отзыв за свежий.
+   */
+  createdAt: z.coerce.date().optional(),
 });
 
 /** Пересчитывает денормализованный рейтинг тура по одобренным отзывам. */
@@ -74,6 +80,7 @@ export const adminReviewRoutes = new Hono<AppEnv>()
       rating: input.rating,
       text: input.text,
       status: input.status,
+      ...(input.createdAt ? { createdAt: input.createdAt } : {}),
     });
     await recalcTourRating(db, input.tourId);
     return ok(c, { id, status: input.status }, 201);
@@ -90,4 +97,17 @@ export const adminReviewRoutes = new Hono<AppEnv>()
     await db.update(reviews).set({ status: input.status }).where(eq(reviews.id, id));
     await recalcTourRating(db, review.tourId);
     return ok(c, { id, status: input.status });
+  })
+
+  /** Совсем убрать отзыв: для спама и для записей, которых быть не должно. */
+  .delete('/:id', async (c) => {
+    const id = c.req.param('id');
+    const db = c.get('db');
+
+    const review = await db.query.reviews.findFirst({ where: eq(reviews.id, id) });
+    if (!review) throw notFound('Отзыв не найден');
+
+    await db.delete(reviews).where(eq(reviews.id, id));
+    await recalcTourRating(db, review.tourId);
+    return ok(c, { id });
   });
