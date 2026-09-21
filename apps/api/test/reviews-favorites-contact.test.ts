@@ -139,7 +139,7 @@ describe('публичные данные', () => {
     const res = await app.request('/api/v1/reviews/latest', {}, TEST_ENV);
     expect(res.status).toBe(200);
     const { data } = await body(res);
-    expect(data).toHaveLength(5);
+    expect(data).toHaveLength(3);
     expect(data[0].tour.title).toBeTruthy();
     expect(data.every((r: { rating: number }) => r.rating >= 4)).toBe(true);
   });

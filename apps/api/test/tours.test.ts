@@ -13,8 +13,11 @@ describe('tours', () => {
     const card = data.items.find((t: { slug: string }) => t.slug === 'obzornaya-po-tveri');
     expect(card.price).toBe(450000);
     expect(card.badges.map((b: { slug: string }) => b.slug)).toContain('hit');
-    expect(card.routePoints).toContain('Староволжский мост');
     expect(card.ratingAvg).toBe(5);
+
+    // Маршрут заранее показывает только поездка в Савватьево.
+    const savvatevo = data.items.find((t: { slug: string }) => t.slug === 'savvatevo-na-avto');
+    expect(savvatevo.routePoints).toContain('Знаменский храм, Савватьево');
   });
 
   it('фильтрует по бейджу', async () => {
@@ -53,17 +56,32 @@ describe('tours', () => {
     expect(data.items[0].slug).toBe('savvatevo-na-avto'); // 2,5 часа — самая длинная
   });
 
-  it('страница экскурсии: программа, маршрут, расписание со свободными местами', async () => {
+  it('страница экскурсии: описание, место встречи, расписание со свободными местами', async () => {
     const { app } = await createTestApp();
     const res = await app.request('/api/v1/tours/obzornaya-po-tveri', {}, TEST_ENV);
     expect(res.status).toBe(200);
     const { data } = await body(res);
-    expect(data.program).toHaveLength(4);
-    expect(data.routePoints).toHaveLength(6);
+    // У пешеходных прогулок программы и маршрута нет — так просила Елена.
+    expect(data.program).toHaveLength(0);
+    expect(data.routePoints).toHaveLength(0);
     expect(data.included.length).toBeGreaterThan(0);
-    expect(data.meetingLat).toBeCloseTo(56.8626);
+    expect(data.meetingPoint).toContain('Детский музейный центр');
+    expect(data.meetingLat).toBeCloseTo(56.8622);
     expect(data.schedules).toHaveLength(3);
     expect(data.schedules[0].freeSeats).toBe(5); // вместимость слота = groupMax
+  });
+
+  it('расписание сборных выходов собрано по всем экскурсиям', async () => {
+    const { app } = await createTestApp();
+    const res = await app.request('/api/v1/schedule', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    const { data } = await body(res);
+    // По три субботы на каждую из трёх экскурсий.
+    expect(data.items).toHaveLength(9);
+    expect(data.items[0].tour.title).toBeTruthy();
+    // Порядок — по возрастанию даты: раздел читают сверху вниз.
+    const dates = data.items.map((item: { startsAt: string }) => item.startsAt);
+    expect([...dates].sort()).toEqual(dates);
   });
 
   it('404 для несуществующего слага', async () => {

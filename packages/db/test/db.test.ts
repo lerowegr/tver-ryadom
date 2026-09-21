@@ -18,7 +18,7 @@ describe('миграции и seed', () => {
     expect(badges).toHaveLength(DEFAULT_BADGES.length);
 
     const reviews = await db.select().from(schema.reviews);
-    expect(reviews).toHaveLength(5);
+    expect(reviews).toHaveLength(3);
     expect(reviews.every((review) => review.status === 'approved')).toBe(true);
 
     const schedules = await db.select().from(schema.schedules);
@@ -37,18 +37,38 @@ describe('миграции и seed', () => {
 
     const tour = await db.query.tours.findFirst({
       where: eq(schema.tours.slug, 'obzornaya-po-tveri'),
-      with: {
-        routePoints: true,
-        badges: { with: { badge: true } },
-      },
+      with: { badges: { with: { badge: true } } },
     });
 
     expect(tour).toBeDefined();
     expect(tour?.ratingCount).toBe(2);
     expect(tour?.ratingAvg).toBe(5);
-    expect(tour?.routePoints).toHaveLength(6);
     expect(tour?.badges.map((tb) => tb.badge.slug)).toContain('hit');
-    expect(tour?.program.length).toBeGreaterThan(0);
+  });
+
+  it('программу и маршрут показывает только Савватьево', async () => {
+    const db = createTestDb();
+    await seedDatabase(db);
+
+    // Елена попросила не расписывать программу пешеходных прогулок и не
+    // показывать их маршрут заранее; поездка в Савватьево — исключение.
+    const walking = await db.query.tours.findMany({
+      where: eq(schema.tours.priceType, 'per_group'),
+      with: { routePoints: true },
+    });
+
+    const bySlug = new Map(walking.map((tour) => [tour.slug, tour]));
+    for (const slug of ['obzornaya-po-tveri', 'predmeste-tveri']) {
+      expect(bySlug.get(slug)?.program).toHaveLength(0);
+      expect(bySlug.get(slug)?.routePoints).toHaveLength(0);
+    }
+
+    const savvatevo = bySlug.get('savvatevo-na-avto');
+    expect(savvatevo?.program).toHaveLength(5);
+    expect(savvatevo?.routePoints.length).toBeGreaterThan(0);
+    // Сумма пунктов программы должна сходиться с заявленной длительностью.
+    const total = (savvatevo?.program ?? []).reduce((sum, step) => sum + (step.durationMinutes ?? 0), 0);
+    expect(total).toBe(savvatevo?.durationMinutes);
   });
 
   it('seed идемпотентен', async () => {
@@ -59,25 +79,25 @@ describe('миграции и seed', () => {
     const tours = await db.select().from(schema.tours);
     expect(tours).toHaveLength(3);
     const reviews = await db.select().from(schema.reviews);
-    expect(reviews).toHaveLength(5);
+    expect(reviews).toHaveLength(3);
   });
 
   it('каскадное удаление: вместе с туром уходят точки маршрута и расписание', async () => {
     const db = createTestDb();
     await seedDatabase(db);
 
-    await db.delete(schema.tours).where(eq(schema.tours.id, 'tour-predmeste'));
+    await db.delete(schema.tours).where(eq(schema.tours.id, 'tour-savvatevo'));
 
     const points = await db
       .select()
       .from(schema.routePoints)
-      .where(eq(schema.routePoints.tourId, 'tour-predmeste'));
+      .where(eq(schema.routePoints.tourId, 'tour-savvatevo'));
     expect(points).toHaveLength(0);
 
     const slots = await db
       .select()
       .from(schema.schedules)
-      .where(eq(schema.schedules.tourId, 'tour-predmeste'));
+      .where(eq(schema.schedules.tourId, 'tour-savvatevo'));
     expect(slots).toHaveLength(0);
   });
 });

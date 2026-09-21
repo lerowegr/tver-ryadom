@@ -72,20 +72,23 @@ export async function seedDatabase(db: Db, now: Date = new Date()): Promise<void
       .values(tour.badgeSlugs.map((slug) => ({ tourId: tour.id, badgeId: `badge-${slug}` })))
       .onConflictDoNothing();
 
-    await db
-      .insert(schema.routePoints)
-      .values(
-        tour.routePoints.map((point, index) => ({
-          id: point.id,
-          tourId: tour.id,
-          title: point.title,
-          description: point.description ?? null,
-          lat: point.lat,
-          lng: point.lng,
-          sortOrder: index,
-        })),
-      )
-      .onConflictDoNothing();
+    // Маршрут показывают не все экскурсии, а пустой values() drizzle не принимает.
+    if (tour.routePoints.length > 0) {
+      await db
+        .insert(schema.routePoints)
+        .values(
+          tour.routePoints.map((point, index) => ({
+            id: point.id,
+            tourId: tour.id,
+            title: point.title,
+            description: point.description ?? null,
+            lat: point.lat,
+            lng: point.lng,
+            sortOrder: index,
+          })),
+        )
+        .onConflictDoNothing();
+    }
 
     await db
       .insert(schema.schedules)
@@ -110,6 +113,7 @@ export async function seedDatabase(db: Db, now: Date = new Date()): Promise<void
         rating: review.rating,
         text: review.text,
         status: 'approved' as const,
+        createdAt: review.createdAt,
       })),
     )
     .onConflictDoNothing();
