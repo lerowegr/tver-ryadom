@@ -31,6 +31,7 @@ export const changePasswordSchema = z.object({
 
 export const requestPasswordResetSchema = z.object({
   email: emailSchema,
+  cfToken: captchaTokenSchema,
 });
 
 export const resetPasswordSchema = z.object({

@@ -2,6 +2,8 @@ import {
   changePasswordSchema,
   loginSchema,
   registerSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
   updateProfileSchema,
 } from '@tver/shared';
 import { users } from '@tver/db';
@@ -22,6 +24,7 @@ import { requireAuth } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import {
   changePassword,
+  confirmPasswordReset,
   getMe,
   listSessions,
   login,
@@ -29,6 +32,7 @@ import {
   logoutByRefreshToken,
   refreshSession,
   register,
+  requestPasswordReset,
   revokeSession,
   updateProfile,
 } from './service';
@@ -101,6 +105,41 @@ export const authRoutes = new Hono<AppEnv>()
     await revokeSession(c.get('db'), user.id, c.req.param('id'));
     return ok(c, { revoked: true });
   })
+
+  /**
+   * Заявка на восстановление пароля. Всегда 200 — иначе перебор email
+   * (существует/нет) по ответу. Письмо уходит только email-каналом.
+   */
+  .post(
+    '/password-reset/request',
+    rateLimit(rateLimits.passwordReset),
+    validate('json', requestPasswordResetSchema),
+    async (c) => {
+      const input = c.req.valid('json');
+      await requireCaptchaForGuest(c, input.cfToken);
+      await requestPasswordReset(c.get('db'), c.env.JWT_SECRET, c.env.SITE_URL, input.email);
+      return ok(c, { requested: true });
+    },
+  )
+
+  /** Сброс пароля по токену из письма + сразу вход. */
+  .post(
+    '/password-reset/confirm',
+    rateLimit(rateLimits.passwordReset),
+    validate('json', resetPasswordSchema),
+    async (c) => {
+      const input = c.req.valid('json');
+      const result = await confirmPasswordReset(
+        c.get('db'),
+        c.env.JWT_SECRET,
+        input.token,
+        input.password,
+        requestMeta(c),
+      );
+      setRefreshCookie(c, result.refreshToken);
+      return ok(c, { user: result.user, accessToken: result.accessToken });
+    },
+  )
 
   /**
    * Загрузка аватара. Кадрирует пользователь в кабинете, сюда приходит уже

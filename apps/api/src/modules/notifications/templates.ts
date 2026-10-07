@@ -36,6 +36,7 @@ export interface TemplatePayload {
   siteUrl?: string;
   comment?: string;
   message?: string;
+  resetUrl?: string;
   [key: string]: unknown;
 }
 
@@ -108,6 +109,15 @@ export const templates: Record<string, Renderer> = {
     subject: 'Новое сообщение с формы обратной связи',
     text: `✉️ <b>Сообщение с сайта</b>\n\nОт: ${escapeHtml(String(p.contactName ?? '—'))}${p.contactPhone ? `, ${escapeHtml(String(p.contactPhone))}` : ''}\n\n${escapeHtml(String(p.message ?? ''))}`,
     html: wrap('Сообщение с сайта', `<p>${escapeHtml(String(p.message ?? ''))}</p>`),
+  }),
+  password_reset: (p) => ({
+    subject: 'Восстановление пароля',
+    text: `🔑 <b>Восстановление пароля</b>\n\nПройдите по ссылке, чтобы задать новый пароль (действует час):\n${escapeHtml(String(p.resetUrl ?? ''))}\n\nЕсли это были не вы — просто игнорируйте письмо.`,
+    html: wrap(
+      'Восстановление пароля',
+      `<p>Нажмите кнопку, чтобы задать новый пароль. Ссылка действует час.</p><p><a href="${escapeHtml(String(p.resetUrl ?? ''))}" style="color:#a65832">Задать новый пароль →</a></p>`,
+      typeof p.siteUrl === 'string' ? p.siteUrl : undefined,
+    ),
   }),
 };
 

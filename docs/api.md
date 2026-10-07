@@ -30,6 +30,10 @@ Refresh-токен (30 дней, ротация при каждом исполь
 | GET | `/auth/me` 🔒 | Профиль текущего пользователя |
 | PATCH | `/auth/profile` 🔒 | `{ name?, phone? }`; телефон нормализуется к `+7XXXXXXXXXX` |
 | POST | `/auth/change-password` 🔒 | `{ currentPassword, newPassword }`; отзывает остальные сессии |
+| GET | `/auth/sessions` 🔒 | Активные сессии без хешей (для экрана «устройства») |
+| DELETE | `/auth/sessions/:id` 🔒 | Отозвать свою сессию |
+| POST | `/auth/password-reset/request` | `{ email }` — всегда 200 (без перебора email); письмо со ссылкой на час уходит email-каналом через outbox |
+| POST | `/auth/password-reset/confirm` | `{ token, password }` — сброс + отзыв всех сессий + сразу вход |
 
 🔒 — требуется Bearer-токен.
 

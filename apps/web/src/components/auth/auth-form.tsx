@@ -232,8 +232,7 @@ export function AuthForm() {
 
       {mode === 'login' ? (
         <p className="text-muted mt-7 text-center text-xs leading-relaxed">
-          Забыли пароль? <Link href="/contacts" className="link-underline text-ink">Напишите нам</Link> —
-          восстановление по email появится вместе с уведомлениями.
+          Забыли пароль? <Link href="/auth/forgot" className="link-underline text-ink">Восстановите по email</Link>.
         </p>
       ) : (
         <p className="text-muted mt-7 text-center text-xs leading-relaxed">

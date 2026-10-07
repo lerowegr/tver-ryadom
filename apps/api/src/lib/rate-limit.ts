@@ -130,6 +130,8 @@ export const rateLimits = {
   webhookMax: { limit: 60, windowSec: 60, prefix: 'wmax' },
   /** Пакеты Telegram идут пачками: 120 в минуту с IP. */
   webhookTelegram: { limit: 120, windowSec: 60, prefix: 'wtg' },
+  /** Перебор email через форму сброса: 5 в час с IP. */
+  passwordReset: { limit: 5, windowSec: 3600, prefix: 'pwdreset' },
   /** Тяжёлый запрос (диапазон год + месяц): 30 в минуту с IP. */
   calendarFeed: { limit: 30, windowSec: 60, prefix: 'cal' },
 } satisfies Record<string, RateLimitRule>;

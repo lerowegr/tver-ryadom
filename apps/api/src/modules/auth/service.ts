@@ -1,10 +1,11 @@
 import type { Db } from '@tver/db';
-import { sessions, users } from '@tver/db';
+import { outbox, sessions, users } from '@tver/db';
 import type { ChangePasswordInput, LoginInput, RegisterInput, UpdateProfileInput } from '@tver/shared';
 import { and, eq, gt, isNull, ne } from 'drizzle-orm';
 import { hashPassword, randomToken, sha256Hex, verifyPassword } from '../../lib/crypto';
 import { conflict, notFound, unauthorized, validationError } from '../../lib/errors';
 import { signAccessToken } from '../../lib/jwt';
+import { createPasswordResetToken, verifyPasswordResetToken } from '../../lib/password-reset';
 import { verifyInitData } from './webapp';
 
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -203,6 +204,63 @@ export async function changePassword(
     .update(sessions)
     .set({ revokedAt: new Date() })
     .where(and(eq(sessions.userId, userId), ne(sessions.id, sessionId), isNull(sessions.revokedAt)));
+}
+
+/**
+ * Заявка на восстановление пароля.
+ *
+ * Всегда молчит одинаково (нет/есть пользователь, есть/нет email): иначе
+ * перебор email через время ответа и наличие письма. Письмо уходит только
+ * email-каналом через outbox — в ЛК класть нечего, человек разлогинен.
+ * Работает и для аккаунтов без пароля (из Telegram-бота): так они задают
+ * первый пароль для входа на сайт.
+ */
+export async function requestPasswordReset(
+  db: Db,
+  secret: string,
+  siteUrl: string | undefined,
+  email: string,
+): Promise<void> {
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+    columns: { id: true, email: true },
+  });
+  if (!user?.email) return;
+  const token = await createPasswordResetToken(secret, user.id);
+  const base = (siteUrl ?? '').replace(/\/$/, '');
+  await db.insert(outbox).values({
+    id: crypto.randomUUID(),
+    channel: 'email',
+    recipient: user.email,
+    template: 'password_reset',
+    payload: { resetUrl: `${base}/auth/reset?token=${token}`, siteUrl: base || undefined },
+    scheduledAt: new Date(),
+  });
+}
+
+/**
+ * Сброс пароля по токену из письма. После успеха гасит все сессии
+ * (токен мог утечь вместе со старой сессией) и сразу входит.
+ */
+export async function confirmPasswordReset(
+  db: Db,
+  secret: string,
+  token: string,
+  password: string,
+  meta: SessionMeta,
+) {
+  const userId = await verifyPasswordResetToken(secret, token);
+  if (!userId) throw validationError('Ссылка недействительна или устарела. Запросите новую.');
+  const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  if (!user?.email) throw validationError('Ссылка недействительна или устарела. Запросите новую.');
+  await db
+    .update(users)
+    .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
+    .where(eq(users.id, user.id));
+  await revokeAllSessions(db, user.id);
+  const fresh = await db.query.users.findFirst({ where: eq(users.id, user.id) });
+  if (!fresh) throw new Error('Не удалось обновить пароль');
+  return issueSession(db, secret, fresh, meta);
 }
 
 /**
