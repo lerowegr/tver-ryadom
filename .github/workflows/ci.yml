@@ -34,7 +34,11 @@ jobs:
         run: pnpm audit --prod --audit-level=high
 
       # Сканер утекших секретов в истории и PR (P2/M11).
+      # Только на push: на pull_request от Dependabot у GITHUB_TOKEN нет прав
+      # на артефакты/комментарии и шаг падает ошибкой доступа, а не находкой.
+      # Смерженный код всё равно сканируется пушем в main.
       - name: Gitleaks
+        if: github.event_name == 'push'
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
