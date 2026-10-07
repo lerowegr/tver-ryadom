@@ -15,7 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@hono/zod-validator": "^0.8.0",
+    "@hono/zod-validator": "^0.9.1",
     "@tver/db": "workspace:*",
     "@tver/shared": "workspace:*",
     "drizzle-orm": "^0.45.2",

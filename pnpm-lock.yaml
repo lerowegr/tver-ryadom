@@ -91,8 +91,8 @@ importers:
   apps/api:
     dependencies:
       '@hono/zod-validator':
-        specifier: ^0.8.0
-        version: 0.8.0(hono@4.13.13)(zod@3.25.76)
+        specifier: ^0.9.1
+        version: 0.9.1(hono@4.13.13)(zod@3.25.76)
       '@tver/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -1207,10 +1207,10 @@ packages:
       gsap: ^3.12.5
       react: '>=17'
 
-  '@hono/zod-validator@0.8.0':
-    resolution: {integrity: sha512-5uS4S1/LKtZQYvD4BtpPUFkOv8d1wNxHHrChm26buMiEYc1FrHWvDUaKVBwkiVtvSExHSpLGDvcnpI2Copyj9w==}
+  '@hono/zod-validator@0.9.1':
+    resolution: {integrity: sha512-iiv6w0qrIc0arfvCtUqBWsvl4fXjzaTcQcCJTTtCnkawF9HHGE+KjEl0ox3gQJ6rKZEgE3mLExlQCF72M+mNuw==}
     peerDependencies:
-      hono: '>=4.10.0'
+      hono: '>=4.11.2'
       zod: ^3.25.0 || ^4.0.0
 
   '@hookform/resolvers@5.4.0':
@@ -4639,7 +4639,7 @@ snapshots:
       gsap: 3.15.0
       react: 19.2.7
 
-  '@hono/zod-validator@0.8.0(hono@4.13.13)(zod@3.25.76)':
+  '@hono/zod-validator@0.9.1(hono@4.13.13)(zod@3.25.76)':
     dependencies:
       hono: 4.13.13
       zod: 3.25.76
