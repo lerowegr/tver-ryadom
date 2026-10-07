@@ -88,6 +88,8 @@ Refresh-токен (30 дней, ротация при каждом исполь
 | GET | `/admin/users` | Пользователи с количеством броней, поиск |
 | GET/PATCH | `/admin/contact-requests[/:id]` | Заявки с формы: новые/обработанные |
 | GET/PUT | `/admin/settings` | Все настройки / upsert `{ entries: { ключ: значение } }` |
+| GET | `/admin/outbox?status=failed` | Dead letter уведомлений (без токенов в payload): шаблон, получатель, попытки, ошибка |
+| POST | `/admin/outbox/:id/retry` | Перепоставить failed-задачу в очередь |
 
 Картинки раздаются публично: `GET /images/<r2-ключ>` (immutable-кеш).
 

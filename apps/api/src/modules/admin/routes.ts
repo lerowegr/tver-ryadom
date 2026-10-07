@@ -7,6 +7,7 @@ import { adminChannelRoutes } from './channels';
 import { adminTelegramRoutes } from './telegram';
 import { adminBookingRoutes } from './bookings';
 import { adminImageRoutes } from './images';
+import { adminOutboxRoutes } from './outbox';
 import { adminRequestRoutes } from './requests';
 import { adminReviewRoutes } from './reviews';
 import { adminScheduleRoutes } from './schedules';
@@ -30,4 +31,5 @@ export const adminRoutes = new Hono<AppEnv>()
   .route('/users', adminUserRoutes)
   .route('/contact-requests', adminRequestRoutes)
   .route('/settings', adminSettingsRoutes)
+  .route('/outbox', adminOutboxRoutes)
   .route('/', adminImageRoutes);
