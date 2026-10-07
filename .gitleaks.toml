@@ -1,0 +1,11 @@
+# Ложные срабатывания Gitleaks для этого репозитория.
+#
+# Пароли-фикстуры в тестах (`password: 'wrong-pass-123'` и подобные) —
+# не секреты: rule `generic-api-key` цепляет любое `password: '...'`.
+# Настоящие секреты (wrangler secret, .dev.vars, *.local.txt) в git не попадают.
+
+[[allowlists]]
+description = "test fixture passwords are not secrets"
+paths = ['''apps/api/test/.*''']
+regexTarget = "line"
+regexes = ['''password:\s*['"][^'"]+['"]''']
