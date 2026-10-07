@@ -18,3 +18,7 @@ updates:
       # миграция отдельным проектом, не ботом. PR #2 закрыт по этой причине.
       - dependency-name: zod
         versions: [">=4"]
+      # TypeScript 6 — ломающий мажор (deprecated baseUrl и др.):
+      # миграция отдельным проектом. Игнорируем мажор, миноры едут.
+      - dependency-name: typescript
+        versions: [">=6"]
