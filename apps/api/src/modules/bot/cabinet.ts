@@ -1,8 +1,7 @@
 import { users, type Db } from '@tver/db';
-import { normalizeRuPhone } from '@tver/shared';
+import { escapeHtml, normalizeRuPhone } from '@tver/shared';
 import { eq } from 'drizzle-orm';
 import { InlineKeyboard, type Context } from 'grammy';
-import { escapeHtml } from './screens';
 
 /**
  * Личный кабинет в боте.

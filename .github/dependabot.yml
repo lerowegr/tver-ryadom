@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    # Рантайм Workers (hono/next/grammy/drizzle) — приоритетно.
+    # Build-time транзитивные high (postcss/sharp) чинятся апстримом.
+    open-pull-requests-limit: 5

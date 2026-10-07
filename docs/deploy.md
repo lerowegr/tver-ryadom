@@ -14,7 +14,7 @@
 | Репозиторий | https://github.com/lerowegr/tver-ryadom (private) |
 
 Администратор: `admin@tver-ryadom.ru`; пароль задаётся командой
-`pnpm --filter @tver/api admin:password -- <пароль> --remote`
+`pnpm --filter @tver/api admin:password --remote` (пароль спросит интерактивно, без эха)
 (текущий — в локальном файле `admin-password.local.txt`, в git не попадает).
 
 ## Автодеплой
@@ -77,7 +77,7 @@ pnpm --filter @tver/api exec wrangler d1 migrations apply DB --remote
 pnpm --filter @tver/api exec wrangler deploy --var ENVIRONMENT:development
 curl -X POST https://tver-api.<поддомен>.workers.dev/dev/seed
 pnpm --filter @tver/api deploy
-pnpm --filter @tver/api admin:password -- <пароль> --remote
+pnpm --filter @tver/api admin:password --remote
 ```
 
 ## Подключение своего домена (когда купите)

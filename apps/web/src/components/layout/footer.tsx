@@ -8,6 +8,28 @@ const linkCls =
   'link-underline text-muted hover:text-ink inline-block py-2 text-sm ' +
   'transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]';
 
+/** Ссылки из настроек правит админ — режем `javascript:`/`data:` и мусор (M5). */
+function safeHttpHref(value: string | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!/^https?:\/\/[^\s"'<>]+$/i.test(trimmed)) return null;
+  return trimmed;
+}
+
+function safeTelHref(phone: string | undefined): string | null {
+  if (!phone) return null;
+  const trimmed = phone.trim();
+  if (!/^\+?[0-9\s\-()]+$/.test(trimmed)) return null;
+  return `tel:${trimmed.replace(/\s+/g, '')}`;
+}
+
+function safeMailHref(email: string | undefined): string | null {
+  if (!email) return null;
+  const trimmed = email.trim();
+  if (!/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(trimmed)) return null;
+  return `mailto:${trimmed}`;
+}
+
 export function Footer({ settings }: { settings: SiteSettings }) {
   const phone = settings['contacts.phone'];
   const email = settings['contacts.email'];
@@ -51,16 +73,16 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           <div>
             <p className="kicker-plain text-faint mb-5">Контакты</p>
             <ul className="space-y-0.5">
-              {phone ? (
+              {safeTelHref(phone) ? (
                 <li>
-                  <a href={`tel:${phone}`} className={linkCls}>
-                    {formatRuPhone(phone)}
+                  <a href={safeTelHref(phone)!} className={linkCls}>
+                    {formatRuPhone(phone!)}
                   </a>
                 </li>
               ) : null}
-              {email ? (
+              {safeMailHref(email) ? (
                 <li>
-                  <a href={`mailto:${email}`} className={linkCls}>
+                  <a href={safeMailHref(email)!} className={linkCls}>
                     {email}
                   </a>
                 </li>
@@ -72,9 +94,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             <p className="kicker-plain text-faint mb-5">Мы на связи</p>
             <ul className="space-y-0.5">
               {socials.map(([key, label]) =>
-                settings[key] ? (
+                safeHttpHref(settings[key]) ? (
                   <li key={key}>
-                    <a href={settings[key]} target="_blank" rel="noopener noreferrer" className={linkCls}>
+                    <a href={safeHttpHref(settings[key])!} target="_blank" rel="noopener noreferrer" className={linkCls}>
                       {label}
                     </a>
                   </li>

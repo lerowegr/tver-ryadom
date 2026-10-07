@@ -18,8 +18,8 @@ export interface WebAppUser {
   photoUrl: string | null;
 }
 
-/** Строка старше суток не принимается: подпись вечная, а сессия — нет. */
-const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+/** Строка старше 10 минут не принимается: подпись вечная, а сессия — нет (P1). */
+const MAX_AGE_MS = 10 * 60 * 1000;
 
 async function hmac(key: ArrayBuffer | Uint8Array, message: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(

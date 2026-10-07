@@ -1,5 +1,5 @@
 import { settings, tours, type Db } from '@tver/db';
-import { formatPrice } from '@tver/shared';
+import { escapeHtml, formatPrice } from '@tver/shared';
 import { eq } from 'drizzle-orm';
 import { InlineKeyboard, type Context } from 'grammy';
 
@@ -29,9 +29,8 @@ function str(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-export function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+/** Совместимость: остальные модули импортируют escapeHtml отсюда. */
+export { escapeHtml };
 
 /**
  * Приветствие.

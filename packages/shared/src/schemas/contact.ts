@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { emailSchema, phoneSchema } from './common';
+import { captchaTokenSchema, emailSchema, phoneSchema } from './common';
 
 export const contactRequestSchema = z
   .object({
@@ -7,6 +7,7 @@ export const contactRequestSchema = z
     phone: phoneSchema.optional(),
     email: emailSchema.optional(),
     message: z.string().trim().min(5, 'Напишите сообщение').max(3000),
+    cfToken: captchaTokenSchema,
   })
   .refine((data) => data.phone || data.email, {
     message: 'Укажите телефон или email для связи',

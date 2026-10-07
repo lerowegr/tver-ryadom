@@ -24,3 +24,11 @@ jobs:
 
       - name: Линт, типы, тесты, сборка
         run: pnpm turbo run lint typecheck test build
+
+      # Сканер уязвимостей зависимостей (P2/M11): только prod-зависимости,
+      # non-blocking — оставшиеся high транзитивные и только build-time
+      # (postcss/source-map-js/sharp/nanoid в сборке, не в рантайме Workers).
+      # Прямые рантайм-зависимости ведёт Dependabot (.github/dependabot.yml).
+      - name: Аудит зависимостей
+        continue-on-error: true
+        run: pnpm audit --prod --audit-level=high

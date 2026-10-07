@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` ADD `previous_refresh_token_hash` text;

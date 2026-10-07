@@ -1,5 +1,5 @@
 import { botDrafts, bookings, favorites, schedules, tours, users, type Db } from '@tver/db';
-import { bookingCreateSchema, formatPrice } from '@tver/shared';
+import { bookingCreateSchema, escapeHtml, formatPrice } from '@tver/shared';
 import { and, asc, eq, gt, inArray, or } from 'drizzle-orm';
 import { InlineKeyboard, Keyboard, type Context } from 'grammy';
 import { toImageUrls } from '../../lib/images';
@@ -127,10 +127,6 @@ function priceLine(price: number, priceType: string): string {
 function clamp(text: string, limit: number): string {
   if (text.length <= limit) return text;
   return text.slice(0, limit - 1).trimEnd() + '…';
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /* ============================================================

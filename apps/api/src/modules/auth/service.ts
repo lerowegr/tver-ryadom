@@ -8,6 +8,12 @@ import { signAccessToken } from '../../lib/jwt';
 import { verifyInitData } from './webapp';
 
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/**
+ * Абсолютный срок жизни цепочки refresh (P1): скольжение продлевает сессию,
+ * но не бесконечно — раз в 90 дней нужен полный вход. Кража старого токена
+ * через месяц после угона уже ничего не даст.
+ */
+const ABSOLUTE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const BAD_CREDENTIALS = 'Неверный email или пароль';
 
 export interface SessionMeta {
@@ -85,20 +91,70 @@ export async function refreshSession(db: Db, secret: string, refreshToken: strin
     ),
     with: { user: true },
   });
-  if (!session) throw unauthorized('Сессия истекла, войдите заново');
+  if (session) {
+    // Абсолютный лимит: цепочка старше 90 дней — только полный вход.
+    if (Date.now() - session.createdAt.getTime() > ABSOLUTE_TTL_MS) {
+      await db
+        .update(sessions)
+        .set({ revokedAt: new Date() })
+        .where(eq(sessions.id, session.id));
+      throw unauthorized('Сессия истекла, войдите заново');
+    }
 
-  // Ротация: старый refresh-токен перестаёт действовать сразу.
-  const nextToken = randomToken();
+    // Ротация: старый refresh-токен перестаёт действовать сразу, его хеш
+    // сохраняем для детекта reuse ниже.
+    const nextToken = randomToken();
+    await db
+      .update(sessions)
+      .set({
+        previousRefreshTokenHash: session.refreshTokenHash,
+        refreshTokenHash: await sha256Hex(nextToken),
+        expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
+      })
+      .where(eq(sessions.id, session.id));
+
+    const accessToken = await signAccessToken(secret, session.user, session.id);
+    return { user: toPublicUser(session.user), accessToken, refreshToken: nextToken };
+  }
+
+  // Токена среди действующих нет: либо протух, либо это повтор уже
+  // повёрнутого токена — признак кражи. Во втором случае убиваем все сессии.
+  const reused = await db.query.sessions.findFirst({
+    where: and(eq(sessions.previousRefreshTokenHash, tokenHash), isNull(sessions.revokedAt)),
+    columns: { userId: true },
+  });
+  if (reused) {
+    await revokeAllSessions(db, reused.userId);
+  }
+  throw unauthorized('Сессия истекла, войдите заново');
+}
+
+/** Отзывает все живые сессии пользователя (reuse-детект, смена роли). */
+export async function revokeAllSessions(db: Db, userId: string): Promise<void> {
   await db
     .update(sessions)
-    .set({
-      refreshTokenHash: await sha256Hex(nextToken),
-      expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
-    })
-    .where(eq(sessions.id, session.id));
+    .set({ revokedAt: new Date() })
+    .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
+}
 
-  const accessToken = await signAccessToken(secret, session.user, session.id);
-  return { user: toPublicUser(session.user), accessToken, refreshToken: nextToken };
+/** Сессии пользователя для экрана «устройства» (без хешей токенов). */
+export async function listSessions(db: Db, userId: string) {
+  const rows = await db.query.sessions.findMany({
+    where: and(eq(sessions.userId, userId), isNull(sessions.revokedAt), gt(sessions.expiresAt, new Date())),
+    columns: { id: true, userAgent: true, ip: true, createdAt: true, expiresAt: true },
+    orderBy: (s, { desc: sortDesc }) => [sortDesc(s.createdAt)],
+  });
+  return rows;
+}
+
+/** Отзыв одной своей сессии по id (чужую отозвать нельзя — проверка userId). */
+export async function revokeSession(db: Db, userId: string, sessionId: string): Promise<void> {
+  const row = await db.query.sessions.findFirst({
+    where: and(eq(sessions.id, sessionId), eq(sessions.userId, userId), isNull(sessions.revokedAt)),
+    columns: { id: true },
+  });
+  if (!row) throw notFound('Сессия не найдена');
+  await db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.id, sessionId));
 }
 
 /** Отзывает сессию по refresh-токену (работает и с истёкшим access-токеном). */

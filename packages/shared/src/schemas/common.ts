@@ -38,3 +38,10 @@ export const coordinatesSchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
 });
+
+/**
+ * Токен капчи Cloudflare Turnstile с фронта (M6).
+ * Опционален, пока виджет не внедрён: сервер требует его только когда
+ * задан секрет TURNSTILE_SECRET (см. apps/api/src/lib/turnstile.ts).
+ */
+export const captchaTokenSchema = z.string().min(1).max(2048).optional();

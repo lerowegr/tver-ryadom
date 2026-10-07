@@ -1,8 +1,9 @@
 import type { Db } from '@tver/db';
 import { badges, reviews, tourBadges, tours } from '@tver/db';
 import type { Pagination, TourFilterInput, TourSort } from '@tver/shared';
-import { and, asc, count, desc, eq, gte, inArray, like, lte, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, lte, or, type SQL } from 'drizzle-orm';
 import { notFound } from '../../lib/errors';
+import { likeContains } from '../../lib/db-utils';
 import { toImageUrls } from '../../lib/images';
 
 type TourRow = typeof tours.$inferSelect;
@@ -64,8 +65,10 @@ export async function listTours(db: Db, filter: TourFilterInput, imagesBase: str
   if (filter.durationMax !== undefined)
     conditions.push(lte(tours.durationMinutes, filter.durationMax));
   if (filter.search) {
-    const pattern = `%${filter.search}%`;
-    const search = or(like(tours.title, pattern), like(tours.shortDescription, pattern));
+    const search = or(
+      likeContains(tours.title, filter.search),
+      likeContains(tours.shortDescription, filter.search),
+    );
     if (search) conditions.push(search);
   }
   if (filter.badge) {

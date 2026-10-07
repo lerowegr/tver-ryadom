@@ -1,15 +1,21 @@
 import { bookingCancelSchema, bookingCreateSchema, bookingListFilterSchema } from '@tver/shared';
 import { Hono } from 'hono';
 import type { AppEnv } from '../../env';
+import { rateLimit, rateLimits } from '../../lib/rate-limit';
 import { ok, paginated } from '../../lib/respond';
-import { requireAuth } from '../../middleware/auth';
+import { requireCaptchaForGuest } from '../../lib/turnstile';
+import { requireAuth, resolveOptionalUser } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { cancelBooking, createBooking, listMyBookings } from './service';
 
 export const bookingRoutes = new Hono<AppEnv>()
   // Гостевое бронирование разрешено: user подставляется, если есть токен.
-  .post('/', validate('json', bookingCreateSchema), async (c) => {
-    const booking = await createBooking(c.get('db'), c.req.valid('json'), c.get('user'), c.env.SITE_URL);
+  // Протухшая/отозванная сессия — уже гость, а не владелец чужого аккаунта.
+  .post('/', rateLimit(rateLimits.bookingCreate), validate('json', bookingCreateSchema), async (c) => {
+    const input = c.req.valid('json');
+    await requireCaptchaForGuest(c, input.cfToken);
+    const user = await resolveOptionalUser(c.get('db'), c.get('user'));
+    const booking = await createBooking(c.get('db'), input, user, c.env.SITE_URL);
     return ok(c, booking, 201);
   })
 

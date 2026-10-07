@@ -51,7 +51,7 @@ cd apps/admin && cp .env.example .env.local && pnpm dev   # админка http:
 Пароль администратора (email `admin@tver-ryadom.ru`):
 
 ```bash
-pnpm --filter @tver/api admin:password -- <пароль>        # локальная база
+pnpm --filter @tver/api admin:password        # локальная база, пароль спросит без эха
 ```
 
 Описание эндпоинтов: [docs/api.md](docs/api.md).

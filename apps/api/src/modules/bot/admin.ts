@@ -1,12 +1,11 @@
 import { bookings, contactRequests, reviews, users, type Db } from '@tver/db';
-import { formatPrice } from '@tver/shared';
+import { escapeHtml, formatPrice } from '@tver/shared';
 import { and, count, desc, eq } from 'drizzle-orm';
 import { InlineKeyboard, type Context } from 'grammy';
 import { changeBookingStatus } from '../admin/booking-status';
 import { recalcTourRating } from '../admin/reviews';
 import { loadRange } from '../calendar/service';
 import { formatMsk } from '../notifications/templates';
-import { escapeHtml } from './screens';
 
 /**
  * Админка в боте.

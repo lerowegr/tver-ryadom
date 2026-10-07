@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { REVIEW_STATUSES } from '../constants/statuses';
-import { idSchema, paginationSchema } from './common';
+import { captchaTokenSchema, idSchema, paginationSchema } from './common';
 
 export const reviewCreateSchema = z.object({
   tourId: idSchema,
@@ -8,6 +8,7 @@ export const reviewCreateSchema = z.object({
   text: z.string().trim().min(10, 'Отзыв должен быть не короче 10 символов').max(2000),
   /** Для отзывов без авторизации. */
   authorName: z.string().trim().min(2).max(100).optional(),
+  cfToken: captchaTokenSchema,
 });
 
 export const reviewModerateSchema = z.object({

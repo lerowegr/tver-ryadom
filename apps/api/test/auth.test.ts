@@ -93,14 +93,15 @@ describe('auth', () => {
     );
     expect(replay.status).toBe(401);
 
-    // А новый токен из первого ответа — работать.
+    // Reuse-детект (P1): повтор старого токена — признак кражи, поэтому
+    // отзывается вся цепочка, включая токен из первого ответа.
     const rotated = refreshCookieOf(first);
     const second = await app.request(
       '/api/v1/auth/refresh',
       { method: 'POST', headers: { Cookie: rotated } },
       TEST_ENV,
     );
-    expect(second.status).toBe(200);
+    expect(second.status).toBe(401);
   });
 
   it('logout отзывает сессию', async () => {

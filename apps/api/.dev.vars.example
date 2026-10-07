@@ -16,3 +16,6 @@ TELEGRAM_WEBHOOK_SECRET=any-random-string
 # Email через resend.com; пусто — канал выключен
 RESEND_API_KEY=
 EMAIL_FROM=Тверь рядом <hello@example.ru>
+
+# Капча Cloudflare Turnstile для гостевых форм; пусто — проверка пропущена
+TURNSTILE_SECRET=

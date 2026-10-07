@@ -107,7 +107,10 @@ export default async function TourPage({ params }: { params: Params }) {
 
   return (
     <div className="pt-32 md:pt-40">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
       <Container className="!max-w-[104rem]">
         <nav aria-label="Хлебные крошки" className="kicker-plain text-faint mb-12">
           <Link href="/excursions" className="link-underline hover:text-ink">

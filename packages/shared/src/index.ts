@@ -2,6 +2,7 @@ export * from './constants/statuses';
 export * from './constants/badges';
 export * from './utils/money';
 export * from './utils/phone';
+export * from './utils/html';
 export * from './schemas/common';
 export * from './schemas/auth';
 export * from './schemas/tour';

@@ -1,20 +1,43 @@
 /**
  * Устанавливает пароль администратора (admin@tver-ryadom.ru) в D1.
  *
- *   node scripts/set-admin-password.mjs <пароль>            # локальная база
- *   node scripts/set-admin-password.mjs <пароль> --remote   # продакшен
+ *   node scripts/set-admin-password.mjs            # спросит пароль без эха
+ *   node scripts/set-admin-password.mjs --remote   # продакшен
  *
+ * Пароль больше не принимается аргументом: он светился в history и `ps`.
  * Формат хеша совпадает с apps/api/src/lib/crypto.ts (PBKDF2-SHA256).
  */
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
+import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
-const password = process.argv[2];
 const remote = process.argv.includes('--remote');
+if (process.argv[2] && !process.argv[2].startsWith('--')) {
+  console.error('Пароль аргументом больше не принимается (светится в history/ps). Запустите без аргументов.');
+  process.exit(1);
+}
 
-if (!password || password.length < 8) {
-  console.error('Использование: node scripts/set-admin-password.mjs <пароль от 8 символов> [--remote]');
+function askPassword(prompt) {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+    // Глушим эхо ввода: вместо символов рисуем звёздочки.
+    rl._writeToOutput = (chunk) => {
+      const s = String(chunk);
+      if (s === '\n' || s === '\r' || s === '\r\n') rl.output.write(s);
+      else if (s.startsWith(prompt)) rl.output.write(s);
+      else rl.output.write('*');
+    };
+    rl.question(prompt, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+const password = await askPassword('Новый пароль администратора (мин. 12 символов): ');
+if (!password || password.length < 12) {
+  console.error('Пароль должен быть не короче 12 символов.');
   process.exit(1);
 }
 
@@ -40,9 +63,12 @@ const hash = `pbkdf2$${ITERATIONS}$${b64(salt)}$${b64(new Uint8Array(bits))}`;
 const apiDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'apps', 'api');
 const command = `UPDATE users SET password_hash='${hash}', updated_at=unixepoch() WHERE email='admin@tver-ryadom.ru';`;
 
-execSync(
-  `pnpm exec wrangler d1 execute DB ${remote ? '--remote' : '--local'} --command "${command}"`,
+// Без shell: аргументы массивом, инъекции через хеш невозможны в принципе.
+const result = spawnSync(
+  'pnpm',
+  ['exec', 'wrangler', 'd1', 'execute', 'DB', ...(remote ? ['--remote'] : ['--local']), '--command', command],
   { cwd: apiDir, stdio: 'inherit' },
 );
+if (result.status !== 0) process.exit(result.status ?? 1);
 
 console.log(`\nПароль администратора обновлён (${remote ? 'remote' : 'local'} база).`);

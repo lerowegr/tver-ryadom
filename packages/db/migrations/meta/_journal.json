@@ -43,6 +43,13 @@
       "when": 1789996401013,
       "tag": "0005_chunky_lilith",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791293815494,
+      "tag": "0006_handy_bushwacker",
+      "breakpoints": true
     }
   ]
 }

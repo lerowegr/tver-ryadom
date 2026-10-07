@@ -3,8 +3,10 @@ import { seedDatabase } from '@tver/db/seed';
 import { webhookCallback } from 'grammy';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { secureHeaders } from 'hono/secure-headers';
 import type { AppEnv } from './env';
 import { AppError, notFound } from './lib/errors';
+import { rateLimit, rateLimits } from './lib/rate-limit';
 import { ok } from './lib/respond';
 import { authenticate } from './middleware/auth';
 import { adminRoutes } from './modules/admin/routes';
@@ -28,17 +30,26 @@ export interface BuildAppOptions {
   db?: Db;
 }
 
+/** Маскирует секреты в пути перед записью в лог (H7). */
+export function safeLogPath(pathname: string): string {
+  if (pathname.startsWith('/webhook/telegram/')) return '/webhook/telegram/…';
+  if (pathname.startsWith('/calendar/')) return '/calendar/…';
+  return pathname;
+}
+
 export function buildApp(options: BuildAppOptions = {}) {
   const app = new Hono<AppEnv>();
 
   // Структурированный лог запросов (Workers Logs).
+  // Секреты в пути (вебхук Telegram, лента календаря) маскируем: иначе
+  // долгоживущие токены осядут в журналах (H7).
   app.use('*', async (c, next) => {
     const started = Date.now();
     await next();
     console.log(
       JSON.stringify({
         method: c.req.method,
-        path: new URL(c.req.url).pathname,
+        path: safeLogPath(new URL(c.req.url).pathname),
         status: c.res.status,
         ms: Date.now() - started,
       }),
@@ -57,8 +68,30 @@ export function buildApp(options: BuildAppOptions = {}) {
     return middleware(c, next);
   });
 
+  // Базовые заголовки для JSON-API (P2/M8). CSP не ставим: прямые открытия
+  // /images/* рисуют image-документ, и default-src 'none' ломал бы просмотр.
+  app.use(
+    '*',
+    secureHeaders({
+      xFrameOptions: 'DENY',
+      xContentTypeOptions: 'nosniff',
+      referrerPolicy: 'no-referrer',
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
   app.use('*', async (c, next) => {
     c.set('db', options.db ?? createDb(c.env.DB));
+    await next();
+  });
+
+  // Fail-fast на слабый JWT-секрет в проде (P2): коротким секретом можно
+  // подобрать подпись access-токенов и tg-link кодов. В dev/tests молчим.
+  app.use('*', async (c, next) => {
+    if (c.env.ENVIRONMENT === 'production' && (c.env.JWT_SECRET ?? '').length < 32) {
+      console.error('JWT_SECRET короче 32 символов — API остановлено. Задайте: wrangler secret put JWT_SECRET');
+      throw new AppError('internal_error', 'Сервис временно недоступен');
+    }
     await next();
   });
 
@@ -75,6 +108,8 @@ export function buildApp(options: BuildAppOptions = {}) {
     return c.body(object.body as unknown as ReadableStream, 200, {
       'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
       'Cache-Control': 'public, max-age=31536000, immutable',
+      // Файлы грузят пользователи: запрещаем браузеру угадывать тип (P1/M3).
+      'X-Content-Type-Options': 'nosniff',
       ETag: object.httpEtag,
     });
   });
@@ -94,8 +129,8 @@ export function buildApp(options: BuildAppOptions = {}) {
    * заголовков авторизации, поэтому доступ даёт длинный секрет в самом URL.
    * Его можно сменить одной кнопкой в админке — старая ссылка тут же умрёт.
    */
-  app.get('/calendar/:file', async (c) => {
-    const token = c.req.param('file').replace(/\.ics$/, '');
+  app.get('/calendar/:file', rateLimit(rateLimits.calendarFeed), async (c) => {
+    const token = (c.req.param('file') ?? '').replace(/\.ics$/, '');
     const db = c.get('db');
     const actual = await readFeedToken(db);
     if (!actual || token.length < 16 || token !== actual) throw notFound();
@@ -125,17 +160,17 @@ export function buildApp(options: BuildAppOptions = {}) {
    * API сообщества, и подстроиться приходится нам. Проверку делает сам
    * обработчик канала.
    */
-  app.post('/webhook/vk', async (c) => {
+  app.post('/webhook/vk', rateLimit(rateLimits.webhookVk), async (c) => {
     const body = await c.req.json().catch(() => ({}));
     return handleVkUpdate(c.get('db'), c.env, body);
   });
 
-  app.post('/webhook/max', async (c) => {
+  app.post('/webhook/max', rateLimit(rateLimits.webhookMax), async (c) => {
     const body = await c.req.json().catch(() => ({}));
     return handleMaxUpdate(c.get('db'), c.env, body);
   });
 
-  app.post('/webhook/telegram/:secret', async (c) => {
+  app.post('/webhook/telegram/:secret', rateLimit(rateLimits.webhookTelegram), async (c) => {
     if (!c.env.TELEGRAM_BOT_TOKEN) throw notFound();
     // Секрет берётся из переменной окружения, а если её нет — из настроек,
     // куда его завела кнопка подключения. Так для запуска бота достаточно

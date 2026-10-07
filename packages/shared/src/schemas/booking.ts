@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { BOOKING_STATUSES } from '../constants/statuses';
-import { emailSchema, idSchema, paginationSchema, phoneSchema } from './common';
+import { captchaTokenSchema, emailSchema, idSchema, paginationSchema, phoneSchema } from './common';
 
 export const bookingCreateSchema = z
   .object({
@@ -14,6 +14,7 @@ export const bookingCreateSchema = z
     contactPhone: phoneSchema,
     contactEmail: emailSchema.optional(),
     comment: z.string().trim().max(2000).optional(),
+    cfToken: captchaTokenSchema,
   })
   .refine((data) => data.scheduleId || data.desiredDate, {
     message: 'Выберите дату из расписания или укажите желаемую дату',

@@ -66,6 +66,13 @@ describe('вход в мини-приложение Telegram', () => {
     expect(await verifyInitData(initData, TOKEN, now)).toBeNull();
   });
 
+  it('окно свежести — 10 минут, а не сутки (P1)', async () => {
+    const eleven = Math.floor(now / 1000) - 11 * 60;
+    expect(await verifyInitData(signInitData(TOKEN, fields(eleven)), TOKEN, now)).toBeNull();
+    const nine = Math.floor(now / 1000) - 9 * 60;
+    expect(await verifyInitData(signInitData(TOKEN, fields(nine)), TOKEN, now)).not.toBeNull();
+  });
+
   it('отвергает строку без подписи', async () => {
     expect(await verifyInitData('user=%7B%7D&auth_date=1', TOKEN, now)).toBeNull();
   });

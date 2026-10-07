@@ -95,8 +95,9 @@ export function ChannelsSetup({ apiOrigin }: { apiOrigin: string }) {
 
         <p className="text-muted mt-3 text-xs leading-relaxed">
           В настройках сообщества → «Работа с API» → Callback API укажите адрес{' '}
-          <code className="text-ink">{apiOrigin}/webhook/vk</code>, скопируйте оттуда строку
-          подтверждения и придумайте секретный ключ — те же значения впишите сюда.
+          <code className="text-ink">{apiOrigin}/webhook/vk</code>, задайте там же секретный
+          ключ и скопируйте строку подтверждения — те же значения впишите сюда. Без
+          секрета вебхук отклоняет все запросы.
         </p>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2">

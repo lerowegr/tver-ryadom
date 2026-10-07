@@ -58,8 +58,13 @@ export async function saveVkSettings(
   db: Db,
   input: { confirmation?: string; secret?: string },
 ): Promise<void> {
-  if (input.confirmation !== undefined) await writeSetting(db, CONFIRMATION_KEY, input.confirmation);
-  if (input.secret !== undefined) await writeSetting(db, SECRET_KEY, input.secret);
+  // Пустые строки от формы («оставьте пустым») — не затирают сохранённое.
+  if (input.confirmation !== undefined && input.confirmation.trim() !== '') {
+    await writeSetting(db, CONFIRMATION_KEY, input.confirmation.trim());
+  }
+  if (input.secret !== undefined && input.secret.trim() !== '') {
+    await writeSetting(db, SECRET_KEY, input.secret.trim());
+  }
 }
 
 /** Клавиатура ВК: своя разметка, но кнопки те же, что в общих экранах. */
@@ -126,7 +131,10 @@ interface VkUpdate {
  */
 export async function handleVkUpdate(db: Db, env: Bindings, update: VkUpdate): Promise<Response> {
   const expectedSecret = await readSetting(db, SECRET_KEY);
-  if (expectedSecret && update.secret !== expectedSecret) {
+  // Fail-closed (H3): пока секрет не задан — отклоняем всё, включая
+  // confirmation. Секрет сначала задаётся на стороне сообщества ВК,
+  // затем вносится в админку, и только потом проходит подтверждение.
+  if (!expectedSecret || update.secret !== expectedSecret) {
     return new Response('forbidden', { status: 403 });
   }
 

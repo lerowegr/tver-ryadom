@@ -34,6 +34,11 @@ export interface Bindings {
   RESEND_API_KEY?: string;
   /** Адрес отправителя писем, например "Тверь рядом <hello@tver-ryadom.ru>". */
   EMAIL_FROM?: string;
+  /**
+   * Секрет Cloudflare Turnstile (secret). Пусто — капча пропущена везде.
+   * Задать: `wrangler secret put TURNSTILE_SECRET` + виджет на фронте.
+   */
+  TURNSTILE_SECRET?: string;
 }
 
 export interface AuthUser {

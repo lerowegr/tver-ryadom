@@ -9,11 +9,23 @@ import { ApiRequestError } from '@/lib/api';
 
 type Mode = 'login' | 'register';
 
+/**
+ * Куда можно вернуть после входа. Только внутренние пути без `//`,
+ * обратных слешей и схем — иначе open-redirect на фишинг (M4).
+ */
+export function safeNextPath(raw: string | null): string {
+  if (!raw) return '/account';
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/account';
+  if (raw.includes('\\')) return '/account';
+  if (!/^\/[A-Za-z0-9\-_./?=&%#]*$/.test(raw)) return '/account';
+  return raw;
+}
+
 export function AuthForm() {
   const { status, login, register } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') ?? '/account';
+  const next = safeNextPath(searchParams.get('next'));
 
   const [mode, setMode] = useState<Mode>('login');
   const [pending, setPending] = useState(false);

@@ -4,17 +4,13 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../../env';
 import { notFound, validationError } from '../../lib/errors';
-import { imagesBaseOf, toImageUrls } from '../../lib/images';
+import { imagesBaseOf, readCheckedImage, toImageUrls } from '../../lib/images';
 import { ok } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
 
 const MAX_SIZE = 8 * 1024 * 1024;
-
-const EXT_BY_TYPE: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-};
+/** Суммарный предел запроса: 4 поля × 8 МБ без контроля — слишком много (P1/M3). */
+const TOTAL_MAX_SIZE = 24 * 1024 * 1024;
 
 const patchSchema = z.object({
   alt: z.string().trim().max(300).optional(),
@@ -45,26 +41,38 @@ export const adminImageRoutes = new Hono<AppEnv>()
     const folder = `tours/${tourId}`;
     const variants: Record<string, string> = {};
 
-    /** Кладёт файл в R2 и возвращает ключ. */
+    /** Кладёт файл в R2 и возвращает ключ. Тип — по сигнатуре, не по заголовку. */
     const store = async (file: File, name: string): Promise<string> => {
-      const ext = EXT_BY_TYPE[file.type];
-      if (!ext) throw validationError('Поддерживаются JPEG, PNG и WebP');
-      if (file.size > MAX_SIZE) throw validationError('Файл больше 8 МБ');
-      const key = `${folder}/${crypto.randomUUID()}-${name}.${ext}`;
-      await c.env.IMAGES.put(key, await file.arrayBuffer(), {
-        httpMetadata: { contentType: file.type },
+      let checked;
+      try {
+        checked = await readCheckedImage(file, MAX_SIZE);
+      } catch (error) {
+        throw validationError(error instanceof Error ? error.message : 'Некорректное изображение');
+      }
+      const key = `${folder}/${crypto.randomUUID()}-${name}.${checked.ext}`;
+      await c.env.IMAGES.put(key, checked.bytes, {
+        httpMetadata: { contentType: checked.contentType },
       });
       return key;
     };
 
+    const files: { file: File; name: string }[] = [];
     for (const name of ['hero', 'card', 'thumb'] as const) {
       const part = form.get(name);
-      if (part instanceof File && part.size > 0) variants[name] = await store(part, name);
+      if (part instanceof File && part.size > 0) files.push({ file: part, name });
     }
 
     const original = form.get('file');
     if (original instanceof File && original.size > 0) {
-      variants.original = await store(original, 'original');
+      files.push({ file: original, name: 'original' });
+    }
+
+    const totalSize = files.reduce((sum, f) => sum + f.file.size, 0);
+    if (totalSize > TOTAL_MAX_SIZE) throw validationError('Суммарный размер файлов больше 24 МБ');
+
+    for (const { file, name } of files) {
+      if (name === 'original') variants.original = await store(file, name);
+      else variants[name] = await store(file, name);
     }
 
     // Основной ключ — самый крупный доступный размер.

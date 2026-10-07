@@ -36,11 +36,13 @@ jobs:
       - name: Проверки (линт, типы, тесты)
         run: pnpm turbo run lint typecheck test
 
-      - name: Деплой API
-        run: pnpm --filter @tver/api exec wrangler deploy
-
+      # Миграции ДО деплоя кода (P2/M10): новый код на старой схеме давал 500
+      # до конца миграций. Правило: только аддитивные миграции без дауна.
       - name: Миграции БД (прод)
         run: pnpm --filter @tver/api exec wrangler d1 migrations apply DB --remote
+
+      - name: Деплой API
+        run: pnpm --filter @tver/api exec wrangler deploy
 
       - name: Деплой сайта
         run: pnpm --filter @tver/web run deploy

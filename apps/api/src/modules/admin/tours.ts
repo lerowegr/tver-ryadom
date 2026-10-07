@@ -8,11 +8,12 @@ import {
   type TourCreateInput,
   type TourUpdateInput,
 } from '@tver/shared';
-import { and, count, eq, inArray, like, ne, or, type SQL } from 'drizzle-orm';
+import { and, count, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../../env';
 import { conflict, notFound } from '../../lib/errors';
+import { likeContains } from '../../lib/db-utils';
 import { imagesBaseOf, toImageUrls } from '../../lib/images';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
@@ -123,8 +124,10 @@ export const adminTourRoutes = new Hono<AppEnv>()
     const conditions: SQL[] = [];
     if (filter.status) conditions.push(eq(tours.status, filter.status));
     if (filter.search) {
-      const pattern = `%${filter.search}%`;
-      const search = or(like(tours.title, pattern), like(tours.slug, pattern));
+      const search = or(
+        likeContains(tours.title, filter.search),
+        likeContains(tours.slug, filter.search),
+      );
       if (search) conditions.push(search);
     }
     const where = conditions.length > 0 ? and(...conditions) : undefined;

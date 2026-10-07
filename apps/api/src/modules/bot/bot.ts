@@ -1,5 +1,6 @@
 import type { Db } from '@tver/db';
 import { users } from '@tver/db';
+import { escapeHtml } from '@tver/shared';
 import { and, eq, isNotNull } from 'drizzle-orm';
 import { Bot, type Context } from 'grammy';
 import type { Bindings } from '../../env';
@@ -443,7 +444,7 @@ export function buildBot(env: Bindings, ref: DbRef): Bot {
       if (!admin.telegramChatId) continue;
       await ctx.api.sendMessage(
         admin.telegramChatId,
-        `💬 <b>Сообщение из бота</b>\nОт: ${signature} (chat ${chatId})\n\n${ctx.message.text}`,
+        `💬 <b>Сообщение из бота</b>\nОт: ${escapeHtml(signature)} (chat ${escapeHtml(chatId)})\n\n${escapeHtml(ctx.message.text)}`,
         { parse_mode: 'HTML' },
       );
     }

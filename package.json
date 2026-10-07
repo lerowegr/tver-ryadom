@@ -2,7 +2,7 @@
   "name": "tver-ryadom",
   "private": true,
   "description": "Сайт экскурсий по Твери «Тверь рядом»: публичный сайт, личный кабинет, админ-панель, API и Telegram-бот на Cloudflare Workers",
-  "packageManager": "pnpm@11.12.0",
+  "packageManager": "pnpm@11.28.5",
   "engines": {
     "node": ">=20"
   },

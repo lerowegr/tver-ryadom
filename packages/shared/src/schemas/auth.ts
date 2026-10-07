@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { emailSchema, phoneSchema } from './common';
+import { captchaTokenSchema, emailSchema, phoneSchema } from './common';
 
 const passwordSchema = z
   .string()
@@ -11,6 +11,7 @@ export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   phone: phoneSchema.optional(),
+  cfToken: captchaTokenSchema,
 });
 
 export const loginSchema = z.object({

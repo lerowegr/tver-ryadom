@@ -66,9 +66,16 @@ export async function saveMaxSettings(
   db: Db,
   input: { apiBase?: string; sendMethod?: string; secret?: string },
 ): Promise<void> {
-  if (input.apiBase !== undefined) await writeSetting(db, BASE_KEY, input.apiBase);
-  if (input.sendMethod !== undefined) await writeSetting(db, SEND_KEY, input.sendMethod);
-  if (input.secret !== undefined) await writeSetting(db, SECRET_KEY, input.secret);
+  // Пустые строки от формы — не затирают сохранённое.
+  if (input.apiBase !== undefined && input.apiBase.trim() !== '') {
+    await writeSetting(db, BASE_KEY, input.apiBase.trim());
+  }
+  if (input.sendMethod !== undefined && input.sendMethod.trim() !== '') {
+    await writeSetting(db, SEND_KEY, input.sendMethod.trim());
+  }
+  if (input.secret !== undefined && input.secret.trim() !== '') {
+    await writeSetting(db, SECRET_KEY, input.secret.trim());
+  }
 }
 
 /**
@@ -114,7 +121,8 @@ interface MaxUpdate {
 /** Приём события: проверка секрета, разбор действия и ответ тем же экраном. */
 export async function handleMaxUpdate(db: Db, env: Bindings, update: MaxUpdate): Promise<Response> {
   const expected = await readSetting(db, SECRET_KEY);
-  if (expected && update.secret !== expected) {
+  // Fail-closed (H3): без заданного секрета отклоняем всё.
+  if (!expected || update.secret !== expected) {
     return new Response('forbidden', { status: 403 });
   }
 

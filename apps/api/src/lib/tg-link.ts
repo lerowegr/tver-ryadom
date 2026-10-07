@@ -39,5 +39,13 @@ export async function verifyLinkCode(secret: string, code: string): Promise<stri
   const exp = parseInt(expRaw, 36);
   if (!userId || !Number.isFinite(exp) || exp < Date.now()) return null;
   const expected = await hmacHex(secret, `${userId}.${exp}`);
-  return expected === sig ? userId : null;
+  return sameLengthEqual(expected, sig) ? userId : null;
+}
+
+/** Сравнение без ранних выходов (P1): длина подписи известна заранее. */
+function sameLengthEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }

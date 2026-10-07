@@ -1,13 +1,15 @@
 import { bookings, users } from '@tver/db';
 import { USER_ROLES, paginationSchema } from '@tver/shared';
-import { and, count, desc, eq, like, ne, or, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, ne, or, type SQL } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../../env';
 import { hashPassword } from '../../lib/crypto';
+import { likeContains } from '../../lib/db-utils';
 import { conflict, notFound } from '../../lib/errors';
 import { ok, paginated } from '../../lib/respond';
 import { validate } from '../../middleware/validate';
+import { revokeAllSessions } from '../auth/service';
 
 const listFilterSchema = paginationSchema.extend({
   search: z.string().trim().max(200).optional(),
@@ -67,6 +69,9 @@ export const adminUserRoutes = new Hono<AppEnv>()
     }
 
     await db.update(users).set({ role }).where(eq(users.id, id));
+    // Новая роль вступает сразу: refresh-цепочки гасим, а access умрёт сам —
+    // requireAuth/requireAdmin сверяют сессию и роль с БД на каждый запрос.
+    await revokeAllSessions(db, id);
     return ok(c, { id, role });
   })
 
@@ -76,8 +81,11 @@ export const adminUserRoutes = new Hono<AppEnv>()
 
     let where: SQL | undefined;
     if (filter.search) {
-      const pattern = `%${filter.search}%`;
-      where = or(like(users.name, pattern), like(users.email, pattern), like(users.phone, pattern));
+      where = or(
+        likeContains(users.name, filter.search),
+        likeContains(users.email, filter.search),
+        likeContains(users.phone, filter.search),
+      );
     }
 
     const [totalRow] = await db.select({ total: count() }).from(users).where(where);

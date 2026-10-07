@@ -5,6 +5,7 @@ import { createTestDb } from '@tver/db/testing';
 import { buildApp } from '../src/app';
 import type { Bindings } from '../src/env';
 import { hashPassword } from '../src/lib/crypto';
+import { __resetRateLimits } from '../src/lib/rate-limit';
 
 /** In-memory замена R2 для тестов загрузки изображений. */
 class MockR2 {
@@ -49,6 +50,9 @@ export interface TestContext {
 }
 
 export async function createTestApp(): Promise<TestContext> {
+  // Изоляция rate-limit между тестами: в тестах у всех запросов один IP,
+  // без сброса лимиты Register/Login съедали бы соседние сьюты (H4).
+  __resetRateLimits();
   const db = createTestDb();
   await seedDatabase(db);
   return { app: buildApp({ db }), db };

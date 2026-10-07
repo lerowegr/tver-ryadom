@@ -40,6 +40,11 @@ export const sessions = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     refreshTokenHash: text('refresh_token_hash').notNull(),
+    /**
+     Хеш предыдущего refresh-токена: нужен для детекта reuse (P1).
+     * Если предъявлен уже повёрнутый токен — это кража, отзываем все сессии.
+     */
+    previousRefreshTokenHash: text('previous_refresh_token_hash'),
     userAgent: text('user_agent'),
     ip: text('ip'),
     expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
