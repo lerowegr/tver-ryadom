@@ -256,8 +256,9 @@ function ip(c: Context): string {
 - [x] Проверка отзыва/роли в auth + reuse detection + абсолютный TTL 90д + `GET|DELETE /sessions` (миграция `0006`, `test/sessions.test.ts` 6 тестов; `initData` окно 10 мин; `tg-link` constant-time; `likeContains` с `ESCAPE`)
 - [x] Отзыв сессий при смене роли; аудит `role/settings/status`
 - [x] Magic bytes + `nosniff` + общие лимиты МБ (`readCheckedImage/detectImageType` в `lib/images.ts`; `X-Content-Type-Options` на `/images/*`; `test/upload-security.test.ts` 4 теста); `initData` окно 10 мин; `tg-link` constant-time; `likeContains` с `ESCAPE`
-- [ ] `Origin`-чек `/refresh|logout`, `deleteCookie` с теми же attrs, `SameSite=Lax` на своём домене
-- [ ] Allowlist `PUT settings`, экранирование `%_`, нормализация email
+- [x] `Origin`-чек `/refresh|logout`, `deleteCookie` с теми же attrs (`isTrustedOrigin`, `cookieAttrs`; `SameSite=Lax` — только со своим доменом, см. deploy)
+- [x] Allowlist `PUT settings` + маскирование секретов в GET + валидация значений (`test/settings-allowlist.test.ts`, 4 теста), экранирование `%_` (`likeContains`), нормализация email (уже была в `emailSchema`)
+- [x] Виджет Turnstile: `web/.../security/turnstile.tsx` + contact/booking(гость)/register; без site key скрыт; ключи — `docs/deploy.md`
 
 ### P2 — инфра и гигиена
 - [x] `secureHeaders` + `headers()` в обоих Next + CSP/SRI (API: `secureHeaders(DENY/nosniff/no-referrer)`; web/admin: nosniff/referrer/permissions-policy; frame-ancestors/CSP сознательно нет — Mini App живёт в Telegram WebView; `X-Content-Type-Options` на `/images/*`)

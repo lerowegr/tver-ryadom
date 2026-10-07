@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth } from '@/components/providers';
+import { Turnstile } from '@/components/security/turnstile';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { CheckIcon } from '@/components/ui/icons';
 import { api, ApiRequestError } from '@/lib/api';
@@ -45,6 +46,10 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
   const [customDate, setCustomDate] = useState(!hasSlots);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [created, setCreated] = useState<BookingCreatedDto | null>(null);
+  // Капча нужна только гостям: авторизованных держит rate-limit + сессии.
+  const isGuest = status !== 'authed';
+  const [cfToken, setCfToken] = useState<string | null>(null);
+  const [cfReset, setCfReset] = useState(0);
 
   // Занятые дни и часы: их календарь не предложит. Сервер проверяет то же
   // самое ещё раз — между открытием страницы и отправкой время могло уйти.
@@ -126,10 +131,13 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
         contactPhone: normalizeRuPhone(values.contactPhone),
         contactEmail: values.contactEmail || undefined,
         comment: values.comment || undefined,
+        cfToken: isGuest ? (cfToken ?? undefined) : undefined,
         }),
       });
       setCreated(booking);
     } catch (error) {
+      setCfReset((n) => n + 1);
+      setCfToken(null);
       if (error instanceof ApiRequestError) {
         setSubmitError(error.message);
       } else {
@@ -364,6 +372,8 @@ export function BookingForm({ tour }: { tour: BookingFormProps['tour'] }) {
           {submitError}
         </p>
       ) : null}
+
+      {isGuest ? <Turnstile onToken={setCfToken} resetKey={cfReset} /> : null}
 
       <button
         type="submit"

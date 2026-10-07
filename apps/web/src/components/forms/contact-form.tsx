@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { CheckIcon } from '@/components/ui/icons';
+import { Turnstile } from '@/components/security/turnstile';
 import { ApiRequestError, apiPost } from '@/lib/api';
 
 const formSchema = z
@@ -28,6 +29,8 @@ type FormValues = z.infer<typeof formSchema>;
 export function ContactForm() {
   const [sent, setSent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [cfToken, setCfToken] = useState<string | null>(null);
+  const [cfReset, setCfReset] = useState(0);
 
   const {
     register,
@@ -43,9 +46,13 @@ export function ContactForm() {
         phone: values.phone ? normalizeRuPhone(values.phone) : undefined,
         email: values.email || undefined,
         message: values.message,
+        cfToken: cfToken ?? undefined,
       });
       setSent(true);
     } catch (error) {
+      // Токен капчи одноразовый — после любой отправки виджет сбрасывается.
+      setCfReset((n) => n + 1);
+      setCfToken(null);
       setSubmitError(
         error instanceof ApiRequestError
           ? error.message
@@ -154,6 +161,8 @@ export function ContactForm() {
           {submitError}
         </p>
       ) : null}
+
+      <Turnstile onToken={setCfToken} resetKey={cfReset} />
 
       <button
         type="submit"

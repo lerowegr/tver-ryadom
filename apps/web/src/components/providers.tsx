@@ -24,7 +24,7 @@ interface AuthContextValue {
   user: PublicUserDto | null;
   status: AuthStatus;
   login: (email: string, password: string) => Promise<void>;
-  register: (input: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (input: { name: string; email: string; password: string; phone?: string; cfToken?: string }) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: PublicUserDto) => void;
 }
@@ -70,7 +70,7 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (input: { name: string; email: string; password: string; phone?: string }) => {
+    async (input: { name: string; email: string; password: string; phone?: string; cfToken?: string }) => {
       const session = await registerRequest(input);
       setUser(session.user);
       setStatus('authed');

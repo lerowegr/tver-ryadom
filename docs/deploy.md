@@ -54,6 +54,7 @@ service binding `API` (fetch между воркерами по `*.workers.dev` 
 | `COOKIE_SAMESITE` | vars | `none` для workers.dev; на своём домене — `lax` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `RESEND_API_KEY` | secret | пока не заданы — каналы выключены; подключение: [api.md](api.md#уведомления-и-telegram-бот) |
 | `TELEGRAM_BOT_USERNAME`, `EMAIL_FROM` | vars | вместе с соответствующими секретами |
+| `TURNSTILE_SECRET` | secret | капча для гостевых форм; пусто — проверка пропущена. Виджету нужен парный site key: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` в `apps/web/.env.production` (оба — из дашборда Cloudflare → Turnstile) |
 
 Публичные URL для сайта/админки инлайнятся при сборке из
 `apps/web/.env.production` и `apps/admin/.env.production`.

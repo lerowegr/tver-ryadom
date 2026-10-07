@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/providers';
+import { Turnstile } from '@/components/security/turnstile';
 import { SegmentedTabs } from '@/components/ui/segmented-tabs';
 import { ApiRequestError } from '@/lib/api';
 
@@ -31,6 +32,8 @@ export function AuthForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [cfToken, setCfToken] = useState<string | null>(null);
+  const [cfReset, setCfReset] = useState(0);
 
   useEffect(() => {
     if (status === 'authed') router.replace(next);
@@ -54,10 +57,13 @@ export function AuthForm() {
           email,
           password,
           phone: String(form.get('phone') ?? '').trim() || undefined,
+          cfToken: cfToken ?? undefined,
         });
       }
       router.replace(next);
     } catch (err) {
+      setCfReset((n) => n + 1);
+      setCfToken(null);
       if (err instanceof ApiRequestError) {
         setError(err.message);
         setFieldErrors(err.details ?? {});
@@ -88,6 +94,8 @@ export function AuthForm() {
           setMode(value);
           setError(null);
           setFieldErrors({});
+          setCfReset((n) => n + 1);
+          setCfToken(null);
         }}
         options={[
           { value: 'login', label: 'Вход' },
@@ -210,6 +218,8 @@ export function AuthForm() {
             {error}
           </p>
         ) : null}
+
+        {mode === 'register' ? <Turnstile onToken={setCfToken} resetKey={cfReset} /> : null}
 
         <button
           type="submit"

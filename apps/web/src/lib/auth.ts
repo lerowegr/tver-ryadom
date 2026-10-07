@@ -98,6 +98,7 @@ export async function registerRequest(input: {
   email: string;
   password: string;
   phone?: string;
+  cfToken?: string;
 }): Promise<SessionData> {
   const res = await fetch(`${apiBase()}/api/v1/auth/register`, {
     method: 'POST',
