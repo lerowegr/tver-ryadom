@@ -7,6 +7,12 @@ updates:
     # Рантайм Workers (hono/next/grammy/drizzle) — приоритетно.
     # Build-time транзитивные high (postcss/sharp) чинятся апстримом.
     open-pull-requests-limit: 5
+    groups:
+      # react и react-dom обязаны совпадать точь-в-точь, иначе падает
+      # сборка Next («must have the exact same version»). PR #7 упал
+      # именно из-за раздельного обновления — держим их в одной группе.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
     ignore:
       # zod v4 — ломающий мажор (меняет вывод типов z.coerce и др.):
       # миграция отдельным проектом, не ботом. PR #2 закрыт по этой причине.
