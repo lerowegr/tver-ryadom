@@ -1,4 +1,4 @@
-import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
+import type { D1Database, KVNamespace, R2Bucket } from '@cloudflare/workers-types';
 import type { Db } from '@tver/db';
 import type { UserRole } from '@tver/shared';
 
@@ -6,6 +6,11 @@ export interface Bindings {
   DB: D1Database;
   /** Бакет с фотографиями экскурсий и галереи. */
   IMAGES: R2Bucket;
+  /**
+   * Счётчики rate-limit (H4, второй слой). Необязателен: без биндинга
+   * работает in-memory на изолят. Завести: `wrangler kv namespace create RATE_KV`.
+   */
+  RATE_KV?: KVNamespace;
   /** Секрет подписи JWT: в проде — wrangler secret, локально — .dev.vars. */
   JWT_SECRET: string;
   ENVIRONMENT?: string;

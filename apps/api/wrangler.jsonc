@@ -17,6 +17,10 @@
       "bucket_name": "tver-images"
     }
   ],
+  // Второй слой rate-limit (H4): завести командой
+  // `wrangler kv namespace create RATE_KV` и вписать id сюда.
+  // Без биндинга лимиты работают в памяти изолята (приблизительно).
+  // "kv_namespaces": [{ "binding": "RATE_KV", "id": "PASTE-KV-NAMESPACE-ID" }],
   // Продакшен-значения; для локальной разработки переопределяются в .dev.vars.
   "vars": {
     "ENVIRONMENT": "production",

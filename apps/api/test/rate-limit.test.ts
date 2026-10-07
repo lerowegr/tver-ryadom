@@ -55,6 +55,28 @@ describe('H4: rate-limit режет флуд', () => {
     __resetRateLimits();
   });
 
+  it('KV-бэкенд считает общий лимит при наличии биндинга', async () => {
+    __resetRateLimits();
+    const store = new Map<string, string>();
+    const kv = {
+      get: async (key: string) => store.get(key) ?? null,
+      put: async (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const { Hono } = await import('hono');
+    const app = new Hono().get('/t', rateLimit({ limit: 2, windowSec: 60, prefix: 'kvtest' }), (c) =>
+      c.json({ ok: true }),
+    );
+    const env = { RATE_KV: kv };
+    expect((await app.request('/t', {}, env as never)).status).toBe(200);
+    expect((await app.request('/t', {}, env as never)).status).toBe(200);
+    const blocked = await app.request('/t', {}, env as never);
+    expect(blocked.status).toBe(429);
+    expect([...store.values()]).toContain('3');
+    __resetRateLimits();
+  });
+
   it('вебхук VK без секрета режется лимитом после 60 запросов', async () => {
     __resetRateLimits();
     const { app } = await createTestApp();

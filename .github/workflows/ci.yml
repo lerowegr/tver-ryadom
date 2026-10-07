@@ -32,3 +32,9 @@ jobs:
       - name: Аудит зависимостей
         continue-on-error: true
         run: pnpm audit --prod --audit-level=high
+
+      # Сканер утекших секретов в истории и PR (P2/M11).
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

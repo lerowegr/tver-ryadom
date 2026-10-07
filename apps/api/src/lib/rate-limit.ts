@@ -1,13 +1,15 @@
 import type { Context, Next } from 'hono';
+import type { AppEnv } from '../env';
 
 /**
- * Простой fixed-window rate-limit в памяти воркера (H4).
+ * Fixed-window rate-limit (H4).
  *
- * Это первый слой: режет флуд на `login/register/contact/брони/вебхуки`
- * без внешних зависимостей. Память у каждого изолята своя, поэтому лимиты
- * приблизительные — точные счётчики даст следующий слой (KV + WAF-правила,
- * см. docs/security-audit.md раздел 4). Формат отказа — тот же конверт
- * ошибок API (`rate_limited` 429) + заголовок `Retry-After`.
+ * Два слоя счётчиков:
+ * 1. KV (`RATE_KV`), если биндинг заведён — общий на всех изолятах, точный.
+ *    Создать: `wrangler kv namespace create RATE_KV` + id в `wrangler.jsonc`.
+ * 2. In-memory Map — fallback без биндинга (dev, тесты, прод до заведения KV);
+ *    у каждого изолята своя память, поэтому лимиты приблизительные.
+ * Формат отказа — тот же конверт ошибок API (`rate_limited` 429) + `Retry-After`.
  */
 
 export interface RateLimitRule {
@@ -59,25 +61,52 @@ export function rateLimit(rule: RateLimitRule) {
     sweep(now);
     const extra = rule.keyOf?.(c) ?? '';
     const key = `rl:${rule.prefix}:${clientIp(c)}:${extra}`;
-    const current = buckets.get(key);
-    if (current && current.resetAt > now) {
-      if (current.count >= rule.limit) {
-        const retryAfter = Math.max(1, Math.ceil((current.resetAt - now) / 1000));
-        c.header('Retry-After', String(retryAfter));
-        return c.json(
-          {
-            success: false,
-            error: { code: 'rate_limited', message: 'Слишком много запросов. Попробуйте позже.' },
-          } as const,
-          429,
-        );
-      }
-      current.count += 1;
-    } else {
-      buckets.set(key, { count: 1, resetAt: now + windowMs });
+    const count = await takeSlot(c, key, rule, now, windowMs);
+    if (count > rule.limit) {
+      const retryAfter = Math.max(1, Math.ceil(rule.windowSec - ((now / 1000) % rule.windowSec)));
+      c.header('Retry-After', String(retryAfter));
+      return c.json(
+        {
+          success: false,
+          error: { code: 'rate_limited', message: 'Слишком много запросов. Попробуйте позже.' },
+        } as const,
+        429,
+      );
     }
     await next();
   };
+}
+
+/**
+ * Занимает слот в окне: возвращает порядковый номер запроса.
+ * KV при наличии биндинга, иначе память изолята. Ошибка KV — откат
+ * на память, а не открытый шлюз.
+ */
+async function takeSlot(
+  c: Context,
+  key: string,
+  rule: RateLimitRule,
+  now: number,
+  windowMs: number,
+): Promise<number> {
+  const kv = ((c.env ?? {}) as AppEnv['Bindings']).RATE_KV;
+  if (kv) {
+    try {
+      const kvKey = `${key}:${Math.floor(now / windowMs)}`;
+      const current = Number((await kv.get(kvKey)) ?? 0) + 1;
+      await kv.put(kvKey, String(current), { expirationTtl: rule.windowSec });
+      return current;
+    } catch {
+      /* KV недоступен — считаем в памяти */
+    }
+  }
+  const current = buckets.get(key);
+  if (current && current.resetAt > now) {
+    current.count += 1;
+    return current.count;
+  }
+  buckets.set(key, { count: 1, resetAt: now + windowMs });
+  return 1;
 }
 
 /** Готовые пресеты — лимиты из docs/security-audit.md раздел 4.2. */
