@@ -16,6 +16,7 @@ const nav = [
   { href: '/reviews', label: 'Отзывы' },
   { href: '/users', label: 'Пользователи' },
   { href: '/requests', label: 'Заявки' },
+  { href: '/outbox', label: 'Уведомления' },
   { href: '/settings', label: 'Настройки' },
 ];
 

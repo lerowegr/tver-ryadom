@@ -1,6 +1,7 @@
 import type {
   BookingStatus,
   ContactRequestStatus,
+  OutboxStatus,
   PriceType,
   ProgramStep,
   ReviewStatus,
@@ -123,6 +124,20 @@ export interface AdminContactRequest {
   email: string | null;
   message: string;
   status: ContactRequestStatus;
+  createdAt: string;
+}
+
+export interface AdminOutboxItem {
+  id: string;
+  channel: string;
+  recipient: string;
+  template: string;
+  payload: Record<string, unknown>;
+  status: OutboxStatus;
+  attempts: number;
+  lastError: string | null;
+  scheduledAt: string;
+  sentAt: string | null;
   createdAt: string;
 }
 
