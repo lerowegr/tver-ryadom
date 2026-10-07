@@ -7,3 +7,8 @@ updates:
     # Рантайм Workers (hono/next/grammy/drizzle) — приоритетно.
     # Build-time транзитивные high (postcss/sharp) чинятся апстримом.
     open-pull-requests-limit: 5
+    ignore:
+      # zod v4 — ломающий мажор (меняет вывод типов z.coerce и др.):
+      # миграция отдельным проектом, не ботом. PR #2 закрыт по этой причине.
+      - dependency-name: zod
+        versions: [">=4"]
