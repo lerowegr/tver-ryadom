@@ -15,7 +15,7 @@
     "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.101.2",
     "@tver/shared": "workspace:*",
-    "maplibre-gl": "^6.6.0",
+    "maplibre-gl": "^6.12.0",
     "next": "^15.5.27",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
