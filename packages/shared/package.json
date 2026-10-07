@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@tver/config": "workspace:*",
-    "maplibre-gl": "^6.6.0"
+    "maplibre-gl": "^6.12.0"
   },
   "dependencies": {
     "zod": "^3.25.76"
