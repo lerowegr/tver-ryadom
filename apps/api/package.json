@@ -19,7 +19,7 @@
     "@tver/db": "workspace:*",
     "@tver/shared": "workspace:*",
     "drizzle-orm": "^0.45.2",
-    "grammy": "^1.44.0",
+    "grammy": "^1.46.0",
     "hono": "^4.13.13",
     "zod": "^3.25.76"
   },
