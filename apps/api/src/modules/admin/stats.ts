@@ -1,4 +1,4 @@
-import { bookings, contactRequests, reviews, schedules } from '@tver/db';
+import { bookings, contactRequests, outbox, reviews, schedules } from '@tver/db';
 import { count, eq, gt, gte, inArray, sql, sum } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { AppEnv } from '../../env';
@@ -42,6 +42,12 @@ export const adminStatsRoutes = new Hono<AppEnv>().get('/', async (c) => {
     .from(contactRequests)
     .where(eq(contactRequests.status, 'new'));
 
+  // Упавшие доставки — бейдж в меню админки, чтобы dead letter не копился незамеченным.
+  const [failedNotifications] = await db
+    .select({ total: count() })
+    .from(outbox)
+    .where(eq(outbox.status, 'failed'));
+
   // Брони по дням за неделю — для мини-графика на дашборде.
   const byDay = await db
     .select({
@@ -68,6 +74,7 @@ export const adminStatsRoutes = new Hono<AppEnv>().get('/', async (c) => {
     revenue: Number(revenue?.total ?? 0),
     pendingReviews: pendingReviews?.total ?? 0,
     newRequests: newRequests?.total ?? 0,
+    failedNotifications: failedNotifications?.total ?? 0,
     bookingsByDay: byDay,
     recentBookings: recent.map((row) => ({
       id: row.id,

@@ -1,4 +1,4 @@
-import { schedules } from '@tver/db';
+import { outbox, schedules } from '@tver/db';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { TEST_ENV, bearer, body, createAdmin, createTestApp, jsonInit, registerUser } from './helpers';
@@ -16,10 +16,24 @@ describe('admin: доступ', () => {
   it('админ видит статистику дашборда', async () => {
     const { app, db } = await createTestApp();
     const admin = await createAdmin(app, db);
+
+    // Упавшая доставка попадает в счётчик бейджа меню.
+    await db.insert(outbox).values({
+      id: crypto.randomUUID(),
+      channel: 'email',
+      recipient: 'user@test.ru',
+      template: 'password_reset',
+      payload: {},
+      status: 'failed',
+      attempts: 3,
+      lastError: 'Resend недоступен',
+      scheduledAt: new Date(),
+    });
+
     const res = await app.request('/api/v1/admin/stats', { headers: bearer(admin.accessToken) }, TEST_ENV);
     expect(res.status).toBe(200);
     const { data } = await body(res);
-    expect(data).toMatchObject({ pendingBookings: 0, pendingReviews: 0 });
+    expect(data).toMatchObject({ pendingBookings: 0, pendingReviews: 0, failedNotifications: 1 });
     expect(Array.isArray(data.recentBookings)).toBe(true);
   });
 });

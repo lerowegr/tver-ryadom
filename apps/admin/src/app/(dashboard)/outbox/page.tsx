@@ -28,6 +28,7 @@ export default function OutboxPage() {
     mutationFn: (id: string) => authFetch(`/admin/outbox/${id}/retry`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-outbox'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 

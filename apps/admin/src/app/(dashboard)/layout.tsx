@@ -48,6 +48,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     '/bookings': stats.data?.pendingBookings,
     '/reviews': stats.data?.pendingReviews,
     '/requests': stats.data?.newRequests,
+    '/outbox': stats.data?.failedNotifications,
   };
 
   return (
@@ -74,7 +75,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               >
                 {item.label}
                 {badge ? (
-                  <span className="bg-ink text-bg px-1.5 py-0.5 text-[0.625rem] tabular-nums">{badge}</span>
+                  <span
+                    className={`px-1.5 py-0.5 text-[0.625rem] tabular-nums ${
+                      item.href === '/outbox' ? 'bg-danger text-white' : 'bg-ink text-bg'
+                    }`}
+                  >
+                    {badge}
+                  </span>
                 ) : null}
               </Link>
             );

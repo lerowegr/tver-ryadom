@@ -148,6 +148,7 @@ export interface AdminStats {
   revenue: number;
   pendingReviews: number;
   newRequests: number;
+  failedNotifications: number;
   bookingsByDay: { day: string; total: number }[];
   recentBookings: {
     id: string;
