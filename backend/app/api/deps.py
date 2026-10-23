@@ -22,6 +22,15 @@ from app.core.security import (
     TokenService,
 )
 from app.core.unit_of_work import UnitOfWork
+from app.services.admin.calendar import AdminCalendarService, DashboardService
+from app.services.admin.people import (
+    AdminBookingService,
+    AdminRequestService,
+    AdminReviewService,
+    AdminUserService,
+    SettingsService,
+)
+from app.services.admin.tours import AdminScheduleService, AdminTourService
 from app.services.auth import AuthService, SessionMeta
 from app.services.availability import AvailabilityService
 from app.services.bookings import BookingService
@@ -152,6 +161,58 @@ def get_contact_service(
 ReviewServiceDep = Annotated[ReviewService, Depends(get_review_service)]
 FavoriteServiceDep = Annotated[FavoriteService, Depends(get_favorite_service)]
 ContactServiceDep = Annotated[ContactService, Depends(get_contact_service)]
+
+
+# ---- Административные службы ------------------------------------------------
+
+
+def get_admin_tour_service(
+    uow: UowDep, images: Annotated[ImageUrlBuilder, Depends(get_image_builder)]
+) -> AdminTourService:
+    return AdminTourService(uow, images)
+
+
+def get_admin_schedule_service(uow: UowDep) -> AdminScheduleService:
+    return AdminScheduleService(uow)
+
+
+def get_admin_booking_service(uow: UowDep) -> AdminBookingService:
+    return AdminBookingService(uow)
+
+
+def get_admin_review_service(uow: UowDep) -> AdminReviewService:
+    return AdminReviewService(uow)
+
+
+def get_admin_request_service(uow: UowDep) -> AdminRequestService:
+    return AdminRequestService(uow)
+
+
+def get_admin_user_service(uow: UowDep, hasher: HasherDep) -> AdminUserService:
+    return AdminUserService(uow, hasher)
+
+
+def get_settings_service(uow: UowDep) -> SettingsService:
+    return SettingsService(uow)
+
+
+def get_admin_calendar_service(uow: UowDep) -> AdminCalendarService:
+    return AdminCalendarService(uow)
+
+
+def get_dashboard_service(uow: UowDep) -> DashboardService:
+    return DashboardService(uow)
+
+
+AdminTourServiceDep = Annotated[AdminTourService, Depends(get_admin_tour_service)]
+AdminScheduleServiceDep = Annotated[AdminScheduleService, Depends(get_admin_schedule_service)]
+AdminBookingServiceDep = Annotated[AdminBookingService, Depends(get_admin_booking_service)]
+AdminReviewServiceDep = Annotated[AdminReviewService, Depends(get_admin_review_service)]
+AdminRequestServiceDep = Annotated[AdminRequestService, Depends(get_admin_request_service)]
+AdminUserServiceDep = Annotated[AdminUserService, Depends(get_admin_user_service)]
+SettingsServiceDep = Annotated[SettingsService, Depends(get_settings_service)]
+AdminCalendarServiceDep = Annotated[AdminCalendarService, Depends(get_admin_calendar_service)]
+DashboardServiceDep = Annotated[DashboardService, Depends(get_dashboard_service)]
 
 
 def get_session_meta(request: Request) -> SessionMeta:
