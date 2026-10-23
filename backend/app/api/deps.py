@@ -106,6 +106,7 @@ def get_auth_service(
         tokens,
         refresh_ttl_days=settings.refresh_token_ttl_days,
         webapp=webapp,
+        reset_secret=settings.jwt_secret,
     )
 
 
@@ -244,6 +245,7 @@ def get_storage(request: Request, settings: SettingsDep) -> ObjectStorage:
 
 
 StorageDep = Annotated[ObjectStorage, Depends(get_storage)]
+ImageBuilderDep = Annotated[ImageUrlBuilder, Depends(get_image_builder)]
 
 
 def get_admin_image_service(
@@ -292,7 +294,14 @@ def get_telegram_channel(
     bookings: BookingServiceDep,
     settings: SettingsDep,
 ) -> TelegramChannel:
-    return TelegramChannel(uow, api, screens, bookings, site_url=settings.site_url)
+    return TelegramChannel(
+        uow,
+        api,
+        screens,
+        bookings,
+        site_url=settings.site_url,
+        link_secret=settings.jwt_secret,
+    )
 
 
 def get_telegram_setup(

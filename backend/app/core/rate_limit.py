@@ -121,4 +121,6 @@ RULES = {
     "booking": Rule(limit=20, window_seconds=3600, prefix="booking"),
     # Флуд модерации отзывами.
     "review": Rule(limit=10, window_seconds=3600, prefix="review"),
+    # Перебор адресов через форму восстановления.
+    "password_reset": Rule(limit=5, window_seconds=3600, prefix="pwdreset"),
 }

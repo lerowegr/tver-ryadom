@@ -525,3 +525,57 @@ class TestState:
         assert restored.booking == state.booking
         assert restored.awaiting == "phone"
         assert restored.carousel == 2
+
+
+class TestAccountLinking:
+    """Привязка аккаунта с сайта кодом из /start."""
+
+    class LinkedHarness(BotHarness):
+        async def run(self, update: dict[str, Any]) -> None:
+            async with UnitOfWork(self._database.session_factory) as uow:
+                screens = ScreenBuilder(uow)
+                bookings = BookingService(uow, AvailabilityService(uow), NullNotifier())
+                channel = TelegramChannel(
+                    uow, self.api, screens, bookings, link_secret="секрет"
+                )
+                await channel.handle(update)
+                await uow.commit()
+
+    async def test_valid_code_links_the_account(
+        self, database: Database, catalog: CatalogFixture
+    ) -> None:
+        from app.services.link_codes import link_codes
+
+        async with UnitOfWork(database.session_factory) as uow:
+            account = User(name="Егор", email="egor@example.com")
+            uow.session.add(account)
+            await uow.flush()
+            user_id = account.id
+            await uow.commit()
+
+        harness = self.LinkedHarness(database, FakeTelegram())
+        await harness.run(message(f"/start {link_codes('секрет').create(user_id)}"))
+
+        assert "аккаунт привязан" in harness.api.last_text()
+        async with database.session() as session:
+            linked = await session.get(User, user_id)
+            assert linked.telegram_chat_id == "555"
+
+    async def test_stale_code_is_refused(
+        self, database: Database, catalog: CatalogFixture
+    ) -> None:
+        from app.services.link_codes import link_codes
+
+        harness = self.LinkedHarness(database, FakeTelegram())
+        stale = link_codes("секрет").create("user-1", now=0)
+        await harness.run(message(f"/start {stale}"))
+        assert "устарела" in harness.api.last_text()
+
+    async def test_foreign_code_is_refused(
+        self, database: Database, catalog: CatalogFixture
+    ) -> None:
+        from app.services.link_codes import link_codes
+
+        harness = self.LinkedHarness(database, FakeTelegram())
+        await harness.run(message(f"/start {link_codes('другой').create('user-1')}"))
+        assert "устарела" in harness.api.last_text()

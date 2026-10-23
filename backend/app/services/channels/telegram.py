@@ -23,6 +23,7 @@ from app.services.bookings import BookingService
 from app.services.channels.accounts import AccountService, ChannelId
 from app.services.channels.screens import Button, Screen, ScreenBuilder, money
 from app.services.channels.state import BotState, Draft, StateStore
+from app.services.link_codes import link_codes
 from app.services.notifications.templates import format_msk
 
 #: Время начала для заявок на свою дату.
@@ -93,6 +94,7 @@ class TelegramChannel:
         bookings: BookingService,
         *,
         site_url: str | None = None,
+        link_secret: str = "",
     ) -> None:
         self._uow = uow
         self._api = api
@@ -101,6 +103,7 @@ class TelegramChannel:
         self._state = StateStore(uow)
         self._accounts = AccountService(uow)
         self._site_url = site_url
+        self._link_secret = link_secret
 
     # ---- Вход ------------------------------------------------------------
 
@@ -161,6 +164,12 @@ class TelegramChannel:
         # Ждём ответ на поле кабинета — значит это он, а не вопрос Елене.
         if state.awaiting and text:
             await self._fill_profile(incoming, state, text)
+            return
+
+        # «/start <код>» — привязка аккаунта с сайта. Код подписан и живёт
+        # четверть часа, поэтому хранить его нигде не нужно.
+        if text.startswith("/start ") and self._link_secret:
+            await self._link_account(incoming, text[len("/start "):].strip())
             return
 
         command = text.lower().lstrip("/").split("@")[0]
@@ -231,6 +240,29 @@ class TelegramChannel:
             return
 
         await self._show(incoming, await self._screens.welcome())
+
+    async def _link_account(self, incoming: Incoming, code: str) -> None:
+        user_id = link_codes(self._link_secret).verify(code)
+        if user_id is None:
+            await self._send(
+                incoming.chat_id,
+                Screen(
+                    "Ссылка привязки устарела. Откройте кабинет на сайте и "
+                    "получите новую.",
+                    [[Button("← Меню", "menu")]],
+                ),
+            )
+            return
+
+        await self._accounts.link(ChannelId.TELEGRAM, incoming.chat_id, user_id)
+        await self._send(
+            incoming.chat_id,
+            Screen(
+                "Готово — аккаунт привязан. Брони с сайта теперь видны здесь, "
+                "а изменения в кабинете работают в обе стороны.",
+                [[Button("📋 Мои брони", "my:list")], [Button("← Меню", "menu")]],
+            ),
+        )
 
     # ---- Личный кабинет --------------------------------------------------
 

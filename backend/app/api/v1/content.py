@@ -10,6 +10,7 @@ from app.api.deps import (
     FavoriteServiceDep,
     OptionalUserDep,
     ReviewServiceDep,
+    SettingsServiceDep,
     UowDep,
     require_captcha,
 )
@@ -25,6 +26,16 @@ from app.domain.schemas.content import (
 )
 
 router = APIRouter(tags=["content"])
+
+
+@router.get("/settings")
+async def public_settings(service: SettingsServiceDep) -> Envelope[dict[str, object]]:
+    """Контакты, тексты разделов и прочее, что показывает сайт.
+
+    Отбор белым списком: новая служебная настройка не должна утечь
+    наружу просто потому, что о ней забыли.
+    """
+    return ok(await service.public())
 
 
 @router.get("/reviews/latest")

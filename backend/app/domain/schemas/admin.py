@@ -337,6 +337,15 @@ class AdminRequestOut(CamelSchema):
 # ---- Настройки --------------------------------------------------------------
 
 
+class VkSettingsUpdate(Schema):
+    confirmation: str | None = Field(default=None, max_length=200)
+    secret: str | None = Field(default=None, max_length=200)
+
+
+class MaxSettingsUpdate(Schema):
+    api_base: str | None = Field(default=None, alias="apiBase", max_length=300)
+
+
 class SettingsUpdate(Schema):
     entries: dict[str, Any]
 

@@ -45,6 +45,9 @@ class TelegramSetupService:
         self._api = api
         self._token = token
 
+    async def username(self) -> str | None:
+        return await self._read(USERNAME_KEY)
+
     async def read_secret(self) -> str | None:
         setting = await self._uow.session.get(Setting, SECRET_KEY)
         return setting.value if setting and isinstance(setting.value, str) else None

@@ -41,6 +41,35 @@ class TelegramWebAppRequest(Schema):
     init_data: str = Field(min_length=1, alias="initData")
 
 
+class PasswordResetRequest(Schema, EmailMixin):
+    email: EmailStr
+    cf_token: str | None = Field(default=None, alias="cfToken", max_length=4000)
+
+
+class PasswordResetConfirm(Schema):
+    token: str = Field(min_length=1)
+    password: Password
+
+
+class SessionOut(CamelSchema):
+    """Устройство в списке. Хеша токена здесь нет по построению."""
+
+    id: str
+    user_agent: str | None
+    ip: str | None
+    created_at: datetime
+    expires_at: datetime
+
+
+class TelegramLink(CamelSchema):
+    available: bool
+    url: str | None = None
+
+
+class AvatarOut(CamelSchema):
+    avatar_url: str | None
+
+
 class PublicUser(CamelSchema):
     """Профиль в том виде, в каком его ждёт сайт.
 

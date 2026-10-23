@@ -10,11 +10,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from app.core.errors import ConflictError, NotFoundError, UnauthorizedError, ValidationError
 from app.core.security import PasswordHasher, TokenService, random_token, sha256_hex
 from app.core.unit_of_work import UnitOfWork
 from app.domain.models.auth import Session, User
+from app.domain.models.notifications import OutboxMessage
 from app.domain.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
@@ -22,6 +24,7 @@ from app.domain.schemas.auth import (
     RegisterRequest,
     UpdateProfileRequest,
 )
+from app.services.link_codes import reset_codes
 from app.services.telegram_webapp import TelegramWebAppVerifier
 
 #: Одно сообщение и на незнакомый адрес, и на неверный пароль: разные
@@ -55,12 +58,14 @@ class AuthService:
         *,
         refresh_ttl_days: int = 30,
         webapp: TelegramWebAppVerifier | None = None,
+        reset_secret: str = "",
     ) -> None:
         self._uow = uow
         self._hasher = hasher
         self._tokens = tokens
         self._refresh_ttl = timedelta(days=refresh_ttl_days)
         self._webapp = webapp
+        self._reset_secret = reset_secret
 
     # ---- Вход и регистрация ---------------------------------------------
 
@@ -161,6 +166,76 @@ class AuthService:
             access_token=self._tokens.issue(user.id, user.role, session.id),
             refresh_token=refresh_token,
         )
+
+    # ---- Устройства ------------------------------------------------------
+
+    async def list_sessions(self, user_id: str) -> list[Session]:
+        """Живые сессии для экрана «устройства». Хеши токенов наружу
+        не уходят: в ответе их просто нет."""
+        return await self._uow.sessions.find_many(
+            Session.user_id == user_id,
+            Session.revoked_at.is_(None),
+            Session.expires_at > datetime.now(UTC),
+            order_by=[Session.created_at.desc()],
+        )
+
+    async def revoke_session(self, user_id: str, session_id: str) -> None:
+        # Проверка владельца обязательна: иначе по идентификатору можно
+        # было бы выбивать чужие устройства.
+        session = await self._uow.sessions.find_one(
+            Session.id == session_id,
+            Session.user_id == user_id,
+            Session.revoked_at.is_(None),
+        )
+        if session is None:
+            raise NotFoundError("Сессия не найдена")
+        session.revoke()
+
+    # ---- Восстановление пароля -------------------------------------------
+
+    async def request_password_reset(
+        self, email: str, *, site_url: str | None, notifier: Any = None
+    ) -> None:
+        """Заявка на восстановление.
+
+        Отвечает одинаково и на известный адрес, и на незнакомый: иначе по
+        ответу можно перебирать, кто зарегистрирован. Работает и для
+        записей без пароля (заведённых из бота) — так они задают первый.
+        """
+        user = await self._uow.users.by_email(email)
+        if user is None or not user.email:
+            return
+
+        token = reset_codes(self._reset_secret).create(user.id)
+        base = (site_url or "").rstrip("/")
+        self._uow.session.add(
+            OutboxMessage(
+                channel="email",
+                recipient=user.email,
+                template="password_reset",
+                payload={
+                    "resetUrl": f"{base}/auth/reset?token={token}",
+                    "siteUrl": base or None,
+                },
+                scheduled_at=datetime.now(UTC),
+            )
+        )
+
+    async def confirm_password_reset(
+        self, token: str, password: str, meta: SessionMeta
+    ) -> IssuedSession:
+        user_id = reset_codes(self._reset_secret).verify(token)
+        if user_id is None:
+            raise ValidationError("Ссылка недействительна или устарела. Запросите новую.")
+
+        user = await self._uow.users.get(user_id)
+        if user is None or not user.email:
+            raise ValidationError("Ссылка недействительна или устарела. Запросите новую.")
+
+        user.password_hash = self._hasher.hash(password)
+        # Гасим все сессии: ссылка могла утечь вместе со старой.
+        await self._uow.sessions.revoke_all_for_user(user.id)
+        return await self._issue(user, meta)
 
     # ---- Профиль ---------------------------------------------------------
 

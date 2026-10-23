@@ -53,6 +53,7 @@ from app.domain.schemas.admin import (
     CalendarEntry,
     DashboardStats,
     ImageUpdate,
+    MaxSettingsUpdate,
     RequestFilter,
     RequestStatusUpdate,
     ReviewFilter,
@@ -65,6 +66,7 @@ from app.domain.schemas.admin import (
     TourFilter,
     TourUpdate,
     UserFilter,
+    VkSettingsUpdate,
 )
 from app.domain.schemas.availability import (
     AvailabilityBlockCreate,
@@ -338,7 +340,7 @@ async def telegram_status(setup: TelegramSetupDep) -> Envelope[dict[str, object]
     return ok(asdict(await setup.status()))
 
 
-@router.post("/telegram/connect")
+@router.post("/telegram/setup")
 async def connect_telegram(
     request: Request, setup: TelegramSetupDep, settings: SettingsDep, uow: UowDep
 ) -> Envelope[dict[str, object]]:
@@ -360,6 +362,32 @@ async def disable_telegram(setup: TelegramSetupDep, uow: UowDep) -> Envelope[dic
     status_ = await setup.disable()
     await uow.commit()
     return ok(asdict(status_))
+
+
+@router.put("/channels/vk")
+async def save_vk_settings(
+    data: VkSettingsUpdate, service: SettingsServiceDep, uow: UowDep
+) -> Envelope[dict[str, bool]]:
+    """Строка подтверждения и секрет приходят из настроек сообщества.
+
+    Токен сообщества сюда не кладём: секреты живут в окружении сервера,
+    а не в базе, из которой их видно в выгрузке.
+    """
+    await service.update({
+        "vk.confirmation": data.confirmation,
+        "vk.secret": data.secret,
+    })
+    await uow.commit()
+    return ok({"saved": True})
+
+
+@router.put("/channels/max")
+async def save_max_settings(
+    data: MaxSettingsUpdate, service: SettingsServiceDep, uow: UowDep
+) -> Envelope[dict[str, bool]]:
+    await service.update({"max.apiBase": data.api_base})
+    await uow.commit()
+    return ok({"saved": True})
 
 
 @router.get("/channels")

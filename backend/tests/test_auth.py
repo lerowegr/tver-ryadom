@@ -206,7 +206,7 @@ class TestProfile:
         headers = {"Authorization": f"Bearer {token}"}
 
         response = await client.patch(
-            "/api/v1/auth/me",
+            "/api/v1/auth/profile",
             headers=headers,
             json={"name": "Егор Ярцев", "phone": "8 910 931-23-55"},
         )
