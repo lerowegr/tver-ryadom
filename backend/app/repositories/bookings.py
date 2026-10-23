@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any, cast
 
-from sqlalchemy import ColumnElement, case, func, or_, select, update
+from sqlalchemy import ColumnElement, CursorResult, case, func, or_, select, update
 from sqlalchemy.orm import selectinload
 
 from app.domain.models.bookings import Booking
@@ -68,7 +69,9 @@ class BookingRepository(Repository[Booking]):
 
         Возвращает False, если мест не хватило или слот закрыт.
         """
-        result = await self.session.execute(
+        result = cast(
+            CursorResult[Any],
+            await self.session.execute(
             update(Schedule)
             .where(
                 Schedule.id == schedule_id,
@@ -78,7 +81,8 @@ class BookingRepository(Repository[Booking]):
             .values(booked_count=Schedule.booked_count + people)
             # Объект слота в сессии мог устареть; синхронизировать его
             # незачем, дальше он перечитывается при необходимости.
-            .execution_options(synchronize_session=False)
+            .execution_options(synchronize_session=False),
+            ),
         )
         return (result.rowcount or 0) > 0
 

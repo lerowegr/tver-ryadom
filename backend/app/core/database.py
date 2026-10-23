@@ -94,7 +94,7 @@ class Database:
         # база в памяти у каждого соединения оказывается своя.
         options: dict[str, object] = {"echo": echo, "pool_pre_ping": True}
         options.update(engine_options)
-        self._engine: AsyncEngine = create_async_engine(url, **options)  # type: ignore[arg-type]
+        self._engine: AsyncEngine = create_async_engine(url, **options)
         self._session_factory = async_sessionmaker(
             self._engine,
             expire_on_commit=False,

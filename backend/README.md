@@ -71,6 +71,18 @@ uvicorn app.main:app --reload
 
 Документация — на `/docs`, в продакшене она отключена.
 
+## Проверки
+
+```bash
+.venv/Scripts/python -m pytest        # 306 тестов
+.venv/Scripts/python -m ruff check .  # стиль
+.venv/Scripts/python -m mypy app      # типы, строгий режим
+```
+
+Все три проходят чисто. Образ Docker собрать на машине разработки не
+удалось — Docker там не установлен; сборка пакета, на которой держится
+Dockerfile, проверена отдельно.
+
 ## Тесты
 
 ```bash

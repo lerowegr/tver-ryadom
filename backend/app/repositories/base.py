@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from abc import ABC
 from collections.abc import Sequence
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
-from sqlalchemy import ColumnElement, delete, func, select
+from sqlalchemy import ColumnElement, CursorResult, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base
@@ -48,7 +48,9 @@ class Repository[ModelT: Base](ABC):
 
     async def delete_where(self, *conditions: ColumnElement[bool]) -> int:
         """Удаление без выборки — когда объекты нужны только чтобы их убрать."""
-        result = await self._session.execute(delete(self.model).where(*conditions))
+        result = cast(
+            CursorResult[Any], await self._session.execute(delete(self.model).where(*conditions))
+        )
         return result.rowcount or 0
 
     async def find_one(self, *conditions: ColumnElement[bool]) -> ModelT | None:

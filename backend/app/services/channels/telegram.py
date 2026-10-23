@@ -223,11 +223,11 @@ class TelegramChannel:
             await self._ask_profile(incoming, action[3:])
             return
         if action.startswith("c:"):
-            screen, position = await self._screens.carousel(int(action[2:]))
+            card, position = await self._screens.carousel(int(action[2:]))
             state = await self._state.read(incoming.chat_id)
             state.carousel = position
             await self._state.write(incoming.chat_id, state)
-            await self._show(incoming, screen)
+            await self._show(incoming, card)
             return
         if action.startswith("fav:"):
             await self._toggle_favorite(incoming, action[4:])

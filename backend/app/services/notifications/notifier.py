@@ -81,7 +81,7 @@ class OutboxNotifier(CabinetNotifier):
     ) -> None:
         self._uow.session.add(
             OutboxMessage(
-                channel=channel,  # type: ignore[arg-type]
+                channel=channel,
                 recipient=recipient,
                 template=event,
                 payload=clean(payload),

@@ -92,9 +92,10 @@ class TourRepository(Repository[Tour]):
             .offset(filter_.offset)
         )
         rows = await self.session.execute(query)
-        return list(rows.scalars().unique().all()), int(total or 0)
+        found: list[Tour] = list(rows.scalars().unique().all())
+        return found, int(total or 0)
 
-    def _card_query(self) -> Select[tuple[Tour]]:
+    def _card_query(self) -> Select[Any]:
         return select(Tour).options(
             # Для карточки нужна одна фотография, но лимит внутри selectinload
             # поставить нельзя — берём все и отрезаем первую при сборке.

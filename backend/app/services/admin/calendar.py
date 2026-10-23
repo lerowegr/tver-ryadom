@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import selectinload
 
 from app.core.unit_of_work import UnitOfWork
@@ -93,7 +94,9 @@ class AdminCalendarService:
                 kind="request",
                 tour_id=booking.tour_id,
                 tour_title=booking.tour.title if booking.tour else "",
-                starts_at=booking.desired_date,  # type: ignore[arg-type]
+                # Проверено условием ниже: сюда попадают только заявки
+                # со своей датой.
+                starts_at=booking.desired_date,
                 duration_minutes=booking.tour.duration_minutes if booking.tour else 0,
                 status=booking.status,
                 meeting_point=booking.tour.meeting_point if booking.tour else None,
@@ -188,8 +191,8 @@ class DashboardService:
             ],
         )
 
-    async def _count(self, model: type, *conditions: object) -> int:
+    async def _count(self, model: type[Any], *conditions: ColumnElement[bool]) -> int:
         total = await self._uow.session.scalar(
-            select(func.count()).select_from(model).where(*conditions)  # type: ignore[arg-type]
+            select(func.count()).select_from(model).where(*conditions)
         )
         return int(total or 0)

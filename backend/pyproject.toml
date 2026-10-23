@@ -27,10 +27,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.4",
+    "mypy>=1.18",
     "pytest-asyncio>=1.0",
     "aiosqlite>=0.21",
     "ruff>=0.14",
-    "mypy>=1.18",
 ]
 
 [build-system]

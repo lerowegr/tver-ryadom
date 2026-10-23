@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from sqlalchemy import delete
+
 from app.core.errors import ConflictError, NotFoundError, ValidationError
 from app.core.unit_of_work import UnitOfWork
 from app.domain.models.bookings import Booking
@@ -14,6 +16,7 @@ from app.domain.schemas.admin import (
     AdminScheduleOut,
     AdminTourDetail,
     AdminTourListItem,
+    RoutePointInput,
     ScheduleCreate,
     ScheduleUpdate,
     TourCreate,
@@ -143,9 +146,7 @@ class AdminTourService:
             raise ConflictError("Экскурсия с таким адресом уже есть")
 
     async def _replace_badges(self, tour_id: str, slugs: list[str]) -> None:
-        await self._uow.session.execute(
-            TourBadge.__table__.delete().where(TourBadge.tour_id == tour_id)
-        )
+        await self._uow.session.execute(delete(TourBadge).where(TourBadge.tour_id == tour_id))
         if not slugs:
             return
         found = await self._uow.badges.by_slugs(slugs)
@@ -156,10 +157,10 @@ class AdminTourService:
         for badge in found:
             self._uow.session.add(TourBadge(tour_id=tour_id, badge_id=badge.id))
 
-    async def _replace_route_points(self, tour_id: str, points: list) -> None:
-        await self._uow.session.execute(
-            RoutePoint.__table__.delete().where(RoutePoint.tour_id == tour_id)
-        )
+    async def _replace_route_points(
+        self, tour_id: str, points: list[RoutePointInput]
+    ) -> None:
+        await self._uow.session.execute(delete(RoutePoint).where(RoutePoint.tour_id == tour_id))
         for index, point in enumerate(points):
             self._uow.session.add(
                 RoutePoint(

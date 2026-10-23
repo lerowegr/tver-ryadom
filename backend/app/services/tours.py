@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 
 from app.core.errors import NotFoundError
 from app.core.unit_of_work import UnitOfWork
-from app.domain.models.tours import Schedule, Tour
+from app.domain.models.tours import RoutePoint, Schedule, Tour
 from app.domain.schemas.tours import (
     BadgeOut,
     ProgramStep,
@@ -75,7 +76,7 @@ class TourCatalogService:
     # ---- Сборка ----------------------------------------------------------
 
     @staticmethod
-    def _to_base(tour: Tour) -> dict:
+    def _to_base(tour: Tour) -> dict[str, Any]:
         return {
             "id": tour.id,
             "slug": tour.slug,
@@ -128,7 +129,7 @@ class TourCatalogService:
         )
 
     @staticmethod
-    def _ordered_points(tour: Tour) -> list:
+    def _ordered_points(tour: Tour) -> list[RoutePoint]:
         return sorted(tour.route_points, key=lambda point: point.sort_order)
 
     @staticmethod
