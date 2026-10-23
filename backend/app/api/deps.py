@@ -23,7 +23,10 @@ from app.core.security import (
 )
 from app.core.unit_of_work import UnitOfWork
 from app.services.auth import AuthService, SessionMeta
+from app.services.availability import AvailabilityService
+from app.services.bookings import BookingService
 from app.services.images import ImageUrlBuilder
+from app.services.notifications import CabinetNotifier, Notifier
 from app.services.telegram_webapp import TelegramWebAppVerifier
 from app.services.tours import TourCatalogService
 
@@ -106,6 +109,29 @@ def get_catalog_service(
 
 
 CatalogServiceDep = Annotated[TourCatalogService, Depends(get_catalog_service)]
+
+
+def get_availability_service(uow: UowDep) -> AvailabilityService:
+    return AvailabilityService(uow)
+
+
+AvailabilityServiceDep = Annotated[AvailabilityService, Depends(get_availability_service)]
+
+
+def get_notifier(uow: UowDep) -> Notifier:
+    return CabinetNotifier(uow)
+
+
+def get_booking_service(
+    uow: UowDep,
+    availability: AvailabilityServiceDep,
+    notifier: Annotated[Notifier, Depends(get_notifier)],
+    settings: SettingsDep,
+) -> BookingService:
+    return BookingService(uow, availability, notifier, site_url=settings.site_url)
+
+
+BookingServiceDep = Annotated[BookingService, Depends(get_booking_service)]
 
 
 def get_session_meta(request: Request) -> SessionMeta:

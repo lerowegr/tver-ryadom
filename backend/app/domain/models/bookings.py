@@ -21,7 +21,9 @@ BookingSource = Literal["web", "telegram", "vk", "max", "admin"]
 #: Из какого состояния куда можно перевести бронь. Правила живут здесь,
 #: а не в обработчике запроса: тот же переход делает бот и админка.
 ALLOWED_TRANSITIONS: dict[BookingStatus, frozenset[BookingStatus]] = {
-    "pending": frozenset({"confirmed", "cancelled"}),
+    # Из ожидания можно и сразу в «завершена»: гость пришёл, экскурсия
+    # состоялась, подтверждать её задним числом незачем.
+    "pending": frozenset({"confirmed", "cancelled", "completed"}),
     "confirmed": frozenset({"completed", "cancelled"}),
     "cancelled": frozenset(),
     "completed": frozenset(),

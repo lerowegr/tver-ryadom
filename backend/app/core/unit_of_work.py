@@ -20,6 +20,8 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.repositories.availability import AvailabilityRepository
+from app.repositories.bookings import BookingRepository
 from app.repositories.tours import (
     BadgeRepository,
     ReviewRepository,
@@ -39,6 +41,8 @@ class UnitOfWork:
         self._badges: BadgeRepository | None = None
         self._schedules: ScheduleRepository | None = None
         self._reviews: ReviewRepository | None = None
+        self._availability: AvailabilityRepository | None = None
+        self._bookings: BookingRepository | None = None
 
     # ---- Протокол контекстного менеджера --------------------------------
 
@@ -67,6 +71,8 @@ class UnitOfWork:
                 self._badges = None
                 self._schedules = None
                 self._reviews = None
+                self._availability = None
+                self._bookings = None
 
     # ---- Транзакция ------------------------------------------------------
 
@@ -124,3 +130,15 @@ class UnitOfWork:
         if self._reviews is None:
             self._reviews = ReviewRepository(self.session)
         return self._reviews
+
+    @property
+    def availability(self) -> AvailabilityRepository:
+        if self._availability is None:
+            self._availability = AvailabilityRepository(self.session)
+        return self._availability
+
+    @property
+    def bookings(self) -> BookingRepository:
+        if self._bookings is None:
+            self._bookings = BookingRepository(self.session)
+        return self._bookings

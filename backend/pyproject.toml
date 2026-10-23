@@ -19,6 +19,9 @@ dependencies = [
     "pillow>=11.0",
     "apscheduler>=3.11",
     "python-multipart>=0.0.20",
+    # База часовых поясов: на Windows её нет вовсе, в slim-образе полагаться
+    # на системную — значит однажды получить расписание со сдвигом на час.
+    "tzdata>=2025.2",
 ]
 
 [project.optional-dependencies]
