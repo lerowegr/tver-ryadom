@@ -21,6 +21,7 @@ from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.database import Database
 from app.core.errors import AppError, NotFoundError, ValidationError
+from app.core.rate_limit import MemoryRateLimiter
 from app.domain import models  # noqa: F401 — регистрирует таблицы в метаданных
 from app.scheduler import BackgroundJobs
 
@@ -45,6 +46,7 @@ def create_app(
         db = database or Database(str(resolved.database_url), echo=resolved.database_echo)
         app.state.settings = resolved
         app.state.database = db
+        app.state.rate_limiter = MemoryRateLimiter()
 
         jobs = BackgroundJobs(db, resolved) if run_jobs else None
         app.state.jobs = jobs

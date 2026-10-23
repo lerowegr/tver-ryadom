@@ -78,6 +78,8 @@ class Settings(BaseSettings):
     vk_secret: str | None = None
     max_bot_token: str | None = None
     max_api_base: str | None = None
+    #: Секрет Cloudflare Turnstile. Пусто — проверка «я не робот» выключена.
+    turnstile_secret: str | None = None
     resend_api_key: str | None = None
     email_from: str | None = None
 

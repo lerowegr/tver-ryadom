@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.deps import (
     ContactServiceDep,
@@ -11,7 +11,9 @@ from app.api.deps import (
     OptionalUserDep,
     ReviewServiceDep,
     UowDep,
+    require_captcha,
 )
+from app.core.rate_limit import RULES, RateLimit
 from app.core.responses import Envelope, ok
 from app.domain.schemas.content import (
     ContactRequestCreate,
@@ -30,7 +32,11 @@ async def latest_reviews(service: ReviewServiceDep) -> Envelope[list[LatestRevie
     return ok(await service.latest())
 
 
-@router.post("/reviews", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/reviews",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimit(RULES["review"])), Depends(require_captcha)],
+)
 async def create_review(
     data: ReviewCreate,
     service: ReviewServiceDep,
@@ -68,7 +74,11 @@ async def remove_favorite(
     return ok({"removed": True})
 
 
-@router.post("/contact", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/contact",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimit(RULES["contact"])), Depends(require_captcha)],
+)
 async def submit_contact_request(
     data: ContactRequestCreate, service: ContactServiceDep, uow: UowDep
 ) -> Envelope[ContactRequestCreated]:

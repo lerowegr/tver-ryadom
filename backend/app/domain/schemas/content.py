@@ -19,6 +19,9 @@ class ReviewCreate(Schema):
     text: Annotated[str, StringConstraints(min_length=10, max_length=2000)]
     #: Для отзывов без входа. У авторизованного имя берётся из профиля.
     author_name: AuthorName | None = Field(default=None, alias="authorName")
+    #: Токен виджета «я не робот». Нужен только гостям и только
+    #: когда проверка подключена.
+    cf_token: str | None = Field(default=None, alias="cfToken", max_length=4000)
 
 
 class ReviewCreated(Schema):
@@ -52,6 +55,8 @@ class ContactRequestCreate(Schema):
     phone: str | None = None
     email: str | None = None
     message: Annotated[str, StringConstraints(min_length=5, max_length=3000)]
+    #: Токен виджета «я не робот» — как и у отзыва.
+    cf_token: str | None = Field(default=None, alias="cfToken", max_length=4000)
 
     @field_validator("phone", mode="after")
     @classmethod

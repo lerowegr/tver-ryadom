@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import (
     AvailabilityServiceDep,
@@ -12,7 +12,9 @@ from app.api.deps import (
     CurrentUserDep,
     OptionalUserDep,
     UowDep,
+    require_captcha,
 )
+from app.core.rate_limit import RULES, RateLimit
 from app.core.responses import Envelope, Page, ok, paginated
 from app.domain.schemas.availability import AvailabilityRange, PublicBlock
 from app.domain.schemas.bookings import (
@@ -26,7 +28,11 @@ from app.domain.schemas.bookings import (
 router = APIRouter(tags=["bookings"])
 
 
-@router.post("/bookings", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/bookings",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimit(RULES["booking"])), Depends(require_captcha)],
+)
 async def create_booking(
     data: BookingCreate,
     service: BookingServiceDep,

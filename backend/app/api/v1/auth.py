@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Cookie, Response, status
+from fastapi import APIRouter, Cookie, Depends, Response, status
 
 from app.api.deps import (
     AuthServiceDep,
@@ -13,6 +13,7 @@ from app.api.deps import (
 )
 from app.core.config import Settings
 from app.core.errors import UnauthorizedError
+from app.core.rate_limit import RULES, RateLimit
 from app.core.responses import Envelope, ok
 from app.domain.schemas.auth import (
     ChangePasswordRequest,
@@ -52,7 +53,11 @@ def _session_response(
     return ok(SessionResponse(user=issued.user, access_token=issued.access_token))
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimit(RULES["register"]))],
+)
 async def register(
     data: RegisterRequest,
     response: Response,
@@ -66,7 +71,7 @@ async def register(
     return _session_response(issued, response, settings)
 
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(RateLimit(RULES["login"]))])
 async def login(
     data: LoginRequest,
     response: Response,
@@ -80,7 +85,10 @@ async def login(
     return _session_response(issued, response, settings)
 
 
-@router.post("/telegram-webapp")
+@router.post(
+    "/telegram-webapp",
+    dependencies=[Depends(RateLimit(RULES["telegram_webapp"]))],
+)
 async def login_by_webapp(
     data: TelegramWebAppRequest,
     response: Response,

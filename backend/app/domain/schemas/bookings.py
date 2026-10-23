@@ -33,6 +33,9 @@ class BookingCreate(Schema):
     contact_phone: str = Field(alias="contactPhone")
     contact_email: str | None = Field(default=None, alias="contactEmail")
     comment: str | None = Field(default=None, max_length=2000)
+    #: Токен виджета «я не робот». Нужен только гостям и только
+    #: когда проверка подключена.
+    cf_token: str | None = Field(default=None, alias="cfToken", max_length=4000)
 
     @field_validator("contact_phone", mode="after")
     @classmethod

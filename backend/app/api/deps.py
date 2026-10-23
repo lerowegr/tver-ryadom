@@ -14,7 +14,8 @@ from fastapi import Depends, Request
 
 from app.core.config import Settings
 from app.core.database import Database
-from app.core.errors import ForbiddenError, UnauthorizedError
+from app.core.errors import ForbiddenError, UnauthorizedError, ValidationError
+from app.core.rate_limit import client_ip
 from app.core.security import (
     AccessTokenPayload,
     PasswordHasher,
@@ -36,6 +37,7 @@ from app.services.auth import AuthService, SessionMeta
 from app.services.availability import AvailabilityService
 from app.services.bookings import BookingService
 from app.services.calendar import FeedTokenService
+from app.services.captcha import CaptchaVerifier
 from app.services.content import ContactService, FavoriteService, ReviewService
 from app.services.images import ImageUrlBuilder
 from app.services.notifications import Notifier, OutboxNotifier
@@ -260,6 +262,44 @@ SettingsServiceDep = Annotated[SettingsService, Depends(get_settings_service)]
 AdminCalendarServiceDep = Annotated[AdminCalendarService, Depends(get_admin_calendar_service)]
 DashboardServiceDep = Annotated[DashboardService, Depends(get_dashboard_service)]
 FeedTokenServiceDep = Annotated[FeedTokenService, Depends(get_feed_token_service)]
+
+
+def get_captcha(settings: SettingsDep) -> CaptchaVerifier:
+    return CaptchaVerifier(settings.turnstile_secret)
+
+
+class RequireCaptcha:
+    """Проверяет капчу у гостя. Вошедшему она не нужна.
+
+    Токен берётся из тела запроса, поэтому зависимость читает его сама:
+    объявлять его отдельным параметром в каждом обработчике значило бы
+    повторять одно и то же четыре раза.
+    """
+
+    async def __call__(
+        self,
+        request: Request,
+        user: OptionalUserDep,
+        captcha: Annotated[CaptchaVerifier, Depends(get_captcha)],
+    ) -> None:
+        if user is not None or not captcha.enabled:
+            return
+
+        token: str | None = None
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                token = body.get("cfToken")
+        except Exception:
+            token = None
+
+        if not await captcha.verify(token, ip=client_ip(request)):
+            raise ValidationError(
+                "Проверка не пройдена. Обновите страницу и попробуйте снова."
+            )
+
+
+require_captcha = RequireCaptcha()
 
 
 def get_session_meta(request: Request) -> SessionMeta:

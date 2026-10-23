@@ -16,6 +16,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.config import Settings
 from app.core.database import Database
+from app.core.rate_limit import MemoryRateLimiter
 from app.core.security import Pbkdf2PasswordHasher
 from app.domain.models.auth import User
 from app.main import create_app
@@ -60,6 +61,9 @@ async def client(settings: Settings, database: Database) -> AsyncIterator[AsyncC
         # приложения выставляем здесь — ровно то же, что ставит lifespan.
         app.state.settings = settings
         app.state.database = database
+        # Ограничитель свой на каждый тест: общий копил бы счётчики
+        # между ними, и порядок запуска начал бы влиять на результат.
+        app.state.rate_limiter = MemoryRateLimiter()
         yield http
 
 
