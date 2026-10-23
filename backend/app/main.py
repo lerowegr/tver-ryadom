@@ -20,13 +20,22 @@ from app.core.config import Settings, get_settings
 from app.core.database import Database
 from app.core.errors import AppError, ValidationError
 from app.domain import models  # noqa: F401 — регистрирует таблицы в метаданных
+from app.scheduler import BackgroundJobs
 
 logger = logging.getLogger("tver")
 
 
-def create_app(settings: Settings | None = None, *, database: Database | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    *,
+    database: Database | None = None,
+    with_scheduler: bool | None = None,
+) -> FastAPI:
     resolved = settings or get_settings()
     resolved.check_production_ready()
+    # В тестах фоновые задачи только мешают: они трогают ту же базу
+    # в произвольный момент.
+    run_jobs = with_scheduler if with_scheduler is not None else resolved.environment != "test"
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -34,9 +43,16 @@ def create_app(settings: Settings | None = None, *, database: Database | None = 
         db = database or Database(str(resolved.database_url), echo=resolved.database_echo)
         app.state.settings = resolved
         app.state.database = db
+
+        jobs = BackgroundJobs(db, resolved) if run_jobs else None
+        app.state.jobs = jobs
+        if jobs is not None:
+            jobs.start()
         try:
             yield
         finally:
+            if jobs is not None:
+                await jobs.stop()
             # Чужую базу не закрываем: её передал тот, кто ею и распоряжается.
             if own_database:
                 await db.dispose()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any, Literal
 
 from sqlalchemy import JSON, ForeignKey, Index, Integer, String, Text
@@ -71,26 +71,27 @@ class OutboxMessage(Base, IdMixin):
     )
 
     #: После стольких неудач задача считается безнадёжной.
-    MAX_ATTEMPTS = 5
+    MAX_ATTEMPTS = 3
 
     def mark_sent(self) -> None:
         self.status = "sent"
         self.sent_at = datetime.now(UTC)
         self.last_error = None
 
-    def mark_failed(self, error: str, retry_in_seconds: int = 60) -> None:
+    def mark_failed(self, error: str) -> None:
         """Откладывает повтор, а после исчерпания попыток закрывает задачу.
 
-        Без потолка попыток одно недоставляемое сообщение крутилось бы
-        в очереди вечно и съедало каждый тик планировщика.
-        """
-        from datetime import timedelta
+        Пауза растёт вдвое с каждой попыткой: две минуты, четыре. Если
+        Telegram или почта прилегли, частые повторы делу не помогут, а тик
+        планировщика займут.
 
+        Без потолка попыток одно недоставляемое сообщение крутилось бы
+        в очереди вечно. После потолка задача уходит в «упавшие» и видна
+        в админке отдельным бейджем.
+        """
         self.attempts += 1
         self.last_error = error[:1000]
         if self.attempts >= self.MAX_ATTEMPTS:
             self.status = "failed"
         else:
-            self.scheduled_at = datetime.now(UTC) + timedelta(
-                seconds=retry_in_seconds * self.attempts
-            )
+            self.scheduled_at = datetime.now(UTC) + timedelta(minutes=2**self.attempts)

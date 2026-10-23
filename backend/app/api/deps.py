@@ -36,7 +36,8 @@ from app.services.availability import AvailabilityService
 from app.services.bookings import BookingService
 from app.services.content import ContactService, FavoriteService, ReviewService
 from app.services.images import ImageUrlBuilder
-from app.services.notifications import CabinetNotifier, Notifier
+from app.services.notifications import Notifier, OutboxNotifier
+from app.services.notifications.service import NotificationService, OutboxAdminService
 from app.services.telegram_webapp import TelegramWebAppVerifier
 from app.services.tours import TourCatalogService
 
@@ -129,7 +130,20 @@ AvailabilityServiceDep = Annotated[AvailabilityService, Depends(get_availability
 
 
 def get_notifier(uow: UowDep) -> Notifier:
-    return CabinetNotifier(uow)
+    """Уведомления идут и в кабинет, и в очередь доставки — одной записью."""
+    return OutboxNotifier(uow)
+
+
+def get_notification_service(uow: UowDep) -> NotificationService:
+    return NotificationService(uow)
+
+
+def get_outbox_admin_service(uow: UowDep) -> OutboxAdminService:
+    return OutboxAdminService(uow)
+
+
+NotificationServiceDep = Annotated[NotificationService, Depends(get_notification_service)]
+OutboxAdminServiceDep = Annotated[OutboxAdminService, Depends(get_outbox_admin_service)]
 
 
 def get_booking_service(

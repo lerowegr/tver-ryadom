@@ -24,6 +24,7 @@ from app.api.deps import (
     AvailabilityServiceDep,
     BookingServiceDep,
     DashboardServiceDep,
+    OutboxAdminServiceDep,
     SettingsServiceDep,
     UowDep,
     require_admin,
@@ -62,6 +63,7 @@ from app.domain.schemas.availability import (
     AvailabilityRange,
     MskDate,
 )
+from app.domain.schemas.notifications import AdminOutboxItem, OutboxFilter
 from app.services.admin.calendar import MAX_DAYS
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -317,6 +319,27 @@ async def remove_block(
     await service.remove(block_id)
     await uow.commit()
     return ok({"ok": True})
+
+
+# ---- Очередь доставки -------------------------------------------------------
+
+
+@router.get("/outbox")
+async def list_outbox(
+    service: OutboxAdminServiceDep, filter_: Annotated[OutboxFilter, Query()]
+) -> Envelope[Page[AdminOutboxItem]]:
+    """Что не доставлено и почему. Без этого упавшие задачи копятся молча."""
+    items, total = await service.list_messages(filter_)
+    return paginated(items, total, filter_.page, filter_.limit)
+
+
+@router.post("/outbox/{message_id}/retry")
+async def retry_outbox(
+    message_id: str, service: OutboxAdminServiceDep, uow: UowDep
+) -> Envelope[dict[str, str]]:
+    message = await service.retry(message_id)
+    await uow.commit()
+    return ok({"id": message.id, "status": message.status})
 
 
 # ---- Календарь --------------------------------------------------------------
