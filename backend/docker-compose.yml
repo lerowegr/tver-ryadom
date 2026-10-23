@@ -1,0 +1,45 @@
+# Локальный запуск и основа для развёртывания на VPS.
+#
+# Наружу торчит только обратный прокси: база и API доступны лишь внутри
+# сети compose. Открытый наружу Postgres — самый частый способ потерять
+# базу, и порт 5432 здесь не публикуется намеренно.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tver}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tver}
+      POSTGRES_DB: ${POSTGRES_DB:-tver}
+      # Кириллица в данных есть, поэтому сортировка и кодировка заданы явно.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tver} -d ${POSTGRES_DB:-tver}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tver}:${POSTGRES_PASSWORD:-tver}@db:5432/${POSTGRES_DB:-tver}
+    depends_on:
+      db:
+        # Без этого первый старт падает: приложение стучится в базу раньше,
+        # чем она успевает подняться.
+        condition: service_healthy
+    # Миграции накатываются при запуске: отдельный ручной шаг рано или
+    # поздно забывают, и прод уезжает от схемы.
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  db-data:

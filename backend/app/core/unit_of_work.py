@@ -1,0 +1,88 @@
+"""Единица работы.
+
+Держит сессию базы и набор репозиториев вокруг неё, а главное — границу
+транзакции. Сервис говорит `await uow.commit()` один раз в конце операции,
+и либо записывается всё, либо ничего.
+
+На Workers такой границы не было: D1 не поддерживает интерактивные
+транзакции, и, например, создание брони шло двумя отдельными запросами —
+счётчик мест и сама запись. Между ними воркер мог упасть и оставить
+занятое место без брони. Здесь это одна транзакция.
+
+Репозитории создаются лениво: операции, которым нужен один пользователь,
+не должны тянуть за собой десяток объектов.
+"""
+
+from __future__ import annotations
+
+from types import TracebackType
+from typing import Self
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from app.repositories.users import SessionRepository, UserRepository
+
+
+class UnitOfWork:
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        self._session_factory = session_factory
+        self._session: AsyncSession | None = None
+        self._users: UserRepository | None = None
+        self._sessions: SessionRepository | None = None
+
+    # ---- Протокол контекстного менеджера --------------------------------
+
+    async def __aenter__(self) -> Self:
+        self._session = self._session_factory()
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        try:
+            # Незавершённую работу откатываем всегда: без явного commit
+            # ничего не должно просочиться в базу, даже если исключения нет.
+            if exc_type is not None:
+                await self.rollback()
+        finally:
+            if self._session is not None:
+                await self._session.close()
+                self._session = None
+                self._users = None
+                self._sessions = None
+
+    # ---- Транзакция ------------------------------------------------------
+
+    @property
+    def session(self) -> AsyncSession:
+        if self._session is None:
+            raise RuntimeError("Единица работы используется вне контекста `async with`")
+        return self._session
+
+    async def commit(self) -> None:
+        await self.session.commit()
+
+    async def rollback(self) -> None:
+        await self.session.rollback()
+
+    async def flush(self) -> None:
+        """Отправить изменения в базу, не закрывая транзакцию, — нужно,
+        когда дальше по ходу операции требуется сгенерированное значение."""
+        await self.session.flush()
+
+    # ---- Репозитории -----------------------------------------------------
+
+    @property
+    def users(self) -> UserRepository:
+        if self._users is None:
+            self._users = UserRepository(self.session)
+        return self._users
+
+    @property
+    def sessions(self) -> SessionRepository:
+        if self._sessions is None:
+            self._sessions = SessionRepository(self.session)
+        return self._sessions
