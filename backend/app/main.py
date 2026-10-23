@@ -9,8 +9,10 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime, timedelta
+from hmac import compare_digest
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,7 +20,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.database import Database
-from app.core.errors import AppError, ValidationError
+from app.core.errors import AppError, NotFoundError, ValidationError
 from app.domain import models  # noqa: F401 — регистрирует таблицы в метаданных
 from app.scheduler import BackgroundJobs
 
@@ -77,6 +79,50 @@ def create_app(
 
     _register_error_handlers(app)
     app.include_router(api_router, prefix="/api/v1")
+
+    @app.get("/calendar/{file}", tags=["service"])
+    async def calendar_feed(file: str, request: Request) -> Response:
+        """Лента занятости по секретной ссылке.
+
+        Вне /api/v1 и без авторизации намеренно: подписчик вроде Google
+        Календаря ходит сюда сам, заголовков не шлёт и про токены не знает.
+        Доступ защищает длинный секрет в самом адресе.
+        """
+        from app.core.unit_of_work import UnitOfWork
+        from app.services.admin.calendar import AdminCalendarService
+        from app.services.calendar import FeedTokenService, IcsBuilder
+
+        token = file.removesuffix(".ics")
+        database: Database = app.state.database
+
+        async with UnitOfWork(database.session_factory) as uow:
+            expected = await FeedTokenService(uow).read()
+            # Сравнение за постоянное время: по задержке ответа секрет
+            # иначе можно подбирать посимвольно. Байты, а не строки:
+            # compare_digest отказывается сравнивать не-ASCII, а в адресе
+            # может оказаться что угодно.
+            if not expected or not compare_digest(
+                token.encode("utf-8"), expected.encode("utf-8")
+            ):
+                raise NotFoundError()
+
+            # Окно ленты: прошлый месяц и год вперёд. Прошлое нужно, чтобы
+            # в календаре осталась история, будущее — ради планов.
+            now = datetime.now(UTC)
+            entries = await AdminCalendarService(uow).load_range(
+                now - timedelta(days=31), now + timedelta(days=365)
+            )
+
+        body = IcsBuilder(resolved.site_url).build(entries)
+        return Response(
+            content=body,
+            media_type="text/calendar; charset=utf-8",
+            headers={
+                "Content-Disposition": 'inline; filename="tver-ryadom.ics"',
+                # Подписчики ходят раз в час; лишний раз базу не тревожим.
+                "Cache-Control": "private, max-age=300",
+            },
+        )
 
     @app.get("/health", tags=["service"])
     async def health() -> dict[str, object]:

@@ -34,6 +34,7 @@ from app.services.admin.tours import AdminScheduleService, AdminTourService
 from app.services.auth import AuthService, SessionMeta
 from app.services.availability import AvailabilityService
 from app.services.bookings import BookingService
+from app.services.calendar import FeedTokenService
 from app.services.content import ContactService, FavoriteService, ReviewService
 from app.services.images import ImageUrlBuilder
 from app.services.notifications import Notifier, OutboxNotifier
@@ -218,6 +219,10 @@ def get_dashboard_service(uow: UowDep) -> DashboardService:
     return DashboardService(uow)
 
 
+def get_feed_token_service(uow: UowDep) -> FeedTokenService:
+    return FeedTokenService(uow)
+
+
 AdminTourServiceDep = Annotated[AdminTourService, Depends(get_admin_tour_service)]
 AdminScheduleServiceDep = Annotated[AdminScheduleService, Depends(get_admin_schedule_service)]
 AdminBookingServiceDep = Annotated[AdminBookingService, Depends(get_admin_booking_service)]
@@ -227,6 +232,7 @@ AdminUserServiceDep = Annotated[AdminUserService, Depends(get_admin_user_service
 SettingsServiceDep = Annotated[SettingsService, Depends(get_settings_service)]
 AdminCalendarServiceDep = Annotated[AdminCalendarService, Depends(get_admin_calendar_service)]
 DashboardServiceDep = Annotated[DashboardService, Depends(get_dashboard_service)]
+FeedTokenServiceDep = Annotated[FeedTokenService, Depends(get_feed_token_service)]
 
 
 def get_session_meta(request: Request) -> SessionMeta:

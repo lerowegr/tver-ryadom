@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
 from app.api.deps import (
     AdminBookingServiceDep,
@@ -24,6 +24,7 @@ from app.api.deps import (
     AvailabilityServiceDep,
     BookingServiceDep,
     DashboardServiceDep,
+    FeedTokenServiceDep,
     OutboxAdminServiceDep,
     SettingsServiceDep,
     UowDep,
@@ -343,6 +344,29 @@ async def retry_outbox(
 
 
 # ---- Календарь --------------------------------------------------------------
+
+
+@router.get("/calendar/feed")
+async def calendar_feed_link(
+    request: Request, service: FeedTokenServiceDep, uow: UowDep
+) -> Envelope[dict[str, str]]:
+    token = await service.ensure()
+    await uow.commit()
+    return ok({"token": token, "url": _feed_url(request, token)})
+
+
+@router.post("/calendar/feed/rotate")
+async def rotate_calendar_feed(
+    request: Request, service: FeedTokenServiceDep, uow: UowDep
+) -> Envelope[dict[str, str]]:
+    """Сменить ссылку, если она утекла. Старая перестаёт работать сразу."""
+    token = await service.rotate()
+    await uow.commit()
+    return ok({"token": token, "url": _feed_url(request, token)})
+
+
+def _feed_url(request: Request, token: str) -> str:
+    return f"{str(request.base_url).rstrip('/')}/calendar/{token}.ics"
 
 
 @router.get("/calendar")
