@@ -80,6 +80,32 @@ def create_app(
     _register_error_handlers(app)
     app.include_router(api_router, prefix="/api/v1")
 
+    @app.get("/images/{key:path}", tags=["service"])
+    async def serve_image(key: str, request: Request) -> Response:
+        """Раздача фотографий из хранилища.
+
+        В продакшене это стоит закрыть обратным прокси или CDN: гонять
+        картинки через Python на каждый просмотр — пустая трата. Но
+        маршрут нужен, чтобы сайт работал и без такой настройки.
+        """
+        from urllib.parse import unquote
+
+        from app.api.deps import get_storage
+        from app.services.storage import read_or_404
+
+        decoded = unquote(key)
+        # Ключ приходит из адреса, и выход за пределы хранилища закрыт явно.
+        if not decoded or ".." in decoded:
+            raise NotFoundError()
+
+        stored = await read_or_404(get_storage(request, resolved), decoded)
+        return Response(
+            content=stored.body,
+            media_type=stored.content_type,
+            # Содержимое по ключу не меняется: в ключе есть случайная часть.
+            headers={"Cache-Control": "public, max-age=31536000, immutable"},
+        )
+
     @app.get("/calendar/{file}", tags=["service"])
     async def calendar_feed(file: str, request: Request) -> Response:
         """Лента занятости по секретной ссылке.

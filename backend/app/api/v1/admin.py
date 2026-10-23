@@ -10,12 +10,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, status
 
 from app.api.deps import (
     AdminBookingServiceDep,
     AdminCalendarServiceDep,
     AdminDep,
+    AdminImageServiceDep,
     AdminRequestServiceDep,
     AdminReviewServiceDep,
     AdminScheduleServiceDep,
@@ -35,6 +36,7 @@ from app.core.responses import Envelope, Page, ok, paginated
 from app.domain.schemas.admin import (
     AdminBookingFilter,
     AdminBookingOut,
+    AdminImage,
     AdminRequestOut,
     AdminReviewCreate,
     AdminReviewOut,
@@ -45,6 +47,7 @@ from app.domain.schemas.admin import (
     BookingStatusUpdate,
     CalendarEntry,
     DashboardStats,
+    ImageUpdate,
     RequestFilter,
     RequestStatusUpdate,
     ReviewFilter,
@@ -320,6 +323,55 @@ async def remove_block(
     await service.remove(block_id)
     await uow.commit()
     return ok({"ok": True})
+
+
+# ---- Фотографии -------------------------------------------------------------
+
+
+@router.post("/tours/{tour_id}/images", status_code=status.HTTP_201_CREATED)
+async def upload_image(
+    tour_id: str,
+    service: AdminImageServiceDep,
+    uow: UowDep,
+    file: Annotated[UploadFile | None, File()] = None,
+    hero: Annotated[UploadFile | None, File()] = None,
+    card: Annotated[UploadFile | None, File()] = None,
+    thumb: Annotated[UploadFile | None, File()] = None,
+    alt: Annotated[str | None, Form()] = None,
+) -> Envelope[AdminImage]:
+    """Загрузка фотографии экскурсии.
+
+    Достаточно одного поля `file`: размеры нарежет сервер. Готовые
+    hero/card/thumb принимаются для совместимости с прежней админкой,
+    которая готовила их в браузере.
+    """
+    ready: dict[str, bytes] = {}
+    for name, part in (("hero", hero), ("card", card), ("thumb", thumb)):
+        if part is not None and part.filename:
+            ready[name] = await part.read()
+
+    original = await file.read() if file is not None and file.filename else None
+    image = await service.upload(tour_id, original=original, ready=ready, alt=alt)
+    await uow.commit()
+    return ok(image)
+
+
+@router.patch("/images/{image_id}")
+async def update_image(
+    image_id: str, data: ImageUpdate, service: AdminImageServiceDep, uow: UowDep
+) -> Envelope[dict[str, str]]:
+    image = await service.update(image_id, alt=data.alt, sort_order=data.sort_order)
+    await uow.commit()
+    return ok({"id": image.id})
+
+
+@router.delete("/images/{image_id}")
+async def delete_image(
+    image_id: str, service: AdminImageServiceDep, uow: UowDep
+) -> Envelope[dict[str, bool]]:
+    await service.remove(image_id)
+    await uow.commit()
+    return ok({"deleted": True})
 
 
 # ---- Очередь доставки -------------------------------------------------------

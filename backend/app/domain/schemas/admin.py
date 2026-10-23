@@ -132,6 +132,11 @@ class AdminRoutePoint(CamelSchema):
     sort_order: int
 
 
+class ImageUpdate(Schema):
+    alt: str | None = Field(default=None, max_length=300)
+    sort_order: int | None = Field(default=None, ge=0, alias="sortOrder")
+
+
 class AdminScheduleOut(CamelSchema):
     id: str
     starts_at: datetime

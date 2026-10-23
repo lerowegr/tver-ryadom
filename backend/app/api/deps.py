@@ -23,6 +23,7 @@ from app.core.security import (
 )
 from app.core.unit_of_work import UnitOfWork
 from app.services.admin.calendar import AdminCalendarService, DashboardService
+from app.services.admin.images import AdminImageService
 from app.services.admin.people import (
     AdminBookingService,
     AdminRequestService,
@@ -39,6 +40,7 @@ from app.services.content import ContactService, FavoriteService, ReviewService
 from app.services.images import ImageUrlBuilder
 from app.services.notifications import Notifier, OutboxNotifier
 from app.services.notifications.service import NotificationService, OutboxAdminService
+from app.services.storage import MemoryStorage, ObjectStorage, R2Storage
 from app.services.telegram_webapp import TelegramWebAppVerifier
 from app.services.tours import TourCatalogService
 
@@ -221,6 +223,31 @@ def get_dashboard_service(uow: UowDep) -> DashboardService:
 
 def get_feed_token_service(uow: UowDep) -> FeedTokenService:
     return FeedTokenService(uow)
+
+
+def get_storage(request: Request, settings: SettingsDep) -> ObjectStorage:
+    """Хранилище живёт на приложении: клиент boto3 тяжело создавать на
+    каждый запрос, а в тестах вместо него подставляется память."""
+    existing = getattr(request.app.state, "storage", None)
+    if existing is not None:
+        return existing  # type: ignore[no-any-return]
+    storage: ObjectStorage = R2Storage(settings) if settings.storage_configured else MemoryStorage()
+    request.app.state.storage = storage
+    return storage
+
+
+StorageDep = Annotated[ObjectStorage, Depends(get_storage)]
+
+
+def get_admin_image_service(
+    uow: UowDep,
+    storage: StorageDep,
+    images: Annotated[ImageUrlBuilder, Depends(get_image_builder)],
+) -> AdminImageService:
+    return AdminImageService(uow, storage, images)
+
+
+AdminImageServiceDep = Annotated[AdminImageService, Depends(get_admin_image_service)]
 
 
 AdminTourServiceDep = Annotated[AdminTourService, Depends(get_admin_tour_service)]
