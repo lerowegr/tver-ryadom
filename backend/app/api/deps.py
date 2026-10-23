@@ -25,6 +25,7 @@ from app.core.unit_of_work import UnitOfWork
 from app.services.auth import AuthService, SessionMeta
 from app.services.availability import AvailabilityService
 from app.services.bookings import BookingService
+from app.services.content import ContactService, FavoriteService, ReviewService
 from app.services.images import ImageUrlBuilder
 from app.services.notifications import CabinetNotifier, Notifier
 from app.services.telegram_webapp import TelegramWebAppVerifier
@@ -132,6 +133,25 @@ def get_booking_service(
 
 
 BookingServiceDep = Annotated[BookingService, Depends(get_booking_service)]
+
+
+def get_review_service(uow: UowDep) -> ReviewService:
+    return ReviewService(uow)
+
+
+def get_favorite_service(uow: UowDep, catalog: CatalogServiceDep) -> FavoriteService:
+    return FavoriteService(uow, catalog)
+
+
+def get_contact_service(
+    uow: UowDep, notifier: Annotated[Notifier, Depends(get_notifier)]
+) -> ContactService:
+    return ContactService(uow, notifier)
+
+
+ReviewServiceDep = Annotated[ReviewService, Depends(get_review_service)]
+FavoriteServiceDep = Annotated[FavoriteService, Depends(get_favorite_service)]
+ContactServiceDep = Annotated[ContactService, Depends(get_contact_service)]
 
 
 def get_session_meta(request: Request) -> SessionMeta:

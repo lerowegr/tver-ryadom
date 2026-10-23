@@ -22,12 +22,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.repositories.availability import AvailabilityRepository
 from app.repositories.bookings import BookingRepository
-from app.repositories.tours import (
-    BadgeRepository,
+from app.repositories.content import (
+    ContactRequestRepository,
+    FavoriteRepository,
     ReviewRepository,
-    ScheduleRepository,
-    TourRepository,
 )
+from app.repositories.tours import BadgeRepository, ScheduleRepository, TourRepository
 from app.repositories.users import SessionRepository, UserRepository
 
 
@@ -43,6 +43,8 @@ class UnitOfWork:
         self._reviews: ReviewRepository | None = None
         self._availability: AvailabilityRepository | None = None
         self._bookings: BookingRepository | None = None
+        self._favorites: FavoriteRepository | None = None
+        self._requests: ContactRequestRepository | None = None
 
     # ---- Протокол контекстного менеджера --------------------------------
 
@@ -73,6 +75,8 @@ class UnitOfWork:
                 self._reviews = None
                 self._availability = None
                 self._bookings = None
+                self._favorites = None
+                self._requests = None
 
     # ---- Транзакция ------------------------------------------------------
 
@@ -142,3 +146,15 @@ class UnitOfWork:
         if self._bookings is None:
             self._bookings = BookingRepository(self.session)
         return self._bookings
+
+    @property
+    def favorites(self) -> FavoriteRepository:
+        if self._favorites is None:
+            self._favorites = FavoriteRepository(self.session)
+        return self._favorites
+
+    @property
+    def requests(self) -> ContactRequestRepository:
+        if self._requests is None:
+            self._requests = ContactRequestRepository(self.session)
+        return self._requests

@@ -32,7 +32,7 @@ class TourCatalogService:
 
     async def list_tours(self, filter_: TourFilter) -> tuple[list[TourCard], int]:
         tours, total = await self._uow.tours.search(filter_)
-        return [self._to_card(tour) for tour in tours], total
+        return [self.to_card(tour) for tour in tours], total
 
     async def get_tour(self, slug: str) -> TourDetail:
         tour = await self._uow.tours.published_by_slug(slug)
@@ -54,7 +54,7 @@ class TourCatalogService:
                 starts_at=slot.starts_at,
                 capacity=slot.capacity,
                 free_seats=slot.free_seats,
-                tour=self._to_card(slot.tour),
+                tour=self.to_card(slot.tour),
             )
             for slot in slots
         ]
@@ -92,7 +92,8 @@ class TourCatalogService:
             "badges": [BadgeOut.model_validate(badge) for badge in tour.badges],
         }
 
-    def _to_card(self, tour: Tour) -> TourCard:
+    def to_card(self, tour: Tour) -> TourCard:
+        """Карточка экскурсии. Публичная: её же собирает избранное."""
         return TourCard(
             **self._to_base(tour),
             image=self._images.first(sorted(tour.images, key=lambda i: i.sort_order)),

@@ -8,7 +8,6 @@ from typing import Any
 from sqlalchemy import ColumnElement, Select, and_, func, or_, select
 from sqlalchemy.orm import selectinload
 
-from app.domain.models.content import Review
 from app.domain.models.tours import Badge, RoutePoint, Schedule, Tour, TourBadge
 from app.domain.schemas.tours import TourFilter, TourSort
 from app.repositories.base import Repository
@@ -160,52 +159,3 @@ class ScheduleRepository(Repository[Schedule]):
         )
         result = await self.session.execute(query)
         return list(result.scalars().unique().all())
-
-
-class ReviewRepository(Repository[Review]):
-    model = Review
-
-    async def approved_for_tour(
-        self, tour_id: str, *, limit: int, offset: int
-    ) -> tuple[list[Review], int]:
-        conditions = [Review.tour_id == tour_id, Review.status == "approved"]
-        total = await self.count(*conditions)
-        items = await self.find_many(
-            *conditions,
-            order_by=[Review.created_at.desc()],
-            limit=limit,
-            offset=offset,
-        )
-        return items, total
-
-    async def latest(self, limit: int = 6) -> list[Review]:
-        """Лента на главной: свежие одобренные отзывы с названием экскурсии."""
-        query = (
-            select(Review)
-            .join(Tour, Tour.id == Review.tour_id)
-            .where(Review.status == "approved", Tour.status == "published")
-            .order_by(Review.created_at.desc())
-            .limit(limit)
-            .options(selectinload(Review.tour))
-        )
-        result = await self.session.execute(query)
-        return list(result.scalars().unique().all())
-
-    async def recalc_tour_rating(self, tour_id: str) -> None:
-        """Пересчёт денормализованного рейтинга.
-
-        Каталог показывает среднее у каждой карточки, и считать его на
-        каждый запрос — лишняя работа; вместо этого обновляем при изменении
-        состава одобренных отзывов.
-        """
-        row = await self.session.execute(
-            select(func.avg(Review.rating), func.count())
-            .select_from(Review)
-            .where(Review.tour_id == tour_id, Review.status == "approved")
-        )
-        average, count = row.one()
-        tour = await self.session.get(Tour, tour_id)
-        if tour is None:  # pragma: no cover — вызывается после проверки
-            return
-        tour.rating_count = int(count or 0)
-        tour.rating_avg = round(float(average), 1) if count else 0.0
