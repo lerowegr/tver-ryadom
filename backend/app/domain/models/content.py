@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, IdMixin
+from app.core.database import Base, IdMixin, UtcDateTime
 
 if TYPE_CHECKING:
     from app.domain.models.auth import User
@@ -37,7 +37,7 @@ class Review(Base, IdMixin):
     #: Дата отзыва на площадке, откуда он перенесён, а не дата импорта:
     #: иначе прошлогодний отзыв выглядел бы свежим.
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
     tour: Mapped[Tour] = relationship(back_populates="reviews")
@@ -58,7 +58,7 @@ class Favorite(Base):
         String(36), ForeignKey("tours.id", ondelete="CASCADE"), primary_key=True
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
     user: Mapped[User] = relationship(back_populates="favorites")
@@ -73,7 +73,7 @@ class GalleryImage(Base, IdMixin):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     variants: Mapped[dict[str, str] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
 
@@ -90,7 +90,7 @@ class ContactRequest(Base, IdMixin):
         String(16), nullable=False, default="new"
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
 
@@ -107,7 +107,7 @@ class Setting(Base):
     #: Значение хранится как JSON — так в одном поле живут и строки, и списки.
     value: Mapped[Any] = mapped_column(JSON, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        UtcDateTime,
         nullable=False,
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),

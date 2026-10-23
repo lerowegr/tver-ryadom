@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Literal
 
-from sqlalchemy import DateTime, ForeignKey, Index, String
+from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, IdMixin, TimestampMixin
+from app.core.database import Base, IdMixin, TimestampMixin, UtcDateTime
 
 if TYPE_CHECKING:
     from app.domain.models.bookings import Booking
@@ -30,7 +30,7 @@ class User(Base, IdMixin, TimestampMixin):
     role: Mapped[UserRole] = mapped_column(String(16), nullable=False, default="user")
     #: Ключ файла в хранилище; кадрирует человек сам, лежит квадрат.
     avatar_key: Mapped[str | None] = mapped_column(String(255))
-    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_verified_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
 
     # Один человек — одна запись на все каналы: это и есть синхронизация
     # между сайтом, Telegram, ВКонтакте и MAX.
@@ -78,10 +78,10 @@ class Session(Base, IdMixin):
     refresh_token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     user_agent: Mapped[str | None] = mapped_column(String(255))
     ip: Mapped[str | None] = mapped_column(String(64))
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime, nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
     user: Mapped[User] = relationship(back_populates="sessions")

@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from sqlalchemy import (
     JSON,
-    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -17,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, IdMixin, TimestampMixin
+from app.core.database import Base, IdMixin, TimestampMixin, UtcDateTime
 
 if TYPE_CHECKING:
     from app.domain.models.bookings import Booking
@@ -134,7 +133,7 @@ class TourImage(Base, IdMixin):
     #: Готовые размеры в хранилище: thumb, card, hero, original.
     variants: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
     tour: Mapped[Tour] = relationship(back_populates="images")
@@ -165,14 +164,14 @@ class Schedule(Base, IdMixin):
     tour_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("tours.id", ondelete="CASCADE"), nullable=False
     )
-    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    starts_at: Mapped[datetime] = mapped_column(UtcDateTime, nullable=False)
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
     #: Денормализованный счётчик: он же защищает от овербукинга в условном
     #: UPDATE, когда две заявки приходят одновременно.
     booked_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[ScheduleStatus] = mapped_column(String(16), nullable=False, default="open")
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
     tour: Mapped[Tour] = relationship(back_populates="schedules")

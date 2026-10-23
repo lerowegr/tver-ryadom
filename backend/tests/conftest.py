@@ -19,6 +19,7 @@ from app.core.database import Database
 from app.core.security import Pbkdf2PasswordHasher
 from app.domain.models.auth import User
 from app.main import create_app
+from tests.factories import CatalogFixture, seed_catalog
 
 
 @pytest.fixture
@@ -60,6 +61,12 @@ async def client(settings: Settings, database: Database) -> AsyncIterator[AsyncC
         app.state.settings = settings
         app.state.database = database
         yield http
+
+
+@pytest.fixture
+async def catalog(database: Database) -> CatalogFixture:
+    """Каталог из трёх маршрутов и одного черновика."""
+    return await seed_catalog(database)
 
 
 @pytest.fixture

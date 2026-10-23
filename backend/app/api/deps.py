@@ -23,7 +23,9 @@ from app.core.security import (
 )
 from app.core.unit_of_work import UnitOfWork
 from app.services.auth import AuthService, SessionMeta
+from app.services.images import ImageUrlBuilder
 from app.services.telegram_webapp import TelegramWebAppVerifier
+from app.services.tours import TourCatalogService
 
 
 def get_settings(request: Request) -> Settings:
@@ -84,6 +86,26 @@ def get_auth_service(
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
+def get_image_builder(request: Request, settings: SettingsDep) -> ImageUrlBuilder:
+    """База адресов картинок: из настроек, иначе текущий хост API.
+
+    Запасной вариант нужен для локального запуска и тестов, где отдельного
+    домена для файлов нет.
+    """
+    base = settings.images_base_url or str(request.base_url).rstrip("/") + "/images"
+    return ImageUrlBuilder(base)
+
+
+def get_catalog_service(
+    uow: UowDep,
+    images: Annotated[ImageUrlBuilder, Depends(get_image_builder)],
+) -> TourCatalogService:
+    return TourCatalogService(uow, images)
+
+
+CatalogServiceDep = Annotated[TourCatalogService, Depends(get_catalog_service)]
 
 
 def get_session_meta(request: Request) -> SessionMeta:

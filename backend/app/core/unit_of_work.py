@@ -20,6 +20,12 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.repositories.tours import (
+    BadgeRepository,
+    ReviewRepository,
+    ScheduleRepository,
+    TourRepository,
+)
 from app.repositories.users import SessionRepository, UserRepository
 
 
@@ -29,6 +35,10 @@ class UnitOfWork:
         self._session: AsyncSession | None = None
         self._users: UserRepository | None = None
         self._sessions: SessionRepository | None = None
+        self._tours: TourRepository | None = None
+        self._badges: BadgeRepository | None = None
+        self._schedules: ScheduleRepository | None = None
+        self._reviews: ReviewRepository | None = None
 
     # ---- Протокол контекстного менеджера --------------------------------
 
@@ -53,6 +63,10 @@ class UnitOfWork:
                 self._session = None
                 self._users = None
                 self._sessions = None
+                self._tours = None
+                self._badges = None
+                self._schedules = None
+                self._reviews = None
 
     # ---- Транзакция ------------------------------------------------------
 
@@ -86,3 +100,27 @@ class UnitOfWork:
         if self._sessions is None:
             self._sessions = SessionRepository(self.session)
         return self._sessions
+
+    @property
+    def tours(self) -> TourRepository:
+        if self._tours is None:
+            self._tours = TourRepository(self.session)
+        return self._tours
+
+    @property
+    def badges(self) -> BadgeRepository:
+        if self._badges is None:
+            self._badges = BadgeRepository(self.session)
+        return self._badges
+
+    @property
+    def schedules(self) -> ScheduleRepository:
+        if self._schedules is None:
+            self._schedules = ScheduleRepository(self.session)
+        return self._schedules
+
+    @property
+    def reviews(self) -> ReviewRepository:
+        if self._reviews is None:
+            self._reviews = ReviewRepository(self.session)
+        return self._reviews

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, Index, String, Text
+from sqlalchemy import Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.database import Base, IdMixin
+from app.core.database import Base, IdMixin, UtcDateTime
 
 #: Часовой пояс экскурсий. Всё, что человек видит как «3 ноября, 14:00», —
 #: это московское время, и в базе оно лежит строками именно поэтому:
@@ -34,7 +34,7 @@ class AvailabilityBlock(Base, IdMixin):
     #: Заметка для себя. Гостям не показывается.
     note: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        UtcDateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
 
     @property
@@ -73,7 +73,7 @@ class BotDraft(Base):
     #: JSON: экскурсия, слот или дата со временем, число участников.
     payload: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        UtcDateTime,
         nullable=False,
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),

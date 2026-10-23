@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, String, func
+from sqlalchemy.engine import Dialect
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -21,10 +22,37 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
 
 
 class Base(DeclarativeBase):
     """Общий предок моделей."""
+
+
+class UtcDateTime(TypeDecorator[datetime]):
+    """Время, которое всегда приходит обратно с поясом UTC.
+
+    PostgreSQL отдаёт timestamptz с поясом, SQLite — без него. Код,
+    сравнивающий отданное базой время с `datetime.now(UTC)`, работал бы
+    на проде и падал в тестах с «can't compare offset-naive and
+    offset-aware». Проще один раз привести тип, чем помнить об этом
+    в каждом сравнении.
+    """
+
+    impl = DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
+        if value is None:
+            return None
+        # Наивное время считаем московским? Нет: по всему коду оно UTC,
+        # а местное время живёт отдельными строками в занятости.
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+
+    def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
 def new_id() -> str:
@@ -42,13 +70,13 @@ class TimestampMixin:
     """Отметки времени. Всегда с поясом: иначе сравнение с `now()` врёт."""
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        UtcDateTime,
         nullable=False,
         default=lambda: datetime.now(UTC),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+        UtcDateTime,
         nullable=False,
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),

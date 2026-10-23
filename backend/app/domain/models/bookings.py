@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, IdMixin, TimestampMixin
+from app.core.database import Base, IdMixin, TimestampMixin, UtcDateTime
 
 if TYPE_CHECKING:
     from app.domain.models.auth import User
@@ -48,7 +48,7 @@ class Booking(Base, IdMixin, TimestampMixin):
         String(36), ForeignKey("schedules.id", ondelete="SET NULL")
     )
     #: …либо своя дата, если подходящего слота нет.
-    desired_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    desired_date: Mapped[datetime | None] = mapped_column(UtcDateTime)
 
     people_count: Mapped[int] = mapped_column(Integer, nullable=False)
     #: Копейки, зафиксированные на момент брони: цена экскурсии могла меняться.
@@ -68,7 +68,7 @@ class Booking(Base, IdMixin, TimestampMixin):
 
     source: Mapped[BookingSource] = mapped_column(String(16), nullable=False, default="web")
     #: Когда ушло напоминание за сутки — защита от повторов в фоновой задаче.
-    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
     #: Человек выключил напоминание именно об этой экскурсии.
     reminder_off: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
