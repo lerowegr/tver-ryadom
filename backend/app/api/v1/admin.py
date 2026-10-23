@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -26,9 +27,13 @@ from app.api.deps import (
     BookingServiceDep,
     DashboardServiceDep,
     FeedTokenServiceDep,
+    MaxChannelDep,
     OutboxAdminServiceDep,
+    SettingsDep,
     SettingsServiceDep,
+    TelegramSetupDep,
     UowDep,
+    VkChannelDep,
     require_admin,
 )
 from app.core.errors import ValidationError
@@ -323,6 +328,58 @@ async def remove_block(
     await service.remove(block_id)
     await uow.commit()
     return ok({"ok": True})
+
+
+# ---- Каналы -----------------------------------------------------------------
+
+
+@router.get("/telegram")
+async def telegram_status(setup: TelegramSetupDep) -> Envelope[dict[str, object]]:
+    return ok(asdict(await setup.status()))
+
+
+@router.post("/telegram/connect")
+async def connect_telegram(
+    request: Request, setup: TelegramSetupDep, settings: SettingsDep, uow: UowDep
+) -> Envelope[dict[str, object]]:
+    """Регистрирует вебхук и меню команд.
+
+    Токен при этом не покидает сервер: наружу он не передаётся ни разу,
+    а в ответе есть только его длина — чтобы отличить пустое значение
+    от незаданного.
+    """
+    status_ = await setup.configure(
+        str(request.base_url).rstrip("/"), settings.site_url
+    )
+    await uow.commit()
+    return ok(asdict(status_))
+
+
+@router.post("/telegram/disable")
+async def disable_telegram(setup: TelegramSetupDep, uow: UowDep) -> Envelope[dict[str, object]]:
+    status_ = await setup.disable()
+    await uow.commit()
+    return ok(asdict(status_))
+
+
+@router.get("/channels")
+async def channels_status(
+    settings: SettingsDep, vk: VkChannelDep, max_channel: MaxChannelDep
+) -> Envelope[dict[str, object]]:
+    """Какие каналы включены и чего им не хватает."""
+    return ok({
+        "vk": {
+            "tokenSet": bool(settings.vk_group_token),
+            "confirmationSet": bool(settings.vk_confirmation),
+            "secretSet": bool(settings.vk_secret),
+            "enabled": vk.enabled,
+        },
+        "max": {
+            "tokenSet": bool(settings.max_bot_token),
+            "apiBaseSet": bool(settings.max_api_base),
+            "ready": max_channel.configured,
+        },
+    })
 
 
 # ---- Фотографии -------------------------------------------------------------

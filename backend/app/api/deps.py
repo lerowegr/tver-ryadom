@@ -38,6 +38,11 @@ from app.services.availability import AvailabilityService
 from app.services.bookings import BookingService
 from app.services.calendar import FeedTokenService
 from app.services.captcha import CaptchaVerifier
+from app.services.channels.max import MaxChannel
+from app.services.channels.screens import ScreenBuilder
+from app.services.channels.setup import TelegramSetupService
+from app.services.channels.telegram import TelegramApi, TelegramChannel
+from app.services.channels.vk import VkChannel
 from app.services.content import ContactService, FavoriteService, ReviewService
 from app.services.images import ImageUrlBuilder
 from app.services.notifications import Notifier, OutboxNotifier
@@ -262,6 +267,67 @@ SettingsServiceDep = Annotated[SettingsService, Depends(get_settings_service)]
 AdminCalendarServiceDep = Annotated[AdminCalendarService, Depends(get_admin_calendar_service)]
 DashboardServiceDep = Annotated[DashboardService, Depends(get_dashboard_service)]
 FeedTokenServiceDep = Annotated[FeedTokenService, Depends(get_feed_token_service)]
+
+
+def get_screen_builder(
+    uow: UowDep, images: Annotated[ImageUrlBuilder, Depends(get_image_builder)]
+) -> ScreenBuilder:
+    return ScreenBuilder(uow, images_base=images.base)
+
+
+ScreenBuilderDep = Annotated[ScreenBuilder, Depends(get_screen_builder)]
+
+
+def get_telegram_api(settings: SettingsDep) -> TelegramApi:
+    return TelegramApi(settings.telegram_bot_token)
+
+
+TelegramApiDep = Annotated[TelegramApi, Depends(get_telegram_api)]
+
+
+def get_telegram_channel(
+    uow: UowDep,
+    api: TelegramApiDep,
+    screens: ScreenBuilderDep,
+    bookings: BookingServiceDep,
+    settings: SettingsDep,
+) -> TelegramChannel:
+    return TelegramChannel(uow, api, screens, bookings, site_url=settings.site_url)
+
+
+def get_telegram_setup(
+    uow: UowDep, api: TelegramApiDep, settings: SettingsDep
+) -> TelegramSetupService:
+    return TelegramSetupService(uow, api, settings.telegram_bot_token)
+
+
+def get_vk_channel(
+    uow: UowDep, screens: ScreenBuilderDep, settings: SettingsDep
+) -> VkChannel:
+    return VkChannel(
+        uow,
+        screens,
+        group_token=settings.vk_group_token,
+        confirmation=settings.vk_confirmation,
+        secret=settings.vk_secret,
+    )
+
+
+def get_max_channel(
+    uow: UowDep, screens: ScreenBuilderDep, settings: SettingsDep
+) -> MaxChannel:
+    return MaxChannel(
+        uow,
+        screens,
+        bot_token=settings.max_bot_token,
+        api_base=settings.max_api_base,
+    )
+
+
+TelegramChannelDep = Annotated[TelegramChannel, Depends(get_telegram_channel)]
+TelegramSetupDep = Annotated[TelegramSetupService, Depends(get_telegram_setup)]
+VkChannelDep = Annotated[VkChannel, Depends(get_vk_channel)]
+MaxChannelDep = Annotated[MaxChannel, Depends(get_max_channel)]
 
 
 def get_captcha(settings: SettingsDep) -> CaptchaVerifier:

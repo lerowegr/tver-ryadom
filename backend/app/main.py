@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
+from app.api.v1.webhooks import router as webhook_router
 from app.core.config import Settings, get_settings
 from app.core.database import Database
 from app.core.errors import AppError, NotFoundError, ValidationError
@@ -81,6 +82,7 @@ def create_app(
 
     _register_error_handlers(app)
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(webhook_router)
 
     @app.get("/images/{key:path}", tags=["service"])
     async def serve_image(key: str, request: Request) -> Response:

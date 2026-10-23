@@ -25,6 +25,10 @@ class ImageUrlBuilder:
     def __init__(self, base_url: str) -> None:
         self._base = base_url.rstrip("/")
 
+    @property
+    def base(self) -> str:
+        return self._base
+
     def url(self, key: str) -> str:
         # quote по сегментам: ключ содержит слеши, и кодировать их нельзя.
         return f"{self._base}/{quote(key, safe='/')}"

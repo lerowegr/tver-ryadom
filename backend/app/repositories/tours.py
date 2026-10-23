@@ -66,6 +66,16 @@ class TourRepository(Repository[Tour]):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
+    async def published_with_media(self, tour_id: str) -> Tour | None:
+        """Опубликованная экскурсия с фотографиями и маршрутом — для бота."""
+        query = (
+            select(Tour)
+            .where(Tour.id == tour_id, Tour.status == "published")
+            .options(selectinload(Tour.images), selectinload(Tour.route_points))
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
     async def search(self, filter_: TourFilter) -> tuple[list[Tour], int]:
         """Каталог: страница карточек и общее число совпадений."""
         conditions = self._conditions(filter_)
