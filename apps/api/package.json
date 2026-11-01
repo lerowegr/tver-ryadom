@@ -20,7 +20,7 @@
     "@tver/shared": "workspace:*",
     "drizzle-orm": "^0.45.3",
     "grammy": "^1.46.0",
-    "hono": "^4.13.13",
+    "hono": "^4.13.14",
     "zod": "^3.25.76"
   },
   "devDependencies": {
